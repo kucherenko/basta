@@ -1,0 +1,8 @@
+{
+  "name": "cpd",
+  "version": "1.0.0",
+  "description": "Copy/Paste Detector",
+  "main": "index.js",
+  "author": "Andrey Kucherenko <kucherenko.andrey@gmail.com>",
+  "license": "MIT"
+}

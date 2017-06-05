@@ -1,0 +1,43 @@
+import {IOptions} from "./options";
+import {create} from "glob-stream";
+import * as through2 from "through2";
+import {Transform} from "stream";
+import {readFileSync} from "fs-extra";
+
+const map = require("through2-map");
+const reduce = require("through2-reduce");
+
+export function readFiles(): Transform {
+    return map.obj((chunk) => {
+        chunk.file = readFileSync(chunk.path);
+        return chunk;
+    });
+}
+
+export function tokenize(): Transform {
+    return map.obj(() => {
+
+    });
+}
+
+export function findDuplicates(): Transform {
+    return reduce.obj((map, current) => {
+
+    });
+}
+
+export function cpdStream(stream: NodeJS.ReadableStream) {
+    stream
+        .pipe(readFiles())
+        .pipe(through2.obj((chunk, enc, callback) => {
+            console.log(chunk);
+            callback()
+        }))
+        .pipe(tokenize())
+        .pipe(findDuplicates());
+}
+
+export function cpd(options: IOptions) {
+    let path = `${options.path}/**/*.ts`;
+    return cpdStream(create([path, '!./node_modules/**/*']));
+}

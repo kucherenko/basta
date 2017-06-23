@@ -6,7 +6,7 @@
 
 <link rel="stylesheet" href="../../lib/codemirror.css">
 <script src="../../lib/codemirror.js"></script>
-<script src="ttcn.js"></script>
+<script src="ttcn.ts"></script>
 <style type="text/css">
     .CodeMirror {
         border-top: 1px solid black;
@@ -94,15 +94,15 @@ module Templates {
         </textarea>
     </div>
 
-    <script> 
-      var ttcnEditor = CodeMirror.fromTextArea(document.getElementById("ttcn-code"), {
-        lineNumbers: true,
-        matchBrackets: true,
-        mode: "text/x-ttcn"
-      });
-      ttcnEditor.setSize(600, 860);
-      var mac = CodeMirror.keyMap.default == CodeMirror.keyMap.macDefault;
-      CodeMirror.keyMap.default[(mac ? "Cmd" : "Ctrl") + "-Space"] = "autocomplete";
+    <script>
+        var ttcnEditor = CodeMirror.fromTextArea(document.getElementById("ttcn-code"), {
+            lineNumbers: true,
+            matchBrackets: true,
+            mode: "text/x-ttcn"
+        });
+        ttcnEditor.setSize(600, 860);
+        var mac = CodeMirror.keyMap.default == CodeMirror.keyMap.macDefault;
+        CodeMirror.keyMap.default[(mac ? "Cmd" : "Ctrl") + "-Space"] = "autocomplete";
     </script>
     <br/>
     <p><strong>Language:</strong> Testing and Test Control Notation

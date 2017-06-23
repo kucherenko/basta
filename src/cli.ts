@@ -1,11 +1,12 @@
-import {Command} from 'commander'
-import {IOptions, prepareOptions} from "./options";
-import {cpd} from "./cpd";
+import {Command} from 'commander';
+import {IOptions, prepareOptions} from './options';
+import {cpd} from './cpd';
+import {readFormats} from './formats/index'
 
 const packageJson = require('../package.json');
 
 export const cli = new Command(packageJson.name)
-  .version(packageJson.version)
+    .version(packageJson.version)
     .description(packageJson.description);
 cli.option('-l, --min-lines [number]', 'min size of duplication in code lines (Default is 5)');
 cli.option('-t, --min-tokens [number]', 'min size of duplication in tokens (Default is 70)');
@@ -23,5 +24,5 @@ cli.option('--verbose', 'show full info about copies');
 cli.parse(process.argv);
 
 const options: IOptions = prepareOptions(cli);
-
+readFormats();
 cpd(options);

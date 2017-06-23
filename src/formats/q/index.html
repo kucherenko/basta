@@ -7,27 +7,30 @@
 <link rel="stylesheet" href="../../lib/codemirror.css">
 <script src="../../lib/codemirror.js"></script>
 <script src="../../addon/edit/matchbrackets.js"></script>
-<script src="q.js"></script>
-<style type="text/css">.CodeMirror {border-top: 1px solid black; border-bottom: 1px solid black;}</style>
+<script src="q.ts"></script>
+<style type="text/css">.CodeMirror {
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+}</style>
 <div id=nav>
-  <a href="http://codemirror.net"><h1>CodeMirror</h1><img id=logo src="../../doc/logo.png"></a>
+    <a href="http://codemirror.net"><h1>CodeMirror</h1><img id=logo src="../../doc/logo.png"></a>
 
-  <ul>
-    <li><a href="../../index.html">Home</a>
-    <li><a href="../../doc/manual.html">Manual</a>
-    <li><a href="https://github.com/codemirror/codemirror">Code</a>
-  </ul>
-  <ul>
-    <li><a href="../index.html">Language modes</a>
-    <li><a class=active href="#">Q</a>
-  </ul>
+    <ul>
+        <li><a href="../../index.html">Home</a>
+        <li><a href="../../doc/manual.html">Manual</a>
+        <li><a href="https://github.com/codemirror/codemirror">Code</a>
+    </ul>
+    <ul>
+        <li><a href="../index.html">Language modes</a>
+        <li><a class=active href="#">Q</a>
+    </ul>
 </div>
 
 <article>
-<h2>Q mode</h2>
+    <h2>Q mode</h2>
 
 
-<div><textarea id="code" name="code">
+    <div><textarea id="code" name="code">
 / utilities to quickly load a csv file - for more exhaustive analysis of the csv contents see csvguess.q
 / 2009.09.20 - updated to match latest csvguess.q 
 
@@ -61,20 +64,43 @@ CHUNKSIZE:50000000 / used in fs2 (modified .Q.fs)
 k)nameltrim:{$[~@x;.z.s'x;~(*x)in aA:.Q.a,.Q.A;(+/&\~x in aA)_x;x]}
 k)fs2:{[f;s]((-7!s)>){[f;s;x]i:1+last@&0xa=r:1:(s;x;CHUNKSIZE);f@`\:i#r;x+i}[f;s]/0j}
 cleanhdrs:{{$[ZAPHDRS;lower x except"_";x]}x where x in DELIM,.Q.an}
-cancast:{nw:x$"";if[not x in"BXCS";nw:(min 0#;max 0#;::)@\:nw];$[not any nw in x$(11&count y)#y;$[11<count y;not any nw in x$y;1b];0b]}
+cancast:{nw:x$"";if[not x in"BXCS";nw:(min 0#;max 0#;::)@\:nw];$[not any nw in x$(11&count y)#y;$[11<count y;not any nw
+                                                                                                           in
+                                                                                                           x$y;1b];0b]}
 
-read:{[file]data[file;info[file]]}  
-read10:{[file]data10[file;info[file]]}  
+                                                                                                           read:{[file]data[file;info[file]]}
+                                                                                                           read10:{[file]data10[file;info[file]]}
 
-colhdrs:{[file]
-	`$nameltrim DELIM vs cleanhdrs first read0(file;0;1+first where 0xa=read1(file;0;WIDTHHDR))}
-data:{[file;info]
-	(exec c from info where not t=" ")xcol(exec t from info;enlist DELIM)0:file}
-data10:{[file;info]
-	data[;info](file;0;1+last 11#where 0xa=read1(file;0;15*WIDTHHDR))}
-info0:{[file;onlycols]
-	colhdrs:`$nameltrim DELIM vs cleanhdrs first head:read0(file;0;1+last where 0xa=read1(file;0;WIDTHHDR));
-	loadfmts:(count colhdrs)#"S";if[count onlycols;loadfmts[where not colhdrs in onlycols]:"C"];
+                                                                                                           colhdrs:{[file]
+                                                                                                           `$nameltrim
+                                                                                                           DELIM vs
+                                                                                                           cleanhdrs
+                                                                                                           first
+                                                                                                           read0(file;0;1+first
+                                                                                                           where
+                                                                                                           0xa=read1(file;0;WIDTHHDR))}
+                                                                                                           data:{[file;info]
+                                                                                                           (exec c from
+                                                                                                           info where
+                                                                                                           not t=" "
+                                                                                                           )xcol(exec t
+                                                                                                           from
+                                                                                                           info;enlist
+                                                                                                           DELIM)0:file}
+                                                                                                           data10:{[file;info]
+                                                                                                           data[;info](file;0;1+last
+                                                                                                           11#where
+                                                                                                           0xa=read1(file;0;15*WIDTHHDR))}
+                                                                                                           info0:{[file;onlycols]
+                                                                                                           colhdrs:`$nameltrim
+                                                                                                           DELIM vs
+                                                                                                           cleanhdrs
+                                                                                                           first
+                                                                                                           head:read0(file;0;1+last
+                                                                                                           where
+                                                                                                           0xa=read1(file;0;WIDTHHDR));
+                                                                                                           loadfmts:(count
+                                                                                                           colhdrs)#"S";if[count onlycols;loadfmts[where not colhdrs in onlycols]:"C"];
 	breaks:where 0xa=read1(file;0;floor(10+READLINES)*WIDTHHDR%count head);
 	nas:count as:colhdrs xcol(loadfmts;enlist DELIM)0:(file;0;1+last((1+READLINES)&count breaks)#breaks);
 	info:([]c:key flip as;v:value flip as);as:();
@@ -134,11 +160,11 @@ bulkload:{[file;info]
 </textarea></div>
 
     <script>
-      var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
-        lineNumbers: true,
-        matchBrackets: true
-      });
+        var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+            lineNumbers: true,
+            matchBrackets: true
+        });
     </script>
 
     <p><strong>MIME type defined:</strong> <code>text/x-q</code>.</p>
-  </article>
+</article>

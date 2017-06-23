@@ -1,18 +1,18 @@
-import {resolve} from "path";
+import {resolve} from 'path';
 
 export interface IOptions {
-    types: string[],
-    minLines: string,
-    minTokens: string,
-    path: string,
-    files: string,
-    limit: number,
-    exclude?: string,
-    reporter?: string,
-    blame?: boolean,
-    debug?: boolean,
-    skipComments?: boolean,
-    verbose?: boolean
+    types: string[];
+    minLines: string;
+    minTokens: string;
+    path: string;
+    files: string;
+    limit: number;
+    exclude?: string;
+    reporter?: string;
+    blame?: boolean;
+    debug?: boolean;
+    skipComments?: boolean;
+    verbose?: boolean;
 }
 
 export function prepareOptions(cli): IOptions {

@@ -1,0 +1,148 @@
+import {defineMIME, defineMode} from '../index';
+defineMode('eiffel', function() {
+    function wordObj(words) {
+        const o = {};
+        for (let i = 0, e = words.length; i < e; ++i) o[words[i]] = true;
+        return o;
+    }
+
+    const keywords = wordObj([
+        'note',
+        'across',
+        'when',
+        'variant',
+        'until',
+        'unique',
+        'undefine',
+        'then',
+        'strip',
+        'select',
+        'retry',
+        'rescue',
+        'require',
+        'rename',
+        'reference',
+        'redefine',
+        'prefix',
+        'once',
+        'old',
+        'obsolete',
+        'loop',
+        'local',
+        'like',
+        'is',
+        'inspect',
+        'infix',
+        'include',
+        'if',
+        'frozen',
+        'from',
+        'external',
+        'export',
+        'ensure',
+        'end',
+        'elseif',
+        'else',
+        'do',
+        'creation',
+        'create',
+        'check',
+        'alias',
+        'agent',
+        'separate',
+        'invariant',
+        'inherit',
+        'indexing',
+        'feature',
+        'expanded',
+        'deferred',
+        'class',
+        'Void',
+        'True',
+        'Result',
+        'Precursor',
+        'False',
+        'Current',
+        'create',
+        'attached',
+        'detachable',
+        'as',
+        'and',
+        'implies',
+        'not',
+        'or'
+    ]);
+    const operators = wordObj([':=', 'and then', 'and', 'or', '<<', '>>']);
+
+    function chain(newtok, stream, state) {
+        state.tokenize.push(newtok);
+        return newtok(stream, state);
+    }
+
+    function tokenBase(stream, state) {
+        if (stream.eatSpace()) return null;
+        const ch = stream.next();
+        if (ch == '"' || ch == "'") {
+            return chain(readQuoted(ch, 'string'), stream, state);
+        } else if (ch == '-' && stream.eat('-')) {
+            stream.skipToEnd();
+            return 'comment';
+        } else if (ch == ':' && stream.eat('=')) {
+            return 'operator';
+        } else if (/[0-9]/.test(ch)) {
+            stream.eatWhile(/[xXbBCc0-9\.]/);
+            stream.eat(/[\?\!]/);
+            return 'ident';
+        } else if (/[a-zA-Z_0-9]/.test(ch)) {
+            stream.eatWhile(/[a-zA-Z_0-9]/);
+            stream.eat(/[\?\!]/);
+            return 'ident';
+        } else if (/[=+\-\/*^%<>~]/.test(ch)) {
+            stream.eatWhile(/[=+\-\/*^%<>~]/);
+            return 'operator';
+        } else {
+            return null;
+        }
+    }
+
+    function readQuoted(quote, style, unescaped = undefined) {
+        return function(stream, state) {
+            let escaped = false, ch;
+            while ((ch = stream.next()) != null) {
+                if (ch == quote && (unescaped || !escaped)) {
+                    state.tokenize.pop();
+                    break;
+                }
+                escaped = !escaped && ch == '%';
+            }
+            return style;
+        };
+    }
+
+    return {
+        startState: function() {
+            return {tokenize: [tokenBase]};
+        },
+
+        token: function(stream, state) {
+            let style = state.tokenize[state.tokenize.length - 1](stream, state);
+            if (style == 'ident') {
+                const word = stream.current();
+                style = keywords.propertyIsEnumerable(stream.current()) ? 'keyword'
+                    : operators.propertyIsEnumerable(stream.current()) ? 'operator'
+                        : /^[A-Z][A-Z_0-9]*$/g.test(word) ? 'tag'
+                            : /^0[bB][0-1]+$/g.test(word) ? 'number'
+                                : /^0[cC][0-7]+$/g.test(word) ? 'number'
+                                    : /^0[xX][a-fA-F0-9]+$/g.test(word) ? 'number'
+                                        : /^([0-9]+\.[0-9]*)|([0-9]*\.[0-9]+)$/g.test(word) ? 'number'
+                                            : /^[0-9]+$/g.test(word) ? 'number'
+                                                : 'variable';
+            }
+            return style;
+        },
+        lineComment: '--'
+    };
+});
+
+defineMIME('text/x-eiffel', 'eiffel');
+

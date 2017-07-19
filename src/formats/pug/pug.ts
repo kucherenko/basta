@@ -1,57 +1,58 @@
+import '../javascript/javascript'
 //@TODO: messy code
+import {defineMIME, defineMode, getMode, mimeModes} from '../index'
 
-import {defineMIME, defineMode, getMode, mimeModes} from '../index';
 
-defineMode('pug', function(config) {
+defineMode('pug', function (config) {
     // token types
-    const KEYWORD = 'keyword';
-    const DOCTYPE = 'meta';
-    const ID = 'builtin';
-    const CLASS = 'qualifier';
+    const KEYWORD = 'keyword'
+    const DOCTYPE = 'meta'
+    const ID = 'builtin'
+    const CLASS = 'qualifier'
 
     const ATTRS_NEST = {
         '{': '}',
         '(': ')',
         '[': ']'
-    };
+    }
 
-    const jsMode = getMode(config, 'javascript');
+    const jsMode = getMode(config, 'javascript')
 
     function State() {
-        this.javaScriptLine = false;
-        this.javaScriptLineExcludesColon = false;
+        this.javaScriptLine = false
+        this.javaScriptLineExcludesColon = false
 
-        this.javaScriptArguments = false;
-        this.javaScriptArgumentsDepth = 0;
+        this.javaScriptArguments = false
+        this.javaScriptArgumentsDepth = 0
 
-        this.isInterpolating = false;
-        this.interpolationNesting = 0;
+        this.isInterpolating = false
+        this.interpolationNesting = 0
 
-        this.jsState = startState(jsMode);
+        this.jsState = startState(jsMode)
 
-        this.restOfLine = '';
+        this.restOfLine = ''
 
-        this.isIncludeFiltered = false;
-        this.isEach = false;
+        this.isIncludeFiltered = false
+        this.isEach = false
 
-        this.lastTag = '';
-        this.scriptType = '';
+        this.lastTag = ''
+        this.scriptType = ''
 
         // Attributes Mode
-        this.isAttrs = false;
-        this.attrsNest = [];
-        this.inAttributeName = true;
-        this.attributeIsType = false;
-        this.attrValue = '';
+        this.isAttrs = false
+        this.attrsNest = []
+        this.inAttributeName = true
+        this.attributeIsType = false
+        this.attrValue = ''
 
         // Indented Mode
-        this.indentOf = Infinity;
-        this.indentToken = '';
+        this.indentOf = Infinity
+        this.indentToken = ''
 
-        this.innerMode = null;
-        this.innerState = null;
+        this.innerMode = null
+        this.innerState = null
 
-        this.innerModeForLine = false;
+        this.innerModeForLine = false
     }
 
     /**
@@ -59,430 +60,430 @@ defineMode('pug', function(config) {
      *
      * @return {State}
      */
-    State.prototype.copy = function() {
-        const res = new State();
-        res.javaScriptLine = this.javaScriptLine;
-        res.javaScriptLineExcludesColon = this.javaScriptLineExcludesColon;
-        res.javaScriptArguments = this.javaScriptArguments;
-        res.javaScriptArgumentsDepth = this.javaScriptArgumentsDepth;
-        res.isInterpolating = this.isInterpolating;
-        res.interpolationNesting = this.interpolationNesting;
+    State.prototype.copy = function () {
+        const res = new State()
+        res.javaScriptLine = this.javaScriptLine
+        res.javaScriptLineExcludesColon = this.javaScriptLineExcludesColon
+        res.javaScriptArguments = this.javaScriptArguments
+        res.javaScriptArgumentsDepth = this.javaScriptArgumentsDepth
+        res.isInterpolating = this.isInterpolating
+        res.interpolationNesting = this.interpolationNesting
 
-        res.jsState = copyState(jsMode, this.jsState);
+        res.jsState = copyState(jsMode, this.jsState)
 
-        res.innerMode = this.innerMode;
+        res.innerMode = this.innerMode
         if (this.innerMode && this.innerState) {
-            res.innerState = copyState(this.innerMode, this.innerState);
+            res.innerState = copyState(this.innerMode, this.innerState)
         }
 
-        res.restOfLine = this.restOfLine;
+        res.restOfLine = this.restOfLine
 
-        res.isIncludeFiltered = this.isIncludeFiltered;
-        res.isEach = this.isEach;
-        res.lastTag = this.lastTag;
-        res.scriptType = this.scriptType;
-        res.isAttrs = this.isAttrs;
-        res.attrsNest = this.attrsNest.slice();
-        res.inAttributeName = this.inAttributeName;
-        res.attributeIsType = this.attributeIsType;
-        res.attrValue = this.attrValue;
-        res.indentOf = this.indentOf;
-        res.indentToken = this.indentToken;
+        res.isIncludeFiltered = this.isIncludeFiltered
+        res.isEach = this.isEach
+        res.lastTag = this.lastTag
+        res.scriptType = this.scriptType
+        res.isAttrs = this.isAttrs
+        res.attrsNest = this.attrsNest.slice()
+        res.inAttributeName = this.inAttributeName
+        res.attributeIsType = this.attributeIsType
+        res.attrValue = this.attrValue
+        res.indentOf = this.indentOf
+        res.indentToken = this.indentToken
 
-        res.innerModeForLine = this.innerModeForLine;
+        res.innerModeForLine = this.innerModeForLine
 
-        return res;
-    };
+        return res
+    }
 
     function javaScript(stream, state) {
         if (stream.sol()) {
             // if javaScriptLine was set at end of line, ignore it
-            state.javaScriptLine = false;
-            state.javaScriptLineExcludesColon = false;
+            state.javaScriptLine = false
+            state.javaScriptLineExcludesColon = false
         }
         if (state.javaScriptLine) {
             if (state.javaScriptLineExcludesColon && stream.peek() === ':') {
-                state.javaScriptLine = false;
-                state.javaScriptLineExcludesColon = false;
-                return;
+                state.javaScriptLine = false
+                state.javaScriptLineExcludesColon = false
+                return
             }
-            const tok = jsMode.token(stream, state.jsState);
-            if (stream.eol()) state.javaScriptLine = false;
-            return tok || true;
+            const tok = jsMode.token(stream, state.jsState)
+            if (stream.eol()) state.javaScriptLine = false
+            return tok || true
         }
     }
 
     function javaScriptArguments(stream, state) {
         if (state.javaScriptArguments) {
             if (state.javaScriptArgumentsDepth === 0 && stream.peek() !== '(') {
-                state.javaScriptArguments = false;
-                return;
+                state.javaScriptArguments = false
+                return
             }
             if (stream.peek() === '(') {
-                state.javaScriptArgumentsDepth++;
+                state.javaScriptArgumentsDepth++
             } else if (stream.peek() === ')') {
-                state.javaScriptArgumentsDepth--;
+                state.javaScriptArgumentsDepth--
             }
             if (state.javaScriptArgumentsDepth === 0) {
-                state.javaScriptArguments = false;
-                return;
+                state.javaScriptArguments = false
+                return
             }
 
-            const tok = jsMode.token(stream, state.jsState);
-            return tok || true;
+            const tok = jsMode.token(stream, state.jsState)
+            return tok || true
         }
     }
 
     function yieldStatement(stream, ...args) {
         if (stream.match(/^yield\b/)) {
-            return 'keyword';
+            return 'keyword'
         }
     }
 
     function doctype(stream, ...args) {
         if (stream.match(/^(?:doctype) *([^\n]+)?/)) {
-            return DOCTYPE;
+            return DOCTYPE
         }
     }
 
     function interpolation(stream, state) {
         if (stream.match('#{')) {
-            state.isInterpolating = true;
-            state.interpolationNesting = 0;
-            return 'punctuation';
+            state.isInterpolating = true
+            state.interpolationNesting = 0
+            return 'punctuation'
         }
     }
 
     function interpolationContinued(stream, state) {
         if (state.isInterpolating) {
             if (stream.peek() === '}') {
-                state.interpolationNesting--;
+                state.interpolationNesting--
                 if (state.interpolationNesting < 0) {
-                    stream.next();
-                    state.isInterpolating = false;
-                    return 'punctuation';
+                    stream.next()
+                    state.isInterpolating = false
+                    return 'punctuation'
                 }
             } else if (stream.peek() === '{') {
-                state.interpolationNesting++;
+                state.interpolationNesting++
             }
-            return jsMode.token(stream, state.jsState) || true;
+            return jsMode.token(stream, state.jsState) || true
         }
     }
 
     function caseStatement(stream, state) {
         if (stream.match(/^case\b/)) {
-            state.javaScriptLine = true;
-            return KEYWORD;
+            state.javaScriptLine = true
+            return KEYWORD
         }
     }
 
     function when(stream, state) {
         if (stream.match(/^when\b/)) {
-            state.javaScriptLine = true;
-            state.javaScriptLineExcludesColon = true;
-            return KEYWORD;
+            state.javaScriptLine = true
+            state.javaScriptLineExcludesColon = true
+            return KEYWORD
         }
     }
 
     function defaultStatement(stream, ...args) {
         if (stream.match(/^default\b/)) {
-            return KEYWORD;
+            return KEYWORD
         }
     }
 
     function extendsStatement(stream, state) {
         if (stream.match(/^extends?\b/)) {
-            state.restOfLine = 'string';
-            return KEYWORD;
+            state.restOfLine = 'string'
+            return KEYWORD
         }
     }
 
     function append(stream, state) {
         if (stream.match(/^append\b/)) {
-            state.restOfLine = 'variable';
-            return KEYWORD;
+            state.restOfLine = 'variable'
+            return KEYWORD
         }
     }
 
     function prepend(stream, state) {
         if (stream.match(/^prepend\b/)) {
-            state.restOfLine = 'variable';
-            return KEYWORD;
+            state.restOfLine = 'variable'
+            return KEYWORD
         }
     }
 
     function block(stream, state) {
         if (stream.match(/^block\b *(?:(prepend|append)\b)?/)) {
-            state.restOfLine = 'variable';
-            return KEYWORD;
+            state.restOfLine = 'variable'
+            return KEYWORD
         }
     }
 
     function include(stream, state) {
         if (stream.match(/^include\b/)) {
-            state.restOfLine = 'string';
-            return KEYWORD;
+            state.restOfLine = 'string'
+            return KEYWORD
         }
     }
 
     function includeFiltered(stream, state) {
         if (stream.match(/^include:([a-zA-Z0-9\-]+)/, false) && stream.match('include')) {
-            state.isIncludeFiltered = true;
-            return KEYWORD;
+            state.isIncludeFiltered = true
+            return KEYWORD
         }
     }
 
     function includeFilteredContinued(stream, state) {
         if (state.isIncludeFiltered) {
-            const tok = filter(stream, state);
-            state.isIncludeFiltered = false;
-            state.restOfLine = 'string';
-            return tok;
+            const tok = filter(stream, state)
+            state.isIncludeFiltered = false
+            state.restOfLine = 'string'
+            return tok
         }
     }
 
     function mixin(stream, state) {
         if (stream.match(/^mixin\b/)) {
-            state.javaScriptLine = true;
-            return KEYWORD;
+            state.javaScriptLine = true
+            return KEYWORD
         }
     }
 
     function call(stream, state) {
         if (stream.match(/^\+([-\w]+)/)) {
             if (!stream.match(/^\( *[-\w]+ *=/, false)) {
-                state.javaScriptArguments = true;
-                state.javaScriptArgumentsDepth = 0;
+                state.javaScriptArguments = true
+                state.javaScriptArgumentsDepth = 0
             }
-            return 'variable';
+            return 'variable'
         }
         if (stream.match(/^\+#{/, false)) {
-            stream.next();
-            state.mixinCallAfter = true;
-            return interpolation(stream, state);
+            stream.next()
+            state.mixinCallAfter = true
+            return interpolation(stream, state)
         }
     }
 
     function callArguments(stream, state) {
         if (state.mixinCallAfter) {
-            state.mixinCallAfter = false;
+            state.mixinCallAfter = false
             if (!stream.match(/^\( *[-\w]+ *=/, false)) {
-                state.javaScriptArguments = true;
-                state.javaScriptArgumentsDepth = 0;
+                state.javaScriptArguments = true
+                state.javaScriptArgumentsDepth = 0
             }
-            return true;
+            return true
         }
     }
 
     function conditional(stream, state) {
         if (stream.match(/^(if|unless|else if|else)\b/)) {
-            state.javaScriptLine = true;
-            return KEYWORD;
+            state.javaScriptLine = true
+            return KEYWORD
         }
     }
 
     function each(stream, state) {
         if (stream.match(/^(- *)?(each|for)\b/)) {
-            state.isEach = true;
-            return KEYWORD;
+            state.isEach = true
+            return KEYWORD
         }
     }
 
     function eachContinued(stream, state) {
         if (state.isEach) {
             if (stream.match(/^ in\b/)) {
-                state.javaScriptLine = true;
-                state.isEach = false;
-                return KEYWORD;
+                state.javaScriptLine = true
+                state.isEach = false
+                return KEYWORD
             } else if (stream.sol() || stream.eol()) {
-                state.isEach = false;
+                state.isEach = false
             } else if (stream.next()) {
                 while (!stream.match(/^ in\b/, false) && stream.next())
-                return 'variable';
+                    return 'variable'
             }
         }
     }
 
     function whileStatement(stream, state) {
         if (stream.match(/^while\b/)) {
-            state.javaScriptLine = true;
-            return KEYWORD;
+            state.javaScriptLine = true
+            return KEYWORD
         }
     }
 
     function tag(stream, state) {
-        let captures;
+        let captures
         if (captures = stream.match(/^(\w(?:[-:\w]*\w)?)\/?/)) {
-            state.lastTag = captures[1].toLowerCase();
+            state.lastTag = captures[1].toLowerCase()
             if (state.lastTag === 'script') {
-                state.scriptType = 'application/javascript';
+                state.scriptType = 'application/javascript'
             }
-            return 'tag';
+            return 'tag'
         }
     }
 
     function filter(stream, state) {
         if (stream.match(/^:([\w\-]+)/)) {
-            let innerMode;
+            let innerMode
             if (config && config.innerModes) {
-                innerMode = config.innerModes(stream.current().substring(1));
+                innerMode = config.innerModes(stream.current().substring(1))
             }
             if (!innerMode) {
-                innerMode = stream.current().substring(1);
+                innerMode = stream.current().substring(1)
             }
             if (typeof innerMode === 'string') {
-                innerMode = getMode(config, innerMode);
+                innerMode = getMode(config, innerMode)
             }
-            setInnerMode(stream, state, innerMode);
-            return 'atom';
+            setInnerMode(stream, state, innerMode)
+            return 'atom'
         }
     }
 
     function code(stream, state) {
         if (stream.match(/^(!?=|-)/)) {
-            state.javaScriptLine = true;
-            return 'punctuation';
+            state.javaScriptLine = true
+            return 'punctuation'
         }
     }
 
     function id(stream, ...args) {
         if (stream.match(/^#([\w-]+)/)) {
-            return ID;
+            return ID
         }
     }
 
     function className(stream, ...args) {
         if (stream.match(/^\.([\w-]+)/)) {
-            return CLASS;
+            return CLASS
         }
     }
 
     function attrs(stream, state) {
         if (stream.peek() == '(') {
-            stream.next();
-            state.isAttrs = true;
-            state.attrsNest = [];
-            state.inAttributeName = true;
-            state.attrValue = '';
-            state.attributeIsType = false;
-            return 'punctuation';
+            stream.next()
+            state.isAttrs = true
+            state.attrsNest = []
+            state.inAttributeName = true
+            state.attrValue = ''
+            state.attributeIsType = false
+            return 'punctuation'
         }
     }
 
     function attrsContinued(stream, state) {
         if (state.isAttrs) {
             if (ATTRS_NEST[stream.peek()]) {
-                state.attrsNest.push(ATTRS_NEST[stream.peek()]);
+                state.attrsNest.push(ATTRS_NEST[stream.peek()])
             }
             if (state.attrsNest[state.attrsNest.length - 1] === stream.peek()) {
-                state.attrsNest.pop();
+                state.attrsNest.pop()
             } else if (stream.eat(')')) {
-                state.isAttrs = false;
-                return 'punctuation';
+                state.isAttrs = false
+                return 'punctuation'
             }
             if (state.inAttributeName && stream.match(/^[^=,\)!]+/)) {
                 if (stream.peek() === '=' || stream.peek() === '!') {
-                    state.inAttributeName = false;
-                    state.jsState = startState(jsMode);
+                    state.inAttributeName = false
+                    state.jsState = startState(jsMode)
                     if (state.lastTag === 'script' && stream.current().trim().toLowerCase() === 'type') {
-                        state.attributeIsType = true;
+                        state.attributeIsType = true
                     } else {
-                        state.attributeIsType = false;
+                        state.attributeIsType = false
                     }
                 }
-                return 'attribute';
+                return 'attribute'
             }
 
-            const tok = jsMode.token(stream, state.jsState);
+            const tok = jsMode.token(stream, state.jsState)
             if (state.attributeIsType && tok === 'string') {
-                state.scriptType = stream.current().toString();
+                state.scriptType = stream.current().toString()
             }
             if (state.attrsNest.length === 0 && (tok === 'string' || tok === 'variable' || tok === 'keyword')) {
                 try {
-                    Function('', 'var x ' + state.attrValue.replace(/,\s*$/, '').replace(/^!/, ''));
-                    state.inAttributeName = true;
-                    state.attrValue = '';
-                    stream.backUp(stream.current().length);
-                    return attrsContinued(stream, state);
+                    Function('', 'var x ' + state.attrValue.replace(/,\s*$/, '').replace(/^!/, ''))
+                    state.inAttributeName = true
+                    state.attrValue = ''
+                    stream.backUp(stream.current().length)
+                    return attrsContinued(stream, state)
                 } catch (ex) {
                     //not the end of an attribute
                 }
             }
-            state.attrValue += stream.current();
-            return tok || true;
+            state.attrValue += stream.current()
+            return tok || true
         }
     }
 
     function attributesBlock(stream, state) {
         if (stream.match(/^&attributes\b/)) {
-            state.javaScriptArguments = true;
-            state.javaScriptArgumentsDepth = 0;
-            return 'keyword';
+            state.javaScriptArguments = true
+            state.javaScriptArgumentsDepth = 0
+            return 'keyword'
         }
     }
 
     function indent(stream, ...args) {
         if (stream.sol() && stream.eatSpace()) {
-            return 'indent';
+            return 'indent'
         }
     }
 
     function comment(stream, state) {
         if (stream.match(/^ *\/\/(-)?([^\n]*)/)) {
-            state.indentOf = stream.indentation();
-            state.indentToken = 'comment';
-            return 'comment';
+            state.indentOf = stream.indentation()
+            state.indentToken = 'comment'
+            return 'comment'
         }
     }
 
     function colon(stream, ...args) {
         if (stream.match(/^: */)) {
-            return 'colon';
+            return 'colon'
         }
     }
 
     function text(stream, state) {
         if (stream.match(/^(?:\| ?| )([^\n]+)/)) {
-            return 'string';
+            return 'string'
         }
         if (stream.match(/^(<[^\n]*)/, false)) {
             // html string
-            setInnerMode(stream, state, 'htmlmixed');
-            state.innerModeForLine = true;
-            return innerMode(stream, state, true);
+            setInnerMode(stream, state, 'htmlmixed')
+            state.innerModeForLine = true
+            return innerMode(stream, state, true)
         }
     }
 
     function dot(stream, state) {
         if (stream.eat('.')) {
-            let innerMode = null;
+            let innerMode = null
             if (state.lastTag === 'script' && state.scriptType.toLowerCase().indexOf('javascript') != -1) {
-                innerMode = state.scriptType.toLowerCase().replace(/"|'/g, '');
+                innerMode = state.scriptType.toLowerCase().replace(/"|'/g, '')
             } else if (state.lastTag === 'style') {
-                innerMode = 'css';
+                innerMode = 'css'
             }
-            setInnerMode(stream, state, innerMode);
-            return 'dot';
+            setInnerMode(stream, state, innerMode)
+            return 'dot'
         }
     }
 
     function fail(stream, ...args) {
-        stream.next();
-        return null;
+        stream.next()
+        return null
     }
 
 
     function setInnerMode(stream, state, mode) {
-        mode = mimeModes[mode] || mode;
-        mode = config.innerModes ? config.innerModes(mode) || mode : mode;
-        mode = mimeModes[mode] || mode;
-        mode = getMode(config, mode);
-        state.indentOf = stream.indentation();
+        mode = mimeModes[mode] || mode
+        mode = config.innerModes ? config.innerModes(mode) || mode : mode
+        mode = mimeModes[mode] || mode
+        mode = getMode(config, mode)
+        state.indentOf = stream.indentation()
 
         if (mode && mode.name !== 'null') {
-            state.innerMode = mode;
+            state.innerMode = mode
         } else {
-            state.indentToken = 'string';
+            state.indentToken = 'string'
         }
     }
 
@@ -490,43 +491,43 @@ defineMode('pug', function(config) {
         if (stream.indentation() > state.indentOf || (state.innerModeForLine && !stream.sol()) || force) {
             if (state.innerMode) {
                 if (!state.innerState) {
-                    state.innerState = state.innerMode.startState ? startState(state.innerMode, stream.indentation()) : {};
+                    state.innerState = state.innerMode.startState ? startState(state.innerMode, stream.indentation()) : {}
                 }
-                return stream.hideFirstChars(state.indentOf + 2, function() {
-                    return state.innerMode.token(stream, state.innerState) || true;
-                });
+                return stream.hideFirstChars(state.indentOf + 2, function () {
+                    return state.innerMode.token(stream, state.innerState) || true
+                })
             } else {
-                stream.skipToEnd();
-                return state.indentToken;
+                stream.skipToEnd()
+                return state.indentToken
             }
         } else if (stream.sol()) {
-            state.indentOf = Infinity;
-            state.indentToken = null;
-            state.innerMode = null;
-            state.innerState = null;
+            state.indentOf = Infinity
+            state.indentToken = null
+            state.innerMode = null
+            state.innerState = null
         }
     }
 
     function restOfLine(stream, state) {
         if (stream.sol()) {
             // if restOfLine was set at end of line, ignore it
-            state.restOfLine = '';
+            state.restOfLine = ''
         }
         if (state.restOfLine) {
-            stream.skipToEnd();
-            const tok = state.restOfLine;
-            state.restOfLine = '';
-            return tok;
+            stream.skipToEnd()
+            const tok = state.restOfLine
+            state.restOfLine = ''
+            return tok
         }
     }
 
 
     function startState(...args) {
-        return new State();
+        return new State()
     }
 
     function copyState(state, mode) {
-        return state.copy();
+        return state.copy()
     }
 
     /**
@@ -575,18 +576,18 @@ defineMode('pug', function(config) {
             || comment(stream, state)
             || colon(stream, state)
             || dot(stream, state)
-            || fail(stream, state);
+            || fail(stream, state)
 
-        return tok === true ? null : tok;
+        return tok === true ? null : tok
     }
 
     return {
         startState: startState,
         copyState: copyState,
         token: nextToken
-    };
-}, 'javascript', 'css', 'htmlmixed');
+    }
+}, 'javascript', 'css', 'htmlmixed')
 
-defineMIME('text/x-pug', 'pug');
-defineMIME('text/x-jade', 'pug');
+defineMIME('text/x-pug', 'pug')
+defineMIME('text/x-jade', 'pug')
 

@@ -142,15 +142,13 @@ export function resolveMode(spec) {
 
 
 export function hasFormat(mode) {
-    return modes.hasOwnProperty(mode);
+    return modes.hasOwnProperty(mode)
 }
-
 // Given a mode spec (anything that resolveMode accepts), find and
 // initialize an actual mode object.
 export function getMode(options, spec) {
-    spec = resolveMode(spec);
-    const mfactory = modes[spec.mode]
-
+    spec = resolveMode(spec)
+    const mfactory = modes[spec.mode || spec.name]
     if (!mfactory) {
         return getMode(options, 'text/plain')
     }
@@ -224,7 +222,6 @@ export function startState(mode, a1 = undefined, a2 = undefined) {
 
 export function runMode(string: string, modespec, {state = false}) {
     const mode = getMode({indentUnit: 2}, modespec)
-    console.log(mode)
     const lines = splitLines(string)
     let tokens = []
     state = state || startState(mode)
@@ -238,6 +235,7 @@ export function runMode(string: string, modespec, {state = false}) {
             mode.blankLine(state)
         }
         while (!stream.eol()) {
+            console.log(stream.pos)
             let style = mode.token(stream, state)
             tokens.push({
                 value: stream.current(),

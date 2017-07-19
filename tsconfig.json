@@ -1,20 +1,31 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "strictNullChecks": true,
-    "declaration": true,
+    "rootDir": ".",
+    "module": "commonjs",
     "moduleResolution": "node",
-    "outDir": "./lib",
+    "types": [
+      "node",
+      "mocha",
+      "sinon",
+      "chai"
+    ],
+    "removeComments": true,
+    "target": "es2015",
     "lib": [
-      "es2017",
-      "dom"
-    ]
+      "es2017"
+    ],
+    "allowSyntheticDefaultImports": false,
+    "allowJs": true,
+    "noImplicitAny": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "sourceMap": false
   },
   "include": [
-    "src/**/*"
+    "src/**/*.?s"
+  ],
+  "exclude": [
+    "src/**/*.test.?s",
+    "src/test"
   ]
 }

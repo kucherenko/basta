@@ -1,7 +1,6 @@
 import {Command} from 'commander';
 import {IOptions, prepareOptions} from './options';
 import {cpd} from './cpd';
-import {readFormats} from './formats/index'
 
 const packageJson = require('../package.json');
 
@@ -24,5 +23,5 @@ cli.option('--verbose', 'show full info about copies');
 cli.parse(process.argv);
 
 const options: IOptions = prepareOptions(cli);
-readFormats();
+
 cpd(options);

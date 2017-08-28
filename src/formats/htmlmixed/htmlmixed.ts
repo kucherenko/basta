@@ -1,8 +1,8 @@
 import {copyState, defineMIME, defineMode, getMode, startState} from '../index';
 import {Pass} from '../misc';
-import "../xml/xml"
-import "../javascript/javascript"
-import "../css/css"
+import '../xml/xml';
+import '../javascript/javascript';
+import '../css/css';
 
 const defaultTags = {
     script: [
@@ -90,7 +90,6 @@ defineMode('htmlmixed', function(config, parserConfig) {
             const inTag = /^([\S]+) (.*)/.exec(state.inTag);
             state.inTag = null;
             const modeSpec = stream.current() == '>' && findMatchingMode(tags[inTag[1]], inTag[2]);
-            console.log(modeSpec)
             const mode = getMode(config, {mode: modeSpec});
             const endTagA = getTagRegexp(inTag[1], true), endTag = getTagRegexp(inTag[1], false);
             state.token = function(stream, state) {

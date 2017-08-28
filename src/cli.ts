@@ -7,6 +7,7 @@ const packageJson = require('../package.json');
 export const cli = new Command(packageJson.name)
     .version(packageJson.version)
     .description(packageJson.description);
+
 cli.option('-l, --min-lines [number]', 'min size of duplication in code lines (Default is 5)');
 cli.option('-t, --min-tokens [number]', 'min size of duplication in tokens (Default is 70)');
 cli.option('-p, --path [string]', 'base directory');

@@ -6,8 +6,7 @@ import '../markdown/markdown';
 import '../sass/sass';
 import '../textile/textile';
 import '../stylus/stylus';
-import {copyState, defineMIME, defineMode, mimeModes, startState} from '../index';
-import {StringStream} from '../StringStream';
+import {copyState, defineMIME, defineMode, mimeModes, startState, StringStream} from '../index';
 
 defineMode('slim', function(config) {
     const htmlMode = getMode(config, {name: 'htmlmixed'});

@@ -1,6 +1,6 @@
-import {defineMIME, defineMode} from "../index"
+import {defineMIME} from '../index';
 
-let TOKEN_STYLES = {
+const TOKEN_STYLES = {
     addition: 'positive',
     attributes: 'attribute',
     bold: 'strong',
@@ -32,161 +32,161 @@ let TOKEN_STYLES = {
     sup: 'builtin',
     table: 'variable-3',
     tableHeading: 'operator'
-}
+};
 
 function startNewLine(stream, state) {
-    state.mode = Modes.newLayout
-    state.tableHeading = false
+    state.mode = Modes.newLayout;
+    state.tableHeading = false;
 
     if (state.layoutType === 'definitionList' && state.spanningLayout &&
         stream.match(RE('definitionListEnd'), false))
-        state.spanningLayout = false
+        state.spanningLayout = false;
 }
 
 function handlePhraseModifier(stream, state, ch) {
     if (ch === '_') {
         if (stream.eat('_'))
-            return togglePhraseModifier(stream, state, 'italic', /__/, 2)
+            return togglePhraseModifier(stream, state, 'italic', /__/, 2);
         else
-            return togglePhraseModifier(stream, state, 'em', /_/, 1)
+            return togglePhraseModifier(stream, state, 'em', /_/, 1);
     }
 
     if (ch === '*') {
         if (stream.eat('*')) {
-            return togglePhraseModifier(stream, state, 'bold', /\*\*/, 2)
+            return togglePhraseModifier(stream, state, 'bold', /\*\*/, 2);
         }
-        return togglePhraseModifier(stream, state, 'strong', /\*/, 1)
+        return togglePhraseModifier(stream, state, 'strong', /\*/, 1);
     }
 
     if (ch === '[') {
-        if (stream.match(/\d+\]/)) state.footCite = true
-        return tokenStyles(state)
+        if (stream.match(/\d+\]/)) state.footCite = true;
+        return tokenStyles(state);
     }
 
     if (ch === '(') {
-        const spec = stream.match(/^(r|tm|c)\)/)
+        const spec = stream.match(/^(r|tm|c)\)/);
         if (spec)
-            return tokenStylesWith(state, TOKEN_STYLES.specialChar)
+            return tokenStylesWith(state, TOKEN_STYLES.specialChar);
     }
 
     if (ch === '<' && stream.match(/(\w+)[^>]+>[^<]+<\/\1>/))
-        return tokenStylesWith(state, TOKEN_STYLES.html)
+        return tokenStylesWith(state, TOKEN_STYLES.html);
 
     if (ch === '?' && stream.eat('?'))
-        return togglePhraseModifier(stream, state, 'cite', /\?\?/, 2)
+        return togglePhraseModifier(stream, state, 'cite', /\?\?/, 2);
 
     if (ch === '=' && stream.eat('='))
-        return togglePhraseModifier(stream, state, 'notextile', /==/, 2)
+        return togglePhraseModifier(stream, state, 'notextile', /==/, 2);
 
     if (ch === '-' && !stream.eat('-'))
-        return togglePhraseModifier(stream, state, 'deletion', /-/, 1)
+        return togglePhraseModifier(stream, state, 'deletion', /-/, 1);
 
     if (ch === '+')
-        return togglePhraseModifier(stream, state, 'addition', /\+/, 1)
+        return togglePhraseModifier(stream, state, 'addition', /\+/, 1);
 
     if (ch === '~')
-        return togglePhraseModifier(stream, state, 'sub', /~/, 1)
+        return togglePhraseModifier(stream, state, 'sub', /~/, 1);
 
     if (ch === '^')
-        return togglePhraseModifier(stream, state, 'sup', /\^/, 1)
+        return togglePhraseModifier(stream, state, 'sup', /\^/, 1);
 
     if (ch === '%')
-        return togglePhraseModifier(stream, state, 'span', /%/, 1)
+        return togglePhraseModifier(stream, state, 'span', /%/, 1);
 
     if (ch === '@')
-        return togglePhraseModifier(stream, state, 'code', /@/, 1)
+        return togglePhraseModifier(stream, state, 'code', /@/, 1);
 
     if (ch === '!') {
-        const type = togglePhraseModifier(stream, state, 'image', /(?:\([^\)]+\))?!/, 1)
-        stream.match(/^:\S+/) // optional Url portion
-        return type
+        const type = togglePhraseModifier(stream, state, 'image', /(?:\([^\)]+\))?!/, 1);
+        stream.match(/^:\S+/); // optional Url portion
+        return type;
     }
-    return tokenStyles(state)
+    return tokenStyles(state);
 }
 
 function togglePhraseModifier(stream, state, phraseModifier, closeRE, openSize) {
-    const charBefore = stream.pos > openSize ? stream.string.charAt(stream.pos - openSize - 1) : null
-    const charAfter = stream.peek()
+    const charBefore = stream.pos > openSize ? stream.string.charAt(stream.pos - openSize - 1) : null;
+    const charAfter = stream.peek();
     if (state[phraseModifier]) {
         if ((!charAfter || /\W/.test(charAfter)) && charBefore && /\S/.test(charBefore)) {
-            const type = tokenStyles(state)
-            state[phraseModifier] = false
-            return type
+            const type = tokenStyles(state);
+            state[phraseModifier] = false;
+            return type;
         }
     } else if ((!charBefore || /\W/.test(charBefore)) && charAfter && /\S/.test(charAfter) &&
         stream.match(new RegExp('^.*\\S' + closeRE.source + '(?:\\W|$)'), false)) {
-        state[phraseModifier] = true
-        state.mode = Modes.attributes
+        state[phraseModifier] = true;
+        state.mode = Modes.attributes;
     }
-    return tokenStyles(state)
+    return tokenStyles(state);
 }
 
 function tokenStyles(state) {
-    const disabled = textileDisabled(state)
-    if (disabled) return disabled
+    const disabled = textileDisabled(state);
+    if (disabled) return disabled;
 
-    let styles = []
-    if (state.layoutType) styles.push(TOKEN_STYLES[state.layoutType])
+    let styles = [];
+    if (state.layoutType) styles.push(TOKEN_STYLES[state.layoutType]);
 
     styles = styles.concat(activeStyles(
         state, 'addition', 'bold', 'cite', 'code', 'deletion', 'em', 'footCite',
-        'image', 'italic', 'link', 'span', 'strong', 'sub', 'sup', 'table', 'tableHeading'))
+        'image', 'italic', 'link', 'span', 'strong', 'sub', 'sup', 'table', 'tableHeading'));
 
     if (state.layoutType === 'header')
-        styles.push(TOKEN_STYLES.header + '-' + state.header)
+        styles.push(TOKEN_STYLES.header + '-' + state.header);
 
-    return styles.length ? styles.join(' ') : null
+    return styles.length ? styles.join(' ') : null;
 }
 
 function textileDisabled(state) {
-    const type = state.layoutType
+    const type = state.layoutType;
 
     switch (type) {
         case 'notextile':
         case 'code':
         case 'pre':
-            return TOKEN_STYLES[type]
+            return TOKEN_STYLES[type];
         default:
             if (state.notextile)
-                return TOKEN_STYLES.notextile + (type ? (' ' + TOKEN_STYLES[type]) : '')
-            return null
+                return TOKEN_STYLES.notextile + (type ? (' ' + TOKEN_STYLES[type]) : '');
+            return null;
     }
 }
 
 function tokenStylesWith(state, extraStyles) {
-    const disabled = textileDisabled(state)
-    if (disabled) return disabled
+    const disabled = textileDisabled(state);
+    if (disabled) return disabled;
 
-    const type = tokenStyles(state)
+    const type = tokenStyles(state);
     if (extraStyles)
-        return type ? (type + ' ' + extraStyles) : extraStyles
+        return type ? (type + ' ' + extraStyles) : extraStyles;
     else
-        return type
+        return type;
 }
 
 function activeStyles(state, ...args) {
-    const styles = []
+    const styles = [];
     for (let i = 1; i < args.length; ++i) {
         if (state[arguments[i]])
-            styles.push(TOKEN_STYLES[arguments[i]])
+            styles.push(TOKEN_STYLES[arguments[i]]);
     }
-    return styles
+    return styles;
 }
 
 function blankLine(state) {
-    const spanningLayout = state.spanningLayout, type = state.layoutType
+    const spanningLayout = state.spanningLayout, type = state.layoutType;
 
     for (const key in state) if (state.hasOwnProperty(key))
-        delete state[key]
+        delete state[key];
 
-    state.mode = Modes.newLayout
+    state.mode = Modes.newLayout;
     if (spanningLayout) {
-        state.layoutType = type
-        state.spanningLayout = true
+        state.layoutType = type;
+        state.spanningLayout = true;
     }
 }
 
-let REs = {
+const REs = {
     cache: {},
     single: {
         bc: 'bc',
@@ -220,237 +220,237 @@ let REs = {
     createRe: function(name) {
         switch (name) {
             case 'drawTable':
-                return REs.makeRe('^', REs.single.drawTable, '$')
+                return REs.makeRe('^', REs.single.drawTable, '$');
             case 'html':
-                return REs.makeRe('^', REs.single.html, '(?:', REs.single.html, ')*', '$')
+                return REs.makeRe('^', REs.single.html, '(?:', REs.single.html, ')*', '$');
             case 'linkDefinition':
-                return REs.makeRe('^', REs.single.linkDefinition, '$')
+                return REs.makeRe('^', REs.single.linkDefinition, '$');
             case 'listLayout':
-                return REs.makeRe('^', REs.single.list, RE('allAttributes'), '*\\s+')
+                return REs.makeRe('^', REs.single.list, RE('allAttributes'), '*\\s+');
             case 'tableCellAttributes':
                 return REs.makeRe('^', REs.choiceRe(REs.single.tableCellAttributes,
-                    RE('allAttributes')), '+\\.')
+                    RE('allAttributes')), '+\\.');
             case 'type':
-                return REs.makeRe('^', RE('allTypes'))
+                return REs.makeRe('^', RE('allTypes'));
             case 'typeLayout':
                 return REs.makeRe('^', RE('allTypes'), RE('allAttributes'),
-                    '*\\.\\.?', '(\\s+|$)')
+                    '*\\.\\.?', '(\\s+|$)');
             case 'attributes':
-                return REs.makeRe('^', RE('allAttributes'), '+')
+                return REs.makeRe('^', RE('allAttributes'), '+');
 
             case 'allTypes':
                 return REs.choiceRe(REs.single.div, REs.single.foot,
                     REs.single.header, REs.single.bc, REs.single.bq,
                     REs.single.notextile, REs.single.pre, REs.single.table,
-                    REs.single.para)
+                    REs.single.para);
 
             case 'allAttributes':
                 return REs.choiceRe(REs.attributes.selector, REs.attributes.css,
-                    REs.attributes.lang, REs.attributes.align, REs.attributes.pad)
+                    REs.attributes.lang, REs.attributes.align, REs.attributes.pad);
 
             default:
-                return REs.makeRe('^', REs.single[name])
+                return REs.makeRe('^', REs.single[name]);
         }
     },
     makeRe: function(...args) {
-        let pattern = ''
+        let pattern = '';
         for (let i = 0; i < args.length; ++i) {
-            const arg = args[i]
-            pattern += (typeof arg === 'string') ? arg : arg.source
+            const arg = args[i];
+            pattern += (typeof arg === 'string') ? arg : arg.source;
         }
-        return new RegExp(pattern)
+        return new RegExp(pattern);
     },
     choiceRe: function(...args) {
-        const parts = [args[0]]
+        const parts = [args[0]];
         for (let i = 1; i < args.length; ++i) {
-            parts[i * 2 - 1] = '|'
-            parts[i * 2] = args[i]
+            parts[i * 2 - 1] = '|';
+            parts[i * 2] = args[i];
         }
 
-        parts.unshift('(?:')
-        parts.push(')')
-        return REs.makeRe.apply(null, parts)
+        parts.unshift('(?:');
+        parts.push(')');
+        return REs.makeRe.apply(null, parts);
     }
-}
+};
 
 function RE(name) {
-    return (REs.cache[name] || (REs.cache[name] = REs.createRe(name)))
+    return (REs.cache[name] || (REs.cache[name] = REs.createRe(name)));
 }
 
-let Modes = {
+const Modes = {
     newLayout: function(stream, state) {
         if (stream.match(RE('typeLayout'), false)) {
-            state.spanningLayout = false
-            return (state.mode = Modes.blockType)(stream, state)
+            state.spanningLayout = false;
+            return (state.mode = Modes.blockType)(stream, state);
         }
-        let newMode
+        let newMode;
         if (!textileDisabled(state)) {
             if (stream.match(RE('listLayout'), false))
-                newMode = Modes.list
+                newMode = Modes.list;
             else if (stream.match(RE('drawTable'), false))
-                newMode = Modes.table
+                newMode = Modes.table;
             else if (stream.match(RE('linkDefinition'), false))
-                newMode = Modes.linkDefinition
+                newMode = Modes.linkDefinition;
             else if (stream.match(RE('definitionList')))
-                newMode = Modes.definitionList
+                newMode = Modes.definitionList;
             else if (stream.match(RE('html'), false))
-                newMode = Modes.html
+                newMode = Modes.html;
         }
-        return (state.mode = (newMode || Modes.text))(stream, state)
+        return (state.mode = (newMode || Modes.text))(stream, state);
     },
 
     blockType: function(stream, state) {
-        let match, type
-        state.layoutType = null
+        let match, type;
+        state.layoutType = null;
 
         if (match = stream.match(RE('type')))
-            type = match[0]
+            type = match[0];
         else
-            return (state.mode = Modes.text)(stream, state)
+            return (state.mode = Modes.text)(stream, state);
 
         if (match = type.match(RE('header'))) {
-            state.layoutType = 'header'
-            state.header = parseInt(match[0][1])
+            state.layoutType = 'header';
+            state.header = parseInt(match[0][1]);
         } else if (type.match(RE('bq'))) {
-            state.layoutType = 'quote'
+            state.layoutType = 'quote';
         } else if (type.match(RE('bc'))) {
-            state.layoutType = 'code'
+            state.layoutType = 'code';
         } else if (type.match(RE('foot'))) {
-            state.layoutType = 'footnote'
+            state.layoutType = 'footnote';
         } else if (type.match(RE('notextile'))) {
-            state.layoutType = 'notextile'
+            state.layoutType = 'notextile';
         } else if (type.match(RE('pre'))) {
-            state.layoutType = 'pre'
+            state.layoutType = 'pre';
         } else if (type.match(RE('div'))) {
-            state.layoutType = 'div'
+            state.layoutType = 'div';
         } else if (type.match(RE('table'))) {
-            state.layoutType = 'table'
+            state.layoutType = 'table';
         }
 
-        state.mode = Modes.attributes
-        return tokenStyles(state)
+        state.mode = Modes.attributes;
+        return tokenStyles(state);
     },
 
     text: function(stream, state) {
-        if (stream.match(RE('text'))) return tokenStyles(state)
+        if (stream.match(RE('text'))) return tokenStyles(state);
 
-        const ch = stream.next()
+        const ch = stream.next();
         if (ch === '"')
-            return (state.mode = Modes.link)(stream, state)
-        return handlePhraseModifier(stream, state, ch)
+            return (state.mode = Modes.link)(stream, state);
+        return handlePhraseModifier(stream, state, ch);
     },
 
     attributes: function(stream, state) {
-        state.mode = Modes.layoutLength
+        state.mode = Modes.layoutLength;
 
         if (stream.match(RE('attributes')))
-            return tokenStylesWith(state, TOKEN_STYLES.attributes)
+            return tokenStylesWith(state, TOKEN_STYLES.attributes);
         else
-            return tokenStyles(state)
+            return tokenStyles(state);
     },
 
     layoutLength: function(stream, state) {
         if (stream.eat('.') && stream.eat('.'))
-            state.spanningLayout = true
+            state.spanningLayout = true;
 
-        state.mode = Modes.text
-        return tokenStyles(state)
+        state.mode = Modes.text;
+        return tokenStyles(state);
     },
 
     list: function(stream, state) {
-        const match = stream.match(RE('list'))
-        state.listDepth = match[0].length
-        const listMod = (state.listDepth - 1) % 3
+        const match = stream.match(RE('list'));
+        state.listDepth = match[0].length;
+        const listMod = (state.listDepth - 1) % 3;
         if (!listMod)
-            state.layoutType = 'list1'
+            state.layoutType = 'list1';
         else if (listMod === 1)
-            state.layoutType = 'list2'
+            state.layoutType = 'list2';
         else
-            state.layoutType = 'list3'
+            state.layoutType = 'list3';
 
-        state.mode = Modes.attributes
-        return tokenStyles(state)
+        state.mode = Modes.attributes;
+        return tokenStyles(state);
     },
 
     link: function(stream, state) {
-        state.mode = Modes.text
+        state.mode = Modes.text;
         if (stream.match(RE('link'))) {
-            stream.match(/\S+/)
-            return tokenStylesWith(state, TOKEN_STYLES.link)
+            stream.match(/\S+/);
+            return tokenStylesWith(state, TOKEN_STYLES.link);
         }
-        return tokenStyles(state)
+        return tokenStyles(state);
     },
 
     linkDefinition: function(stream, state) {
-        stream.skipToEnd()
-        return tokenStylesWith(state, TOKEN_STYLES.linkDefinition)
+        stream.skipToEnd();
+        return tokenStylesWith(state, TOKEN_STYLES.linkDefinition);
     },
 
     definitionList: function(stream, state) {
-        stream.match(RE('definitionList'))
+        stream.match(RE('definitionList'));
 
-        state.layoutType = 'definitionList'
+        state.layoutType = 'definitionList';
 
         if (stream.match(/\s*$/))
-            state.spanningLayout = true
+            state.spanningLayout = true;
         else
-            state.mode = Modes.attributes
+            state.mode = Modes.attributes;
 
-        return tokenStyles(state)
+        return tokenStyles(state);
     },
 
     html: function(stream, state) {
-        stream.skipToEnd()
-        return tokenStylesWith(state, TOKEN_STYLES.html)
+        stream.skipToEnd();
+        return tokenStylesWith(state, TOKEN_STYLES.html);
     },
 
     table: function(stream, state) {
-        state.layoutType = 'table'
-        return (state.mode = Modes.tableCell)(stream, state)
+        state.layoutType = 'table';
+        return (state.mode = Modes.tableCell)(stream, state);
     },
 
     tableCell: function(stream, state) {
         if (stream.match(RE('tableHeading')))
-            state.tableHeading = true
+            state.tableHeading = true;
         else
-            stream.eat('|')
+            stream.eat('|');
 
-        state.mode = Modes.tableCellAttributes
-        return tokenStyles(state)
+        state.mode = Modes.tableCellAttributes;
+        return tokenStyles(state);
     },
 
     tableCellAttributes: function(stream, state) {
-        state.mode = Modes.tableText
+        state.mode = Modes.tableText;
 
         if (stream.match(RE('tableCellAttributes')))
-            return tokenStylesWith(state, TOKEN_STYLES.attributes)
+            return tokenStylesWith(state, TOKEN_STYLES.attributes);
         else
-            return tokenStyles(state)
+            return tokenStyles(state);
     },
 
     tableText: function(stream, state) {
         if (stream.match(RE('tableText')))
-            return tokenStyles(state)
+            return tokenStyles(state);
 
         if (stream.peek() === '|') { // end of cell
-            state.mode = Modes.tableCell
-            return tokenStyles(state)
+            state.mode = Modes.tableCell;
+            return tokenStyles(state);
         }
-        return handlePhraseModifier(stream, state, stream.next())
+        return handlePhraseModifier(stream, state, stream.next());
     }
-}
+};
 
 defineMode('textile', function() {
     return {
         startState: function() {
-            return {mode: Modes.newLayout}
+            return {mode: Modes.newLayout};
         },
         token: function(stream, state) {
-            if (stream.sol()) startNewLine(stream, state)
-            return state.mode(stream, state)
+            if (stream.sol()) startNewLine(stream, state);
+            return state.mode(stream, state);
         },
         blankLine: blankLine
-    }
-})
+    };
+});
 
-defineMIME('text/x-textile', 'textile')
+defineMIME('text/x-textile', 'textile');

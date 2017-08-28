@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('yaml', function() {
 
     const cons = ['true', 'false', 'on', 'off', 'yes', 'no'];

@@ -1,5 +1,6 @@
-import {resolve} from 'path'
-import {hasFormat} from './index'
+import {resolve} from 'path';
+import {hasFormat} from './index';
+
 export interface FormatMetadata {
     name: string;
     mime?: string;
@@ -20,6 +21,7 @@ export const modeInfo: FormatMetadata[] = [
     {
         name: 'PGP',
         mimes: ['application/pgp', 'application/pgp-keys', 'application/pgp-signature'],
+        mime: 'application/pgp',
         mode: 'asciiarmor',
         ext: ['pgp']
     },
@@ -145,6 +147,7 @@ export const modeInfo: FormatMetadata[] = [
     {
         name: 'Dart',
         mimes: ['application/dart', 'text/x-dart'],
+        mime: 'application/dart',
         mode: 'dart',
         ext: ['dart']
     },
@@ -363,6 +366,7 @@ export const modeInfo: FormatMetadata[] = [
     {
         name: 'JavaScript',
         mimes: ['text/javascript', 'text/ecmascript', 'application/javascript', 'application/x-javascript', 'application/ecmascript'],
+        mime: 'text/javascript',
         mode: 'javascript',
         ext: ['js'],
         alias: ['ecmascript', 'js', 'node']
@@ -370,6 +374,7 @@ export const modeInfo: FormatMetadata[] = [
     {
         name: 'JSON',
         mimes: ['application/json', 'application/x-json'],
+        mime: 'application/x-json',
         mode: 'javascript',
         ext: ['json', 'map'],
         alias: ['json5']
@@ -681,6 +686,7 @@ export const modeInfo: FormatMetadata[] = [
     {
         name: 'Slim',
         mimes: ['text/x-slim', 'application/x-slim'],
+        mime: 'text/x-slim',
         mode: 'slim',
         ext: ['slim']
     },
@@ -883,12 +889,14 @@ export const modeInfo: FormatMetadata[] = [
     {
         name: 'Vue.js Component',
         mimes: ['script/x-vue', 'text/x-vue'],
+        mime: 'script/x-vue',
         mode: 'vue',
         ext: ['vue']
     },
     {
         name: 'XML',
         mimes: ['application/xml', 'text/xml'],
+        mime: 'application/xml',
         mode: 'xml',
         ext: ['xml', 'xsl', 'xsd', 'svg'],
         alias: ['rss', 'wsdl', 'xsd']
@@ -908,6 +916,7 @@ export const modeInfo: FormatMetadata[] = [
     {
         name: 'YAML',
         mimes: ['text/x-yaml', 'text/yaml'],
+        mime: 'text/yaml',
         mode: 'yaml',
         ext: ['yaml', 'yml'],
         alias: ['yml']
@@ -936,70 +945,65 @@ export const modeInfo: FormatMetadata[] = [
         mode: 'mscgen',
         ext: ['msgenny']
     }
-].map((format: FormatMetadata) => {
-    if (format.mimes) {
-        [format.mime] = format.mimes
-    }
-    return format
-})
+];
 
 export function findModeByMIME(mime) {
-    mime = mime.toLowerCase()
+    mime = mime.toLowerCase();
     for (let i = 0; i < modeInfo.length; i++) {
-        const info = modeInfo[i]
+        const info = modeInfo[i];
         if (info.mime === mime) {
-            return info
+            return info;
         }
         if (info.mimes) {
             for (let j = 0; j < info.mimes.length; j++) {
                 if (info.mimes[j] === mime) {
-                    return info
+                    return info;
                 }
             }
         }
     }
     if (/\+xml$/.test(mime)) {
-        return findModeByMIME('application/xml')
+        return findModeByMIME('application/xml');
     }
     if (/\+json$/.test(mime)) {
-        return findModeByMIME('application/json')
+        return findModeByMIME('application/json');
     }
 }
 
 export function findModeByExtension(ext): FormatMetadata {
     for (let i = 0; i < modeInfo.length; i++) {
-        const format: FormatMetadata = modeInfo[i]
+        const format: FormatMetadata = modeInfo[i];
         if (format.ext && format.ext.includes(ext)) {
-            return requireFormat(format)
+            return requireFormat(format);
         }
     }
 }
 
 export function findModeByFileName(filename: string): FormatMetadata {
     for (let i = 0; i < modeInfo.length; i++) {
-        const format: FormatMetadata = modeInfo[i]
+        const format: FormatMetadata = modeInfo[i];
         if (format.file && format.file.test(filename)) {
-            return requireFormat(format)
+            return requireFormat(format);
         }
     }
-    const dot = filename.lastIndexOf('.')
-    const ext = dot > -1 && filename.substring(dot + 1, filename.length)
+    const dot = filename.lastIndexOf('.');
+    const ext = dot > -1 && filename.substring(dot + 1, filename.length);
     if (ext) {
-        return findModeByExtension(ext)
+        return findModeByExtension(ext);
     }
 }
 
 export function findModeByName(name): FormatMetadata {
-    name = name.toLowerCase()
+    name = name.toLowerCase();
     for (let i = 0; i < modeInfo.length; i++) {
-        const format: FormatMetadata = modeInfo[i]
+        const format: FormatMetadata = modeInfo[i];
         if (format.name.toLowerCase() === name) {
-            return format
+            return format;
         }
         if (format.alias) {
             for (let j = 0; j < format.alias.length; j++) {
                 if (format.alias[j].toLowerCase() === name) {
-                    return requireFormat(format)
+                    return requireFormat(format);
                 }
             }
         }
@@ -1007,7 +1011,7 @@ export function findModeByName(name): FormatMetadata {
 }
 
 
-function requireFormat(format: FormatMetadata):FormatMetadata {
+function requireFormat(format: FormatMetadata): FormatMetadata {
     if (!hasFormat(format.mode)) {
         require(resolve(`${__dirname}/${format.mode}/${format.mode}`));
     }

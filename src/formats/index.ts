@@ -1,5 +1,4 @@
-import {copyObj, createObj} from './misc'
-import {StringStream} from './StringStream'
+import {copyObj, countColumn, createObj} from './misc'
 import {readdirSync, statSync} from 'fs'
 import {resolve} from 'path'
 
@@ -8,7 +7,7 @@ export const modes = {}, mimeModes = {}
 
 export function readFormats(formats: string[] = []) {
     readdirSync(__dirname).filter((file) => {
-        return statSync(resolve(__dirname + "/" + file)).isDirectory()
+        return statSync(resolve(__dirname + '/' + file)).isDirectory()
     }).map((file) => {
         if (formats.length === 0 || formats.includes(file)) {
             readFormat(file)
@@ -18,7 +17,7 @@ export function readFormats(formats: string[] = []) {
 
 export function readFormat(format: string) {
     if (format) {
-        require(resolve(__dirname + "/" + format + '/' + format))
+        require(resolve(__dirname + '/' + format + '/' + format))
     }
 }
 
@@ -36,7 +35,7 @@ export function defineMIME(mime, spec) {
     mimeModes[mime] = spec
 }
 
-defineMode("null", function () {
+defineMode('null', function () {
     return {
         token: function (stream) {
             stream.skipToEnd()
@@ -44,7 +43,7 @@ defineMode("null", function () {
     }
 })
 
-defineMIME("text/plain", "null")
+defineMIME('text/plain', 'null')
 
 export function overlayMode(base, overlay, combine = undefined) {
     return {
@@ -220,26 +219,122 @@ export function startState(mode, a1 = undefined, a2 = undefined) {
     return mode.startState ? mode.startState(a1, a2) : true
 }
 
+export function StringStream(str: string, tabSize = undefined) {
+    this.pos = this.start = 0
+    this.string = str
+    this.tabSize = tabSize || 8
+    this.lastColumnPos = this.lastColumnValue = 0
+    this.lineStart = 0
+}
+
+
+StringStream.prototype = {
+    eol: function () {
+        return this.pos >= this.string.length
+    },
+    sol: function () {
+        return this.pos == this.lineStart
+    },
+    peek: function () {
+        return this.string.charAt(this.pos) || undefined
+    },
+    next: function () {
+        if (this.pos < this.string.length)
+            return this.string.charAt(this.pos++)
+    },
+    eat: function (match) {
+        const ch = this.string.charAt(this.pos)
+        let ok
+        if (typeof match == 'string') ok = ch == match
+        else ok = ch && (match.test ? match.test(ch) : match(ch))
+        if (ok) {
+            ++this.pos
+            return ch
+        }
+    },
+    eatWhile: function (match) {
+        const start = this.pos
+        while (this.eat(match)) {
+        }
+        return this.pos > start
+    },
+    eatSpace: function () {
+        const start = this.pos
+        while (/[\s\u00a0]/.test(this.string.charAt(this.pos))) ++this.pos
+        return this.pos > start
+    },
+    skipToEnd: function () {
+        this.pos = this.string.length
+    },
+    skipTo: function (ch) {
+        const found = this.string.indexOf(ch, this.pos)
+        if (found > -1) {
+            this.pos = found
+            return true
+        }
+    },
+    backUp: function (n) {
+        this.pos -= n
+    },
+    column: function () {
+        if (this.lastColumnPos < this.start) {
+            this.lastColumnValue = countColumn(this.string, this.start, this.tabSize, this.lastColumnPos, this.lastColumnValue)
+            this.lastColumnPos = this.start
+        }
+        return this.lastColumnValue - (this.lineStart ? countColumn(this.string, this.lineStart, this.tabSize) : 0)
+    },
+    indentation: function () {
+        return countColumn(this.string, null, this.tabSize) -
+            (this.lineStart ? countColumn(this.string, this.lineStart, this.tabSize) : 0)
+    },
+    match: function (pattern, consume, caseInsensitive) {
+        if (typeof pattern == 'string') {
+            const cased = str => caseInsensitive ? str.toLowerCase() : str
+            const substr = this.string.substr(this.pos, pattern.length)
+            if (cased(substr) == cased(pattern)) {
+                if (consume !== false) this.pos += pattern.length
+                return true
+            }
+        } else {
+            const match = this.string.slice(this.pos).match(pattern)
+            if (match && match.index > 0) return null
+            if (match && consume !== false) this.pos += match[0].length
+            return match
+        }
+    },
+    current: function () {
+        return this.string.slice(this.start, this.pos)
+    },
+    hideFirstChars: function (n, inner) {
+        this.lineStart += n
+        try {
+            return inner()
+        }
+        finally {
+            this.lineStart -= n
+        }
+    }
+}
+
 export function runMode(string: string, modespec, {state = false}) {
     const mode = getMode({indentUnit: 2}, modespec)
     const lines = splitLines(string)
-    let tokens = []
+    const tokens = []
     state = state || startState(mode)
 
     for (let i = 0, e = lines.length; i < e; ++i) {
         if (i) {
-            tokens.push({value: "\n"})
+            tokens.push({value: '\n'})
         }
-        let stream = new StringStream(lines[i])
+        const stream = new StringStream(lines[i])
         if (!stream.string && mode.blankLine) {
             mode.blankLine(state)
         }
         while (!stream.eol()) {
-            console.log(stream.pos)
-            let style = mode.token(stream, state)
+            const style = mode.token(stream, state)
             tokens.push({
                 value: stream.current(),
-                type: style,
+                type: style || 'blank',
                 line: i
             })
             stream.start = stream.pos
@@ -249,6 +344,6 @@ export function runMode(string: string, modespec, {state = false}) {
 }
 
 function splitLines(string) {
-    return string.split(/\r\n?|\n/)
+    return string ? string.split(/\r\n?|\n/) : [];
 }
 

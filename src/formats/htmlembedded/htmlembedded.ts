@@ -1,4 +1,4 @@
-import '../htmlmixed/htmlmixed'
+import '../htmlmixed/htmlmixed';
 import {defineMIME, defineMode, getMode} from '../index';
 import {multiplexingMode} from '../multiplex';
 

@@ -1,16 +1,17 @@
-import {defineMIME, defineMode} from '../index'
+import {defineMIME, defineMode} from '../index';
+
 defineMode('lua', function (config, parserConfig) {
-    const indentUnit = config.indentUnit
+    const indentUnit = config.indentUnit;
 
     function prefixRE(words) {
-        return new RegExp('^(?:' + words.join('|') + ')', 'i')
+        return new RegExp('^(?:' + words.join('|') + ')', 'i');
     }
 
     function wordRE(words) {
-        return new RegExp('^(?:' + words.join('|') + ')$', 'i')
+        return new RegExp('^(?:' + words.join('|') + ')$', 'i');
     }
 
-    const specials = wordRE(parserConfig.specials || [])
+    const specials = wordRE(parserConfig.specials || []);
 
     // long list of standard functions from lua manual
     const builtins = wordRE([
@@ -44,106 +45,106 @@ defineMode('lua', function (config, parserConfig) {
         'string.len', 'string.lower', 'string.match', 'string.rep', 'string.reverse', 'string.sub', 'string.upper',
 
         'table.concat', 'table.insert', 'table.maxn', 'table.remove', 'table.sort'
-    ])
+    ]);
     const keywords = wordRE(['and', 'break', 'elseif', 'false', 'nil', 'not', 'or', 'return',
         'true', 'function', 'end', 'if', 'then', 'else', 'do',
-        'while', 'repeat', 'until', 'for', 'in', 'local'])
+        'while', 'repeat', 'until', 'for', 'in', 'local']);
 
-    const indentTokens = wordRE(['function', 'if', 'repeat', 'do', '\\(', '{'])
-    const dedentTokens = wordRE(['end', 'until', '\\)', '}'])
-    const dedentPartial = prefixRE(['end', 'until', '\\)', '}', 'else', 'elseif'])
+    const indentTokens = wordRE(['function', 'if', 'repeat', 'do', '\\(', '{']);
+    const dedentTokens = wordRE(['end', 'until', '\\)', '}']);
+    const dedentPartial = prefixRE(['end', 'until', '\\)', '}', 'else', 'elseif']);
 
     function readBracket(stream) {
-        let level = 0
-        while (stream.eat('=')) ++level
-        stream.eat('[')
-        return level
+        let level = 0;
+        while (stream.eat('=')) ++level;
+        stream.eat('[');
+        return level;
     }
 
     function normal(stream, state) {
-        const ch = stream.next()
+        const ch = stream.next();
         if (ch == '-' && stream.eat('-')) {
             if (stream.eat('[') && stream.eat('['))
-                return (state.cur = bracketed(readBracket(stream), 'comment'))(stream, state)
-            stream.skipToEnd()
-            return 'comment'
+                return (state.cur = bracketed(readBracket(stream), 'comment'))(stream, state);
+            stream.skipToEnd();
+            return 'comment';
         }
         if (ch == '"' || ch == "'")
-            return (state.cur = string(ch))(stream, state)
+            return (state.cur = string(ch))(stream, state);
         if (ch == '[' && /[\[=]/.test(stream.peek()))
-            return (state.cur = bracketed(readBracket(stream), 'string'))(stream, state)
+            return (state.cur = bracketed(readBracket(stream), 'string'))(stream, state);
         if (/\d/.test(ch)) {
-            stream.eatWhile(/[\w.%]/)
-            return 'number'
+            stream.eatWhile(/[\w.%]/);
+            return 'number';
         }
         if (/[\w_]/.test(ch)) {
-            stream.eatWhile(/[\w\\\-_.]/)
-            return 'variable'
+            stream.eatWhile(/[\w\\\-_.]/);
+            return 'variable';
         }
-        return null
+        return null;
     }
 
     function bracketed(level, style) {
         return function (stream, state) {
-            let curlev = null, ch
+            let curlev = null, ch;
             while ((ch = stream.next()) != null) {
                 if (curlev == null) {
-                    if (ch == ']') curlev = 0
+                    if (ch == ']') curlev = 0;
                 }
-                else if (ch == '=') ++curlev
+                else if (ch == '=') ++curlev;
                 else if (ch == ']' && curlev == level) {
-                    state.cur = normal
-                    break
+                    state.cur = normal;
+                    break;
                 }
-                else curlev = null
+                else curlev = null;
             }
-            return style
-        }
+            return style;
+        };
     }
 
     function string(quote) {
         return function (stream, state) {
-            let escaped = false, ch
+            let escaped = false, ch;
             while ((ch = stream.next()) != null) {
-                if (ch == quote && !escaped) break
-                escaped = !escaped && ch == '\\'
+                if (ch == quote && !escaped) break;
+                escaped = !escaped && ch == '\\';
             }
-            if (!escaped) state.cur = normal
-            return 'string'
-        }
+            if (!escaped) state.cur = normal;
+            return 'string';
+        };
     }
 
     return {
         startState: function (basecol) {
-            return {basecol: basecol || 0, indentDepth: 0, cur: normal}
+            return {basecol: basecol || 0, indentDepth: 0, cur: normal};
         },
 
         token: function (stream, state) {
-            if (stream.eatSpace()) return null
-            let style = state.cur(stream, state)
-            const word = stream.current()
+            if (stream.eatSpace()) return null;
+            let style = state.cur(stream, state);
+            const word = stream.current();
             if (style == 'variable') {
-                if (keywords.test(word)) style = 'keyword'
-                else if (builtins.test(word)) style = 'builtin'
-                else if (specials.test(word)) style = 'variable-2'
+                if (keywords.test(word)) style = 'keyword';
+                else if (builtins.test(word)) style = 'builtin';
+                else if (specials.test(word)) style = 'variable-2';
             }
             if ((style != 'comment') && (style != 'string')) {
-                if (indentTokens.test(word)) ++state.indentDepth
-                else if (dedentTokens.test(word)) --state.indentDepth
+                if (indentTokens.test(word)) ++state.indentDepth;
+                else if (dedentTokens.test(word)) --state.indentDepth;
             }
-            return style
+            return style;
         },
 
         indent: function (state, textAfter) {
-            const closing = dedentPartial.test(textAfter)
-            return state.basecol + indentUnit * (state.indentDepth - (closing ? 1 : 0))
+            const closing = dedentPartial.test(textAfter);
+            return state.basecol + indentUnit * (state.indentDepth - (closing ? 1 : 0));
         },
 
         lineComment: '--',
         blockCommentStart: '--[[',
         blockCommentEnd: ']]'
-    }
-})
+    };
+});
 
-defineMIME('text/x-lua', 'lua')
+defineMIME('text/x-lua', 'lua');
 

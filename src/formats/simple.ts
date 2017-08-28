@@ -1,5 +1,5 @@
 import {Pass} from './misc';
-import {copyState, defineMode, getMode, startState} from './index'
+import {copyState, defineMode, getMode, startState} from './index';
 
 export function defineSimpleMode(name, states) {
     defineMode(name, function(config) {

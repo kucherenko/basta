@@ -22,10 +22,11 @@
     "sourceMap": false
   },
   "include": [
-    "src/**/*.?s"
+    "src/**/*.ts"
   ],
   "exclude": [
-    "src/**/*.test.?s",
-    "src/test"
+    "src/**/*.test.ts",
+    "src/test",
+    "fixtures"
   ]
 }

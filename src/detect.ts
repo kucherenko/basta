@@ -17,28 +17,24 @@ export function detect(source: ISource, mode, content, options: IOptions) {
     const tokensPositions = [];
     const tokens = runMode(content, {mode, name: mode}, {}).filter(isValidToken);
 
-    const addClone = (mode, file, hash, firstToken, lastToken, firstLine, lastLine) => {
+    const addClone = (mode, source: ISource, hash, firstToken, lastToken, firstLine, lastLine) => {
         let fileA;
         let firstLineA;
         let numLines;
         const hashInfo: IHash = maps.getHash(hash, mode);
-        fileA = hashInfo.source;
+        fileA = hashInfo.source.id;
         firstLineA = hashInfo.line;
         numLines = lastLine + 1 - firstLine;
-        if (numLines >= linesLimit && (fileA !== file || firstLineA !== firstLine)) {
-            const first: ISource = {
-                id: file,
-                start: firstLine
-            };
-            const second: ISource = {
-                id: fileA,
-                start: firstLineA
-            };
+        if (numLines >= linesLimit && (fileA !== source.id || firstLineA !== firstLine)) {
+            const first: ISource = Object.assign(source, {start: firstLine});
+            const second: ISource = Object.assign(hashInfo.source, {start: firstLineA});
             const clone: IClone = {
                 first,
                 second,
                 linesCount: numLines,
-                tokensCount: lastToken - firstToken
+                tokensCount: lastToken - firstToken,
+                mode,
+                content: content.toString().split("\n").slice(firstLine, lastLine).join("\n")
             };
             clones.saveClone(clone);
         }
@@ -55,7 +51,6 @@ export function detect(source: ISource, mode, content, options: IOptions) {
         tokensPositions.push(token.line);
         map += generateTokenHash(token);
     });
-
 
     while (tokenPosition <= tokensPositions.length - tokensLimit) {
         const mapFrame = map.substring(
@@ -91,4 +86,5 @@ export function detect(source: ISource, mode, content, options: IOptions) {
         }
         tokenPosition++;
     }
+    return clones;
 }

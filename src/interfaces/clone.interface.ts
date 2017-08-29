@@ -5,5 +5,6 @@ export interface IClone {
     second: ISource;
     linesCount: number;
     tokensCount: number;
-    metadata?: object;
+    content?: string;
+    mode?: string;
 }

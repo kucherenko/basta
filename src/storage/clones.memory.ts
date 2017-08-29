@@ -12,5 +12,4 @@ export class ClonesMemory implements IClones {
     getClones(): IClone[] {
         return this.clones;
     }
-
 }

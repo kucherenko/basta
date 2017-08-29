@@ -1,4 +1,4 @@
-import {defineMIME} from '../index';
+import {defineMIME, defineMode} from '../index';
 
 const TOKEN_STYLES = {
     addition: 'positive',

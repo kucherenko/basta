@@ -1,5 +1,5 @@
 import {findModeByName} from '../meta';
-import {defineMIME, defineMode, getMode, innerMode, startState} from '../index';
+import {defineMIME, defineMode, getMode, innerMode, startState, copyState} from '../index';
 
 defineMode('markdown', function(cmCfg, modeCfg) {
 

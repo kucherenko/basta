@@ -1,7 +1,7 @@
 {
-  "name": "cpd",
+  "name": "basta",
   "version": "1.0.0",
-  "description": "Copy/Paste Detector",
+  "description": "Duplication detection tool",
   "main": "index.js",
   "author": "Andrey Kucherenko <kucherenko.andrey@gmail.com>",
   "license": "MIT",
@@ -39,7 +39,6 @@
     "commander": "^2.9.0",
     "fs-extra": "^3.0.1",
     "glob-stream": "^6.1.0",
-    "through2": "^2.0.3",
-    "through2-map": "^3.0.0"
+    "through2": "^2.0.3"
   }
 }

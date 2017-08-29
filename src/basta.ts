@@ -16,7 +16,8 @@ export function basta(options: IOptions) {
                 return callback();
             }
             const content = readFileSync(path);
-            detect({id: path}, mode.mode, content, options);
+            const clones = detect({id: path}, mode.mode, content, options);
+            console.dir(clones.getClones());
         }
         return callback();
     }));

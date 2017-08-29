@@ -6,37 +6,41 @@ import '../markdown/markdown';
 import '../sass/sass';
 import '../textile/textile';
 import '../stylus/stylus';
-import {copyState, defineMIME, defineMode, mimeModes, startState, StringStream} from '../index';
+import {copyState, defineMIME, defineMode, mimeModes, modes, startState, StringStream} from '../index';
 
-defineMode('slim', function(config) {
+
+const embedded = {
+    ruby: 'ruby',
+    javascript: 'javascript',
+    css: 'text/css',
+    sass: 'text/x-sass',
+    scss: 'text/x-scss',
+    less: 'text/x-less',
+    styl: 'text/x-styl', // no highlighting so far
+    coffee: 'coffeescript',
+    asciidoc: 'text/x-asciidoc',
+    markdown: 'text/x-markdown',
+    textile: 'text/x-textile', // no highlighting so far
+    creole: 'text/x-creole', // no highlighting so far
+    wiki: 'text/x-wiki', // no highlighting so far
+    mediawiki: 'text/x-mediawiki', // no highlighting so far
+    rdoc: 'text/x-rdoc', // no highlighting so far
+    builder: 'text/x-builder', // no highlighting so far
+    nokogiri: 'text/x-nokogiri', // no highlighting so far
+    erb: 'application/x-erb'
+};
+
+defineMode('slim', (config) => {
     const htmlMode = getMode(config, {name: 'htmlmixed'});
     const rubyMode = getMode(config, 'ruby');
-    const modes = {html: htmlMode, ruby: rubyMode};
-    const embedded = {
-        ruby: 'ruby',
-        javascript: 'javascript',
-        css: 'text/css',
-        sass: 'text/x-sass',
-        scss: 'text/x-scss',
-        less: 'text/x-less',
-        styl: 'text/x-styl', // no highlighting so far
-        coffee: 'coffeescript',
-        asciidoc: 'text/x-asciidoc',
-        markdown: 'text/x-markdown',
-        textile: 'text/x-textile', // no highlighting so far
-        creole: 'text/x-creole', // no highlighting so far
-        wiki: 'text/x-wiki', // no highlighting so far
-        mediawiki: 'text/x-mediawiki', // no highlighting so far
-        rdoc: 'text/x-rdoc', // no highlighting so far
-        builder: 'text/x-builder', // no highlighting so far
-        nokogiri: 'text/x-nokogiri', // no highlighting so far
-        erb: 'application/x-erb'
-    };
-    const embeddedRegexp = function(map) {
+
+    const embeddedRegexp = ((map) => {
         const arr = [];
-        for (const key in map) arr.push(key);
+        for (const key in map) {
+            arr.push(key);
+        }
         return new RegExp('^(' + arr.join('|') + '):');
-    }(embedded);
+    })(embedded);
 
     const styleMap = {
         'commentLine': 'comment',

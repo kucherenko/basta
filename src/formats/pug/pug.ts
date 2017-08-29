@@ -1,9 +1,6 @@
-import '../javascript/javascript';
-//@TODO: messy code
-import {defineMIME, defineMode, getMode, mimeModes} from '../index';
+import {defineMIME, defineMode, getMode, mimeModes} from "../index";
 
-
-defineMode('pug', function (config) {
+defineMode("pug", (config) => {
     // token types
     const KEYWORD = 'keyword';
     const DOCTYPE = 'meta';
@@ -60,7 +57,7 @@ defineMode('pug', function (config) {
      *
      * @return {State}
      */
-    State.prototype.copy = function () {
+    State.prototype.copy = () => {
         const res = new State();
         res.javaScriptLine = this.javaScriptLine;
         res.javaScriptLineExcludesColon = this.javaScriptLineExcludesColon;
@@ -108,7 +105,9 @@ defineMode('pug', function (config) {
                 return;
             }
             const tok = jsMode.token(stream, state.jsState);
-            if (stream.eol()) state.javaScriptLine = false;
+            if (stream.eol()) {
+                state.javaScriptLine = false;
+            }
             return tok || true;
         }
     }
@@ -298,8 +297,9 @@ defineMode('pug', function (config) {
             } else if (stream.sol() || stream.eol()) {
                 state.isEach = false;
             } else if (stream.next()) {
-                while (!stream.match(/^ in\b/, false) && stream.next())
-                    return 'variable';
+                while (!stream.match(/^ in\b/, false) && stream.next()) {
+                }
+                return 'variable';
             }
         }
     }
@@ -359,7 +359,7 @@ defineMode('pug', function (config) {
     }
 
     function attrs(stream, state) {
-        if (stream.peek() == '(') {
+        if (stream.peek() === '(') {
             stream.next();
             state.isAttrs = true;
             state.attrsNest = [];
@@ -385,11 +385,7 @@ defineMode('pug', function (config) {
                 if (stream.peek() === '=' || stream.peek() === '!') {
                     state.inAttributeName = false;
                     state.jsState = startState(jsMode);
-                    if (state.lastTag === 'script' && stream.current().trim().toLowerCase() === 'type') {
-                        state.attributeIsType = true;
-                    } else {
-                        state.attributeIsType = false;
-                    }
+                    state.attributeIsType = (state.lastTag === 'script' && stream.current().trim().toLowerCase() === 'type');
                 }
                 return 'attribute';
             }
@@ -400,7 +396,7 @@ defineMode('pug', function (config) {
             }
             if (state.attrsNest.length === 0 && (tok === 'string' || tok === 'variable' || tok === 'keyword')) {
                 try {
-                    Function('', 'var x ' + state.attrValue.replace(/,\s*$/, '').replace(/^!/, ''));
+                    Function('', 'const x ' + state.attrValue.replace(/,\s*$/, '').replace(/^!/, ''));
                     state.inAttributeName = true;
                     state.attrValue = '';
                     stream.backUp(stream.current().length);
@@ -422,7 +418,7 @@ defineMode('pug', function (config) {
         }
     }
 
-    function indent(stream, ...args) {
+    function indent(stream, state) {
         if (stream.sol() && stream.eatSpace()) {
             return 'indent';
         }
@@ -436,7 +432,7 @@ defineMode('pug', function (config) {
         }
     }
 
-    function colon(stream, ...args) {
+    function colon(stream, state) {
         if (stream.match(/^: */)) {
             return 'colon';
         }
@@ -457,7 +453,7 @@ defineMode('pug', function (config) {
     function dot(stream, state) {
         if (stream.eat('.')) {
             let innerMode = null;
-            if (state.lastTag === 'script' && state.scriptType.toLowerCase().indexOf('javascript') != -1) {
+            if (state.lastTag === 'script' && state.scriptType.toLowerCase().indexOf('javascript') !== -1) {
                 innerMode = state.scriptType.toLowerCase().replace(/"|'/g, '');
             } else if (state.lastTag === 'style') {
                 innerMode = 'css';
@@ -467,7 +463,7 @@ defineMode('pug', function (config) {
         }
     }
 
-    function fail(stream, ...args) {
+    function fail(stream, state) {
         stream.next();
         return null;
     }
@@ -487,13 +483,13 @@ defineMode('pug', function (config) {
         }
     }
 
-    function innerMode(stream, state, force = undefined) {
+    function innerMode(stream, state, force = null) {
         if (stream.indentation() > state.indentOf || (state.innerModeForLine && !stream.sol()) || force) {
             if (state.innerMode) {
                 if (!state.innerState) {
                     state.innerState = state.innerMode.startState ? startState(state.innerMode, stream.indentation()) : {};
                 }
-                return stream.hideFirstChars(state.indentOf + 2, function () {
+                return stream.hideFirstChars(state.indentOf + 2, () => {
                     return state.innerMode.token(stream, state.innerState) || true;
                 });
             } else {
@@ -526,7 +522,7 @@ defineMode('pug', function (config) {
         return new State();
     }
 
-    function copyState(state, mode) {
+    function copyState(state, ...args) {
         return state.copy();
     }
 

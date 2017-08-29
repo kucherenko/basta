@@ -125,7 +125,7 @@ defineMode('clojure', function(options) {
         }
 
         // leading sign
-        if (( ch == '+' || ch == '-' ) && ( tests.digit.test(stream.peek()) )) {
+        if ((ch == '+' || ch == '-') && (tests.digit.test(stream.peek()))) {
             stream.eat(tests.sign);
             ch = stream.next();
         }
@@ -210,7 +210,7 @@ defineMode('clojure', function(options) {
                     } else if (ch == '\\') {
                         eatCharacter(stream);
                         returnType = CHARACTER;
-                    } else if (ch == "'" && !( tests.digit_or_colon.test(stream.peek()) )) {
+                    } else if (ch == "'" && !(tests.digit_or_colon.test(stream.peek()))) {
                         returnType = ATOM;
                     } else if (ch == ';') { // comment
                         stream.skipToEnd(); // rest of the line is a comment

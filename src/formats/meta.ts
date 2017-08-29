@@ -343,13 +343,13 @@ export const modeInfo: FormatMetadata[] = [
         mode: 'idl',
         ext: ['pro']
     },
-    {
-        name: 'Pug',
-        mime: 'text/x-pug',
-        mode: 'pug',
-        ext: ['jade', 'pug'],
-        alias: ['jade']
-    },
+    // {
+    //     name: 'Pug',
+    //     mime: 'text/x-pug',
+    //     mode: 'pug',
+    //     ext: ['jade', 'pug'],
+    //     alias: ['jade']
+    // },
     {
         name: 'Java',
         mime: 'text/x-java',
@@ -683,13 +683,13 @@ export const modeInfo: FormatMetadata[] = [
         mode: 'sieve',
         ext: ['siv', 'sieve']
     },
-    {
-        name: 'Slim',
-        mimes: ['text/x-slim', 'application/x-slim'],
-        mime: 'text/x-slim',
-        mode: 'slim',
-        ext: ['slim']
-    },
+    // {
+    //     name: 'Slim',
+    //     mimes: ['text/x-slim', 'application/x-slim'],
+    //     mime: 'text/x-slim',
+    //     mode: 'slim',
+    //     ext: ['slim']
+    // },
     {
         name: 'Smalltalk',
         mime: 'text/x-stsrc',
@@ -848,7 +848,8 @@ export const modeInfo: FormatMetadata[] = [
     {
         name: 'Twig',
         mime: 'text/x-twig',
-        mode: 'twig'
+        mode: 'twig',
+        ext: ['twig']
     },
     {
         name: 'Web IDL',

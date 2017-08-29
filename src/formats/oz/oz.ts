@@ -92,7 +92,7 @@ defineMode('oz', function(conf) {
             if (ch == '~') {
                 if (!/^[0-9]/.test(stream.peek()))
                     return null;
-                else if (( stream.next() == '0' && stream.match(/^[xX][0-9a-fA-F]+/)) || stream.match(/^[0-9]*(\.[0-9]+)?([eE][~+]?[0-9]+)?/))
+                else if ((stream.next() == '0' && stream.match(/^[xX][0-9a-fA-F]+/)) || stream.match(/^[0-9]*(\.[0-9]+)?([eE][~+]?[0-9]+)?/))
                     return 'number';
             }
 

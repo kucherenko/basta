@@ -42,7 +42,7 @@ export let Pass = {
     toString: function() {
         return 'Pass';
     }
-}
+};
 
 export function map(array, f) {
     const out = [];

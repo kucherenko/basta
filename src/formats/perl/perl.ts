@@ -1,6 +1,6 @@
 import {defineMIME, defineMode} from '../index';
 
-defineMode('perl', function() {
+defineMode('perl', () => {
     // http://perldoc.perl.org
     const PERL = {                                      //   null - magic touch
         //   1 - keyword
@@ -64,7 +64,9 @@ defineMode('perl', function() {
         'and': 4,
         'or': 4,
         'xor': 4,
-        //      PERL predefined variables (I know, what this is a paranoid idea, but may be needed for people, who learn PERL, and for me as well, ...and may be for you?;)
+        //
+        // PERL predefined variables (I know, what this is a paranoid idea,
+        // but may be needed for people, who learn PERL, and for me as well, ...and may be for you?;)
         'BEGIN': [5, 1],
         'END': [5, 1],
         'PRINT': [5, 1],
@@ -467,21 +469,24 @@ defineMode('perl', function() {
     const RXstyle = 'string-2';
     const RXmodifiers = /[goseximacplud]/;              // NOTE: "m", "s", "y" and "tr" need to correct real modifiers for each regexp type
 
-    function tokenChain(stream, state, chain, style, tail = undefined) {     // NOTE: chain.length > 2 is not working now (it's for s[...][...]geos;)
+    function tokenChain(stream, state, chain, style, tail = null) {
+        // NOTE: chain.length > 2 is not working now (it's for s[...][...]geos;)
         state.chain = null;                               //                                                          12   3tail
         state.style = null;
         state.tail = null;
-        state.tokenize = function(stream, state) {
-            let e = false, c, i = 0;
+        state.tokenize = (stream, state) => {
+            let e = false;
+            let c;
+            let i = 0;
             while (c = stream.next()) {
                 if (c === chain[i] && !e) {
                     if (chain[++i] !== undefined) {
                         state.chain = chain[i];
                         state.style = style;
                         state.tail = tail;
-                    }
-                    else if (tail)
+                    } else if (tail) {
                         stream.eatWhile(tail);
+                    }
                     state.tokenize = tokenPerl;
                     return style;
                 }
@@ -493,7 +498,7 @@ defineMode('perl', function() {
     }
 
     function tokenSOMETHING(stream, state, string) {
-        state.tokenize = function(stream, state) {
+        state.tokenize = (stream, state) => {
             if (stream.string === string)
                 state.tokenize = tokenPerl;
             stream.skipToEnd();
@@ -518,7 +523,8 @@ defineMode('perl', function() {
             return tokenSOMETHING(stream, state, '=cut');
         }
         const ch = stream.next();
-        if (ch === '"' || ch === "'") {                           // NOTE: ' or " or <<'SOMETHING'\n...\nSOMETHING\n or <<"SOMETHING"\n...\nSOMETHING\n
+        if (ch === '"' || ch === "'") {
+            // NOTE: ' or " or <<'SOMETHING'\n...\nSOMETHING\n or <<"SOMETHING"\n...\nSOMETHING\n
             if (prefix(stream, 3) === '<<' + ch) {
                 const p = stream.pos;
                 stream.eatWhile(/\w/);
@@ -555,8 +561,7 @@ defineMode('perl', function() {
                         eatSuffix(stream, 1);
                         return tokenChain(stream, state, [stream.eat(c)], RXstyle, RXmodifiers);
                     }
-                }
-                else if (c === 'q') {
+                } else if (c === 'q') {
                     c = look(stream, 1);
                     if (c === '(') {
                         eatSuffix(stream, 2);
@@ -578,8 +583,7 @@ defineMode('perl', function() {
                         eatSuffix(stream, 1);
                         return tokenChain(stream, state, [stream.eat(c)], 'string');
                     }
-                }
-                else if (c === 'w') {
+                } else if (c === 'w') {
                     c = look(stream, 1);
                     if (c === '(') {
                         eatSuffix(stream, 2);
@@ -601,8 +605,7 @@ defineMode('perl', function() {
                         eatSuffix(stream, 1);
                         return tokenChain(stream, state, [stream.eat(c)], 'bracket');
                     }
-                }
-                else if (c === 'r') {
+                } else if (c === 'r') {
                     c = look(stream, 1);
                     if (c === '(') {
                         eatSuffix(stream, 2);
@@ -624,8 +627,7 @@ defineMode('perl', function() {
                         eatSuffix(stream, 1);
                         return tokenChain(stream, state, [stream.eat(c)], RXstyle, RXmodifiers);
                     }
-                }
-                else if (/[\^'"!~\/(\[{<]/.test(c)) {
+                } else if (/[\^'"!~\/(\[{<]/.test(c)) {
                     if (c === '(') {
                         eatSuffix(stream, 1);
                         return tokenChain(stream, state, [')'], 'string');
@@ -676,14 +678,18 @@ defineMode('perl', function() {
             if (!c) {
                 c = stream.eat(/[(\[{<\^'"!~\/]/);
                 if (c) {
-                    if (c === '[')
+                    if (c === '[') {
                         return tokenChain(stream, state, [']', ']'], RXstyle, RXmodifiers);
-                    if (c === '{')
+                    }
+                    if (c === '{') {
                         return tokenChain(stream, state, ['}', '}'], RXstyle, RXmodifiers);
-                    if (c === '<')
+                    }
+                    if (c === '<') {
                         return tokenChain(stream, state, ['>', '>'], RXstyle, RXmodifiers);
-                    if (c === '(')
+                    }
+                    if (c === '(') {
                         return tokenChain(stream, state, [')', ')'], RXstyle, RXmodifiers);
+                    }
                     return tokenChain(stream, state, [c, c], RXstyle, RXmodifiers);
                 }
             }
@@ -693,14 +699,18 @@ defineMode('perl', function() {
             if (!c) {
                 c = stream.eat(/[(\[{<\^'"!~\/]/);
                 if (c) {
-                    if (c === '[')
+                    if (c === '[') {
                         return tokenChain(stream, state, [']', ']'], RXstyle, RXmodifiers);
-                    if (c === '{')
+                    }
+                    if (c === '{') {
                         return tokenChain(stream, state, ['}', '}'], RXstyle, RXmodifiers);
-                    if (c === '<')
+                    }
+                    if (c === '<') {
                         return tokenChain(stream, state, ['>', '>'], RXstyle, RXmodifiers);
-                    if (c === '(')
+                    }
+                    if (c === '(') {
                         return tokenChain(stream, state, [')', ')'], RXstyle, RXmodifiers);
+                    }
                     return tokenChain(stream, state, [c, c], RXstyle, RXmodifiers);
                 }
             }
@@ -712,14 +722,18 @@ defineMode('perl', function() {
                 if (c) {
                     c = stream.eat(/[(\[{<\^'"!~\/]/);
                     if (c) {
-                        if (c === '[')
+                        if (c === '[') {
                             return tokenChain(stream, state, [']', ']'], RXstyle, RXmodifiers);
-                        if (c === '{')
+                        }
+                        if (c === '{') {
                             return tokenChain(stream, state, ['}', '}'], RXstyle, RXmodifiers);
-                        if (c === '<')
+                        }
+                        if (c === '<') {
                             return tokenChain(stream, state, ['>', '>'], RXstyle, RXmodifiers);
-                        if (c === '(')
+                        }
+                        if (c === '(') {
                             return tokenChain(stream, state, [')', ')'], RXstyle, RXmodifiers);
+                        }
                         return tokenChain(stream, state, [c, c], RXstyle, RXmodifiers);
                     }
                 }
@@ -736,17 +750,19 @@ defineMode('perl', function() {
         }
         if (ch === '$') {
             const p = stream.pos;
-            if (stream.eatWhile(/\d/) || stream.eat('{') && stream.eatWhile(/\d/) && stream.eat('}'))
+            if (stream.eatWhile(/\d/) || stream.eat('{') && stream.eatWhile(/\d/) && stream.eat('}')) {
                 return 'variable-2';
-            else
+            } else {
                 stream.pos = p;
+            }
         }
         if (/[$@%]/.test(ch)) {
             const p = stream.pos;
             if (stream.eat('^') && stream.eat(/[A-Z]/) || !/[@$%&]/.test(look(stream, -2)) && stream.eat(/[=|\\\-#?@;:&`~\^!\[\]*'"$+.,\/<>()]/)) {
                 const c = stream.current();
-                if (PERL[c])
+                if (PERL[c]) {
                     return 'variable-2';
+                }
             }
             stream.pos = p;
         }
@@ -853,7 +869,7 @@ defineMode('perl', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenPerl,
                 chain: null,
@@ -861,7 +877,7 @@ defineMode('perl', function() {
                 tail: null
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             return (state.tokenize || tokenPerl)(stream, state);
         },
         lineComment: '#'
@@ -882,8 +898,7 @@ function prefix(stream, c = undefined) {
     if (c) {
         const x = stream.pos - c;
         return stream.string.substr((x >= 0 ? x : 0), c);
-    }
-    else {
+    } else {
         return stream.string.substr(0, stream.pos - 1);
     }
 }
@@ -899,11 +914,12 @@ function suffix(stream, c) {
 function eatSuffix(stream, c) {
     const x = stream.pos + c;
     let y;
-    if (x <= 0)
+    if (x <= 0) {
         stream.pos = 0;
-    else if (x >= (y = stream.string.length - 1))
+    } else if (x >= (y = stream.string.length - 1)) {
         stream.pos = y;
-    else
+    } else {
         stream.pos = x;
+    }
 }
 

@@ -9,7 +9,8 @@
     "lint": "tslint 'src/**/*.ts{,x}'",
     "lint:fix": "tslint 'src/**/*.ts{,x}' --fix",
     "test": "mocha ./test/index.js --compilers ts:ts-node/register,tsx:ts-node/register",
-    "test:dev": "npm test -- --watch"
+    "test:dev": "npm test -- --watch",
+    "build": "tsc --outDir lib src/**/*.ts"
   },
   "devDependencies": {
     "@types/chai": "^3.5.2",
@@ -38,6 +39,7 @@
     "commander": "^2.9.0",
     "fs-extra": "^3.0.1",
     "glob-stream": "^6.1.0",
-    "through2": "^2.0.3"
+    "through2": "^2.0.3",
+    "through2-map": "^3.0.0"
   }
 }

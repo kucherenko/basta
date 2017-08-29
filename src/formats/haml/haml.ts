@@ -61,7 +61,7 @@ defineMode('haml', function(config) {
         }
 
         // donot handle --> as valid ruby, make it HTML close comment instead
-        if (state.startOfLine && !stream.match('-->', false) && (ch == '=' || ch == '-' )) {
+        if (state.startOfLine && !stream.match('-->', false) && (ch == '=' || ch == '-')) {
             state.tokenize = ruby;
             return state.tokenize(stream, state);
         }

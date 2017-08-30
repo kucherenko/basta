@@ -1,2 +1,0 @@
-describe('CPD: Proccess', () => {
-});

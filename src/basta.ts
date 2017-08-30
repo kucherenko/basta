@@ -2,9 +2,10 @@ import {IOptions} from "./interfaces/options.interface";
 import {lstatSync, readFileSync} from "fs";
 import {findModeByFileName} from "./formats/meta";
 import {detect} from "./detect";
-import {getClonesStorage} from "./storage/index";
+import {getClonesStorage, getStatisticStorage} from "./storage/index";
 import {IClones} from "./interfaces/clones.interface";
 import through2 = require("through2");
+import { IStatistic } from "./interfaces/statistic.interface";
 
 const create = require('glob-stream');
 
@@ -25,6 +26,8 @@ export function basta(options: IOptions) {
 
     stream.on('end', () => {
         const clones: IClones = getClonesStorage({});
+        const statistic: IStatistic = getStatisticStorage({});
         console.log(clones.getClones());
+        console.log(statistic.get());
     });
 }

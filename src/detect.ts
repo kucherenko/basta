@@ -5,21 +5,23 @@ import {ISource} from "./interfaces/source.interface";
 import {createHash} from "crypto";
 import {IHash} from "./interfaces/hash.interface";
 import {IClone} from "./interfaces/clone.interface";
-import {getClonesStorage, getMapsStorage} from "./storage/index";
+import {getClonesStorage, getMapsStorage, getStatisticStorage} from "./storage/";
 import {IMaps} from "./interfaces/maps.interface";
 import {IClones} from "./interfaces/clones.interface";
+import { IStatistic } from "./interfaces/statistic.interface";
 
 export function detect(source: ISource, mode, content, options: IOptions) {
     const maps: IMaps = getMapsStorage({});
     const clones: IClones = getClonesStorage({});
+    const statistic: IStatistic = getStatisticStorage({});
 
     const tokensLimit: number = options.minTokens || 70;
     const linesLimit: number = options.minLines || 5;
     const tokensPositions = [];
     const tokens = runMode(content, {mode, name: mode}, {}).filter(isValidToken);
 
-    const addClone = (mode, source: ISource, hash, firstToken, lastToken, firstLine, lastLine) => {
-        const hashInfo: IHash = maps.getHash(hash, mode);
+    const addClone = (lastToken, firstLine, lastLine) => {
+        const hashInfo: IHash = maps.getHash(firstHash, mode);
         const numLines = lastLine + 1 - firstLine;
         if (numLines >= linesLimit && (hashInfo.source.id !== source.id || hashInfo.line !== firstLine)) {
             const first: ISource = {...source, start: firstLine};
@@ -32,6 +34,7 @@ export function detect(source: ISource, mode, content, options: IOptions) {
                 mode,
                 content: content.toString().split("\n").slice(firstLine, lastLine).join("\n")
             };
+            statistic.addDuplicated(mode, source, numLines);
             clones.saveClone(clone);
         }
     };
@@ -47,6 +50,10 @@ export function detect(source: ISource, mode, content, options: IOptions) {
         tokensPositions.push(token.line);
         map += generateTokenHash(token);
     });
+
+    if (tokensPositions.length) {
+      statistic.addTotal(mode, source, tokensPositions[tokensPositions.length - 1])
+    }
 
     while (tokenPosition <= tokensPositions.length - tokensLimit) {
         const mapFrame = map.substring(
@@ -64,15 +71,7 @@ export function detect(source: ISource, mode, content, options: IOptions) {
             }
         } else {
             if (isClone) {
-                addClone(
-                    mode,
-                    source,
-                    firstHash,
-                    firstToken,
-                    tokenPosition,
-                    firstLine,
-                    tokensPositions[tokenPosition]
-                );
+                addClone(tokenPosition, firstLine, tokensPositions[tokenPosition]);
                 firstLine = null;
                 isClone = false;
             }
@@ -84,14 +83,6 @@ export function detect(source: ISource, mode, content, options: IOptions) {
         tokenPosition++;
     }
     if (isClone) {
-        addClone(
-            mode,
-            source,
-            firstHash,
-            firstToken,
-            tokenPosition - 1,
-            firstLine,
-            tokensPositions[tokenPosition - 1]
-        );
+        addClone(tokenPosition - 1, firstLine, tokensPositions[tokenPosition - 1]);
     }
 }

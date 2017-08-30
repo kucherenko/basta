@@ -2,32 +2,28 @@ import {IOptions} from "./interfaces/options.interface";
 import {generateTokenHash, isValidToken, TOKEN_HASH_LENGTH} from "./tokens";
 import {runMode} from "./formats/index";
 import {ISource} from "./interfaces/source.interface";
-import {MapsMemory} from "./storage/maps.memory";
 import {createHash} from "crypto";
 import {IHash} from "./interfaces/hash.interface";
-import {ClonesMemory} from "./storage/clones.memory";
 import {IClone} from "./interfaces/clone.interface";
-
-const maps = new MapsMemory();
-const clones = new ClonesMemory();
+import {getClonesStorage, getMapsStorage} from "./storage/index";
+import {IMaps} from "./interfaces/maps.interface";
+import {IClones} from "./interfaces/clones.interface";
 
 export function detect(source: ISource, mode, content, options: IOptions) {
+    const maps: IMaps = getMapsStorage({});
+    const clones: IClones = getClonesStorage({});
+
     const tokensLimit: number = options.minTokens || 70;
     const linesLimit: number = options.minLines || 5;
     const tokensPositions = [];
     const tokens = runMode(content, {mode, name: mode}, {}).filter(isValidToken);
 
     const addClone = (mode, source: ISource, hash, firstToken, lastToken, firstLine, lastLine) => {
-        let fileA;
-        let firstLineA;
-        let numLines;
         const hashInfo: IHash = maps.getHash(hash, mode);
-        fileA = hashInfo.source.id;
-        firstLineA = hashInfo.line;
-        numLines = lastLine + 1 - firstLine;
-        if (numLines >= linesLimit && (fileA !== source.id || firstLineA !== firstLine)) {
-            const first: ISource = Object.assign(source, {start: firstLine});
-            const second: ISource = Object.assign(hashInfo.source, {start: firstLineA});
+        const numLines = lastLine + 1 - firstLine;
+        if (numLines >= linesLimit && (hashInfo.source.id !== source.id || hashInfo.line !== firstLine)) {
+            const first: ISource = {...source, start: firstLine};
+            const second: ISource = {...hashInfo.source, start: hashInfo.line};
             const clone: IClone = {
                 first,
                 second,
@@ -57,7 +53,8 @@ export function detect(source: ISource, mode, content, options: IOptions) {
             tokenPosition * TOKEN_HASH_LENGTH,
             tokenPosition * TOKEN_HASH_LENGTH + tokensLimit * TOKEN_HASH_LENGTH
         );
-        const hash = createHash('md5').update(mapFrame).digest('hex');
+        const hash = createHash('md5').update(mapFrame).digest('hex').substr(0, 10);
+
         if (maps.hasHash(hash, mode)) {
             isClone = true;
             if (!firstLine) {
@@ -86,5 +83,15 @@ export function detect(source: ISource, mode, content, options: IOptions) {
         }
         tokenPosition++;
     }
-    return clones;
+    if (isClone) {
+        addClone(
+            mode,
+            source,
+            firstHash,
+            firstToken,
+            tokenPosition - 1,
+            firstLine,
+            tokensPositions[tokenPosition - 1]
+        );
+    }
 }

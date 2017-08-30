@@ -2,6 +2,8 @@ import {IOptions} from "./interfaces/options.interface";
 import {lstatSync, readFileSync} from "fs";
 import {findModeByFileName} from "./formats/meta";
 import {detect} from "./detect";
+import {getClonesStorage} from "./storage/index";
+import {IClones} from "./interfaces/clones.interface";
 import through2 = require("through2");
 
 const create = require('glob-stream');
@@ -16,9 +18,13 @@ export function basta(options: IOptions) {
                 return callback();
             }
             const content = readFileSync(path);
-            const clones = detect({id: path}, mode.mode, content, options);
-            console.dir(clones.getClones());
+            detect({id: path}, mode.mode, content, options);
         }
         return callback();
     }));
+
+    stream.on('end', () => {
+        const clones: IClones = getClonesStorage({});
+        console.log(clones.getClones());
+    });
 }

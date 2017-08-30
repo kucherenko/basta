@@ -6,4 +6,6 @@ export interface IMaps {
     getHash(hash: string, mode: string): IHash;
 
     addHash(hash: string, mode: string, info: IHash);
+
+    getMaps();
 }

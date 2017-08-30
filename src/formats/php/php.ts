@@ -1,28 +1,36 @@
 import {copyState, defineMIME, defineMode, getMode, startState} from '../index';
+
 function keywords(str) {
-    const obj = {}, words = str.split(' ');
-    for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+    const obj = {};
+    const words = str.split(' ');
+    for (let i = 0; i < words.length; ++i) {
+        obj[words[i]] = true;
+    }
     return obj;
 }
 
 // Helper for phpString
-function matchSequence(list, end, escapes = undefined) {
-    if (list.length == 0) return phpString(end);
-    return function(stream, state) {
+function matchSequence(list, end, escapes = null) {
+    if (list.length === 0) {
+        return phpString(end);
+    }
+    return (stream, state) => {
         const patterns = list[0];
-        for (let i = 0; i < patterns.length; i++) if (stream.match(patterns[i][0])) {
-            state.tokenize = matchSequence(list.slice(1), end);
-            return patterns[i][1];
+        for (let i = 0; i < patterns.length; i++) {
+            if (stream.match(patterns[i][0])) {
+                state.tokenize = matchSequence(list.slice(1), end);
+                return patterns[i][1];
+            }
         }
         state.tokenize = phpString(end, escapes);
         return 'string';
     };
 }
-function phpString(closing, escapes = undefined) {
-    return function(stream, state) {
-        return phpString_(stream, state, closing, escapes);
-    };
+
+function phpString(closing, escapes = null) {
+    return (stream, state) => phpString_(stream, state, closing, escapes);
 }
+
 function phpString_(stream, state, closing, escapes) {
     // "Complex" syntax
     if (escapes !== false && stream.match('${', false) || stream.match('{$', false)) {
@@ -93,17 +101,19 @@ const phpConfig = {
     builtin: keywords(phpBuiltin),
     multiLineStrings: true,
     hooks: {
-        '$': function(stream) {
+        '$': stream => {
             stream.eatWhile(/[\w\$_]/);
             return 'variable-2';
         },
-        '<': function(stream, state) {
+        '<': (stream, state) => {
             let before;
             if (before = stream.match(/<<\s*/)) {
                 const quoted = stream.eat(/['"]/);
                 stream.eatWhile(/[\w\.]/);
                 const delim = stream.current().slice(before[0].length + (quoted ? 2 : 1));
-                if (quoted) stream.eat(quoted);
+                if (quoted) {
+                    stream.eat(quoted);
+                }
                 if (delim) {
                     (state.tokStack || (state.tokStack = [])).push(delim, 0);
                     state.tokenize = phpString(delim, quoted != "'");
@@ -112,28 +122,33 @@ const phpConfig = {
             }
             return false;
         },
-        '#': function(stream) {
-            while (!stream.eol() && !stream.match('?>', false)) stream.next();
+        '#': stream => {
+            while (!stream.eol() && !stream.match('?>', false)) {
+                stream.next();
+            }
             return 'comment';
         },
-        '/': function(stream) {
+        '/': stream => {
             if (stream.eat('/')) {
-                while (!stream.eol() && !stream.match('?>', false)) stream.next();
+                while (!stream.eol() && !stream.match('?>', false)) {
+                    stream.next();
+                }
                 return 'comment';
             }
             return false;
         },
-        '"': function(_stream, state) {
+        '"': (_stream, state) => {
             (state.tokStack || (state.tokStack = [])).push('"', 0);
             state.tokenize = phpString('"');
             return 'string';
         },
-        '{': function(_stream, state) {
-            if (state.tokStack && state.tokStack.length)
+        '{': (_stream, state) => {
+            if (state.tokStack && state.tokStack.length) {
                 state.tokStack[state.tokStack.length - 1]++;
+            }
             return false;
         },
-        '}': function(_stream, state) {
+        '}': (_stream, state) => {
             if (state.tokStack && state.tokStack.length > 0 &&
                 !--state.tokStack[state.tokStack.length - 1]) {
                 state.tokenize = phpString(state.tokStack[state.tokStack.length - 2]);
@@ -143,23 +158,27 @@ const phpConfig = {
     }
 };
 
-defineMode('php', function(config, parserConfig) {
-    const htmlMode = getMode(config, 'text/html');
+defineMode('php', (config, parserConfig) => {
+    const htmlMode = getMode(config, 'htmlmixed');
     const phpMode = getMode(config, phpConfig);
 
     function dispatch(stream, state) {
         const isPHP = state.curMode == phpMode;
-        if (stream.sol() && state.pending && state.pending != '"' && state.pending != "'") state.pending = null;
+        if (stream.sol() && state.pending && state.pending != '"' && state.pending != "'") {
+            state.pending = null;
+        }
         if (!isPHP) {
             let style;
             if (stream.match(/^<\?\w*/)) {
                 state.curMode = phpMode;
-                if (!state.php) state.php = startState(phpMode, htmlMode.indent(state.html, ''));
+                if (!state.php) {
+                    state.php = startState(phpMode, htmlMode.indent(state.html, ''));
+                }
                 state.curState = state.php;
                 return 'meta';
             }
-            if (state.pending == '"' || state.pending == "'") {
-                while (!stream.eol() && stream.next() != state.pending) {
+            if (state.pending === '"' || state.pending === "'") {
+                while (!stream.eol() && stream.next() !== state.pending) {
                 }
                 const style = 'string';
             } else if (state.pending && stream.pos < state.pending.end) {
@@ -168,18 +187,27 @@ defineMode('php', function(config, parserConfig) {
             } else {
                 style = htmlMode.token(stream, state.curState);
             }
-            if (state.pending) state.pending = null;
-            let cur = stream.current(), openPHP = cur.search(/<\?/), m;
-            if (openPHP != -1) {
-                if (style == 'string' && (m = cur.match(/[\'\"]$/)) && !/\?>/.test(cur)) state.pending = m[0];
-                else state.pending = {end: stream.pos, style: style};
+            if (state.pending) {
+                state.pending = null;
+            }
+            const cur = stream.current();
+            const openPHP = cur.search(/<\?/);
+            let m;
+            if (openPHP !== -1) {
+                if (style === 'string' && (m = cur.match(/[\'\"]$/)) && !/\?>/.test(cur)) {
+                    state.pending = m[0];
+                } else {
+                    state.pending = {end: stream.pos, style: style};
+                }
                 stream.backUp(cur.length - openPHP);
             }
             return style;
         } else if (isPHP && state.php.tokenize == null && stream.match('?>')) {
             state.curMode = htmlMode;
             state.curState = state.html;
-            if (!state.php.context.prev) state.php = null;
+            if (!state.php.context.prev) {
+                state.php = null;
+            }
             return 'meta';
         } else {
             return phpMode.token(stream, state.curState);
@@ -187,7 +215,7 @@ defineMode('php', function(config, parserConfig) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             const html = startState(htmlMode);
             const php = parserConfig.startOpen ? startState(phpMode) : null;
             return {
@@ -199,11 +227,13 @@ defineMode('php', function(config, parserConfig) {
             };
         },
 
-        copyState: function(state) {
-            let html = state.html, htmlNew = copyState(htmlMode, html),
-                php = state.php, phpNew = php && copyState(phpMode, php), cur;
-            if (state.curMode == htmlMode) cur = htmlNew;
-            else cur = phpNew;
+        copyState: state => {
+            const html = state.html;
+            const htmlNew = copyState(htmlMode, html);
+            const php = state.php;
+            const phpNew = php && copyState(phpMode, php);
+            const cur = state.curMode === htmlMode ? htmlNew : phpNew;
+
             return {
                 html: htmlNew, php: phpNew, curMode: state.curMode, curState: cur,
                 pending: state.pending
@@ -212,10 +242,11 @@ defineMode('php', function(config, parserConfig) {
 
         token: dispatch,
 
-        indent: function(state, textAfter) {
-            if ((state.curMode != phpMode && /^\s*<\//.test(textAfter)) ||
-                (state.curMode == phpMode && /^\?>/.test(textAfter)))
+        indent: (state, textAfter) => {
+            if ((state.curMode !== phpMode && /^\s*<\//.test(textAfter)) ||
+                (state.curMode === phpMode && /^\?>/.test(textAfter))) {
                 return htmlMode.indent(state.html, textAfter);
+            }
             return state.curMode.indent(state.curState, textAfter);
         },
 
@@ -223,9 +254,7 @@ defineMode('php', function(config, parserConfig) {
         blockCommentEnd: '*/',
         lineComment: '//',
 
-        innerMode: function(state) {
-            return {state: state.curState, mode: state.curMode};
-        }
+        innerMode: state => ({state: state.curState, mode: state.curMode})
     };
 }, 'htmlmixed', 'clike');
 

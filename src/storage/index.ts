@@ -1,7 +1,7 @@
-import {IClones} from "../interfaces/clones.interface";
-import {IMaps} from "../interfaces/maps.interface";
+import {IClones} from "./clones.interface";
+import {IMaps} from "./maps.interface";
 import {ClonesMemory, MapsMemory, StatisticMemory} from "./memory";
-import { IStatistic } from "../interfaces/statistic.interface";
+import {IStatistic} from "./statistic.interface";
 
 export function getClonesStorage(options): IClones {
     return new ClonesMemory();

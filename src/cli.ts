@@ -1,5 +1,5 @@
 import {Command} from 'commander';
-import {IOptions} from './interfaces/options.interface';
+import {IOptions} from './options.interface';
 import {basta} from "./basta";
 import {resolve} from "path";
 

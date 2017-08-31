@@ -1,14 +1,14 @@
-import {IOptions} from "./interfaces/options.interface";
+import {IOptions} from "./options.interface";
 import {generateTokenHash, isValidToken, TOKEN_HASH_LENGTH} from "./tokens";
 import {runMode} from "./formats/index";
-import {ISource} from "./interfaces/source.interface";
+import {ISource} from "./source.interface";
 import {createHash} from "crypto";
-import {IHash} from "./interfaces/hash.interface";
-import {IClone} from "./interfaces/clone.interface";
+import {IHash} from "./hash.interface";
+import {IClone} from "./clone.interface";
 import {getClonesStorage, getMapsStorage, getStatisticStorage} from "./storage/";
-import {IMaps} from "./interfaces/maps.interface";
-import {IClones} from "./interfaces/clones.interface";
-import { IStatistic } from "./interfaces/statistic.interface";
+import {IMaps} from "./storage/maps.interface";
+import {IClones} from "./storage/clones.interface";
+import {IStatistic} from "./storage/statistic.interface";
 
 export function detect(source: ISource, mode, content, options: IOptions) {
     const maps: IMaps = getMapsStorage({});
@@ -18,10 +18,10 @@ export function detect(source: ISource, mode, content, options: IOptions) {
     const tokensLimit: number = options.minTokens || 70;
     const linesLimit: number = options.minLines || 5;
     const tokensPositions = [];
-    const tokens = runMode(content, {mode, name: mode}, {}).filter(isValidToken);
+    const tokens = runMode(content, mode, {}).filter(isValidToken);
 
     const addClone = (lastToken, firstLine, lastLine) => {
-        const hashInfo: IHash = maps.getHash(firstHash, mode);
+        const hashInfo: IHash = maps.getHash(firstHash, mode.name);
         const numLines = lastLine + 1 - firstLine;
         if (numLines >= linesLimit && (hashInfo.source.id !== source.id || hashInfo.line !== firstLine)) {
             const first: ISource = {...source, start: firstLine};
@@ -31,10 +31,10 @@ export function detect(source: ISource, mode, content, options: IOptions) {
                 second,
                 linesCount: numLines,
                 tokensCount: lastToken - firstToken,
-                mode,
+                mode: mode.name,
                 content: content.toString().split("\n").slice(firstLine, lastLine).join("\n")
             };
-            statistic.addDuplicated(mode, source, numLines);
+            statistic.addDuplicated(mode.name, numLines);
             clones.saveClone(clone);
         }
     };
@@ -52,7 +52,7 @@ export function detect(source: ISource, mode, content, options: IOptions) {
     });
 
     if (tokensPositions.length) {
-      statistic.addTotal(mode, source, tokensPositions[tokensPositions.length - 1])
+        statistic.addTotal(mode.name, tokensPositions[tokensPositions.length - 1]);
     }
 
     while (tokenPosition <= tokensPositions.length - tokensLimit) {
@@ -62,7 +62,7 @@ export function detect(source: ISource, mode, content, options: IOptions) {
         );
         const hash = createHash('md5').update(mapFrame).digest('hex').substr(0, 10);
 
-        if (maps.hasHash(hash, mode)) {
+        if (maps.hasHash(hash, mode.name)) {
             isClone = true;
             if (!firstLine) {
                 firstLine = tokensPositions[tokenPosition];
@@ -75,7 +75,7 @@ export function detect(source: ISource, mode, content, options: IOptions) {
                 firstLine = null;
                 isClone = false;
             }
-            maps.addHash(hash, mode, {
+            maps.addHash(hash, mode.name, {
                 source,
                 line: tokensPositions[tokenPosition]
             });

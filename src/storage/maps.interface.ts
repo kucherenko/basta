@@ -1,4 +1,4 @@
-import {IHash} from "./hash.interface";
+import {IHash} from "../hash.interface";
 
 export interface IMaps {
     hasHash(hash: string, mode: string): boolean;

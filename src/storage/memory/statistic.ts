@@ -1,37 +1,47 @@
-import {IStatistic} from "../../interfaces/statistic.interface";
-import {ISource} from "../../interfaces/source.interface";
+import {IStatistic} from "../statistic.interface";
 
-const statistic = {
-    sources: {},
-    modes: {},
-    total: 0,
-    duplicated: 0
-};
+
 const total = 0;
 const duplicated = 0;
+const rate = 0.00;
+
+const statistic = {
+    modes: {},
+    total,
+    duplicated,
+    rate
+};
 
 export class StatisticMemory implements IStatistic {
 
-    private _initStatistic(mode: string, source: ISource) {
-      statistic.modes[mode] = statistic.modes[mode] || {total, duplicated};
-      statistic.sources[source.id] = statistic.sources[source.id] || {total, duplicated};
-    }
-
-    addDuplicated(mode: string, source: ISource, lines: number) {
-        this._initStatistic(mode, source);
+    addDuplicated(mode: string, lines: number) {
+        this._initStatistic(mode);
         statistic.modes[mode].duplicated += lines;
-        statistic.sources[source.id].duplicated += lines;
         statistic.duplicated += lines;
+        statistic.rate = this._calculateRate(statistic.total, statistic.duplicated);
+        statistic.modes[mode].rate = this._calculateRate(statistic.modes[mode].total, statistic.modes[mode].duplicated);
     }
 
-    addTotal(mode: string, source: ISource, lines: number) {
-      this._initStatistic(mode, source);
-      statistic.modes[mode].total += lines;
-      statistic.sources[source.id].total = lines;
-      statistic.total += lines;
+    addTotal(mode: string, lines: number) {
+        this._initStatistic(mode);
+        statistic.modes[mode].total += lines;
+        statistic.total += lines;
+        statistic.rate = this._calculateRate(statistic.total, statistic.duplicated);
+        statistic.modes[mode].rate = this._calculateRate(statistic.modes[mode].total, statistic.modes[mode].duplicated);
     }
 
     get() {
-      return statistic;
+        return statistic;
+    }
+
+    private _initStatistic(mode: string) {
+        statistic.modes[mode] = statistic.modes[mode] || {total, duplicated, rate};
+    }
+
+    private _calculateRate(total: number, duplicated: number): number {
+        if (total) {
+            return Math.round(duplicated / total * 10000) / 100;
+        }
+        return 0.00;
     }
 }

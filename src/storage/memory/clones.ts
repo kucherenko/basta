@@ -1,5 +1,5 @@
-import {IClones} from "../../interfaces/clones.interface";
-import {IClone} from "../../interfaces/clone.interface";
+import {IClones} from "../clones.interface";
+import {IClone} from "../../clone.interface";
 
 const clones: IClone[] = [];
 

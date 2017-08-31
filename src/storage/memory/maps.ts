@@ -1,5 +1,5 @@
-import {IMaps} from "../../interfaces/maps.interface";
-import {IHash} from "../../interfaces/hash.interface";
+import {IMaps} from "../maps.interface";
+import {IHash} from "../../hash.interface";
 
 const maps = {};
 

@@ -1,4 +1,4 @@
-import {IClone} from "./clone.interface";
+import {IClone} from "../clone.interface";
 
 export interface IClones {
 

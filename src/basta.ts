@@ -7,6 +7,7 @@ import {IClones} from "./storage/clones.interface";
 import {IStatistic} from "./storage/statistic.interface";
 import "colors";
 import {ConsoleReporter} from "./reporters/console";
+import {HtmlReporter} from "./reporters/html";
 
 const create = require('glob-stream');
 
@@ -30,6 +31,6 @@ export function basta(options: IOptions) {
         const clones: IClones = getClonesStorage({});
         const statistic: IStatistic = getStatisticStorage({});
 
-        [new ConsoleReporter()].map((reporter) => reporter.report(clones, statistic));
+        [new ConsoleReporter(), new HtmlReporter()].map((reporter) => reporter.report(clones, statistic));
     });
 }

@@ -83,6 +83,6 @@ export function detect(source: ISource, mode, content, options: IOptions) {
         tokenPosition++;
     }
     if (isClone) {
-        addClone(tokenPosition - 1, firstLine, tokensPositions[tokenPosition - 1]);
+        addClone(tokensPositions.length - 1, firstLine, tokensPositions[tokensPositions.length - 1]);
     }
 }

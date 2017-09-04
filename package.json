@@ -1,7 +1,7 @@
 {
   "name": "basta",
   "version": "1.0.0",
-  "description": "Basta is duplications detection tool (copy/paste detector), support 50+ programming languages. Developed by Andrey Kucherenko.",
+  "description": "Basta is duplications detection tool (copy/paste detector), support 100+ programming languages. Developed by Andrey Kucherenko.",
   "main": "index.js",
   "author": "Andrey Kucherenko <kucherenko.andrey@gmail.com>",
   "license": "MIT",

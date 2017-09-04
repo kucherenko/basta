@@ -1,14 +1,41 @@
 extends layout
 
 block content
+
+    .controls
+        .pure-u.pure-button-active
+            button.pure-button Collapse All
+            button.pure-button.pure-button-active Expand All
+
+    table.pure-table.stats
+        thead
+            tr
+                th Total lines
+                th Duplicated lines
+                th % of duplications
+        tbody
+            tr
+                td= total
+                td= duplicated
+                td= rate + '%'
+
     .clones
-        each clone in clones
-            h1.content-subhead= clone.mode
+        each mode, name in modes
+            +mode(name, mode)
+
+mixin mode(name, mode)
+    a(name=name)
+    h1.content-subhead= name
+    .mode-stats
+        p
+            span.mode-rate= mode.rate + '%'
+            = " Total lines: " + mode.total + ", duplicated lines: " + mode.duplicated
+
+    each clone in clones
+        if clone.mode === name
             section.clone
                 .clone-title
                     != clone.first.id + ': ' + clone.first.start + '-' + (clone.first.start + clone.linesCount) + '<br/>'
                     = clone.second.id + ': ' + clone.second.start + '-' + (clone.second.start + clone.linesCount)
                 .clone-description
                     pre= clone.content
-
-

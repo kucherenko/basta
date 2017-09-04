@@ -683,13 +683,13 @@ export const modeInfo: FormatMetadata[] = [
         mode: 'sieve',
         ext: ['siv', 'sieve']
     },
-    // {
-    //     name: 'Slim',
-    //     mimes: ['text/x-slim', 'application/x-slim'],
-    //     mime: 'text/x-slim',
-    //     mode: 'slim',
-    //     ext: ['slim']
-    // },
+    {
+        name: 'Slim',
+        mimes: ['text/x-slim', 'application/x-slim'],
+        mime: 'text/x-slim',
+        mode: 'slim',
+        ext: ['slim']
+    },
     {
         name: 'Smalltalk',
         mime: 'text/x-stsrc',

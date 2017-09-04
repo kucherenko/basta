@@ -8,7 +8,9 @@ export const TOKEN_HASH_LENGTH = TOKEN_TYPE_HASH_LENGTH + TOKEN_VALUE_HASH_LENGT
 const tokenTypes = {};
 
 export function isValidToken(token) {
-    return token.hasOwnProperty('type') && token.type !== 'comment';
+    let isValid = token.hasOwnProperty('type');
+    isValid = isValid && token.type !== 'comment';
+    return isValid && token.type !== 'comment';
 }
 
 export function generateTokenTypeHash(tokenType: string): string {

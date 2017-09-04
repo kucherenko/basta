@@ -6,7 +6,7 @@ import '../markdown/markdown';
 import '../sass/sass';
 import '../textile/textile';
 import '../stylus/stylus';
-import {copyState, defineMIME, defineMode, mimeModes, modes, startState, StringStream} from '../index';
+import {copyState, defineMIME, defineMode, getMode, startState, StringStream} from '../index';
 
 
 const embedded = {
@@ -69,7 +69,7 @@ defineMode('slim', (config) => {
     const classIdRegexp = /^#[_a-zA-Z]+[\w\-]*/;
 
     function backup(pos, tokenize, style) {
-        const restore = function(stream, state) {
+        const restore = (stream, state) => {
             state.tokenize = tokenize;
             if (stream.pos < pos) {
                 stream.pos = pos;
@@ -77,7 +77,7 @@ defineMode('slim', (config) => {
             }
             return state.tokenize(stream, state);
         };
-        return function(stream, state) {
+        return (stream, state) => {
             state.tokenize = restore;
             return tokenize(stream, state);
         };
@@ -111,7 +111,7 @@ defineMode('slim', (config) => {
     }
 
     function lineContinuable(column, tokenize) {
-        return function(stream, state) {
+        return (stream, state) => {
             finishContinue(state);
             if (stream.match(/^\\$/)) {
                 continueLine(state, column);
@@ -126,7 +126,7 @@ defineMode('slim', (config) => {
     }
 
     function commaContinuable(column, tokenize) {
-        return function(stream, state) {
+        return (stream, state) => {
             finishContinue(state);
             const style = tokenize(stream, state);
             if (stream.eol() && stream.current().match(/,$/)) {
@@ -138,7 +138,7 @@ defineMode('slim', (config) => {
 
     function rubyInQuote(endQuote, tokenize) {
         // TODO: add multi line support
-        return function(stream, state) {
+        return (stream, state) => {
             const ch = stream.peek();
             if (ch == endQuote && state.rubyState.tokenize.length == 1) {
                 // step out of ruby context as it seems to complete processing all the braces
@@ -153,7 +153,7 @@ defineMode('slim', (config) => {
 
     function startRubySplat(tokenize) {
         let rubyState;
-        const runSplat = function(stream, state) {
+        const runSplat = (stream, state) => {
             if (state.rubyState.tokenize.length == 1 && !state.rubyState.context.prev) {
                 stream.backUp(1);
                 if (stream.eatSpace()) {
@@ -165,7 +165,7 @@ defineMode('slim', (config) => {
             }
             return ruby(stream, state);
         };
-        return function(stream, state) {
+        return (stream, state) => {
             rubyState = state.rubyState;
             state.rubyState = startState(rubyMode);
             state.tokenize = runSplat;
@@ -193,9 +193,11 @@ defineMode('slim', (config) => {
     }
 
     function startHtmlLine(lastTokenize) {
-        return function(stream, state) {
+        return (stream, state) => {
             const style = htmlLine(stream, state);
-            if (stream.eol()) state.tokenize = lastTokenize;
+            if (stream.eol()) {
+                state.tokenize = lastTokenize;
+            }
             return style;
         };
     }
@@ -252,12 +254,12 @@ defineMode('slim', (config) => {
 
     function attributeWrapperValue(stream, state) {
         const ch = stream.peek();
-        if (ch == '"' || ch == "\'") {
+        if (ch === '"' || ch === "\'") {
             state.tokenize = readQuoted(ch, 'string', true, false, attributeWrapper);
             stream.next();
             return state.tokenize(stream, state);
         }
-        if (ch == '[') {
+        if (ch === '[') {
             return startRubySplat(attributeWrapper)(stream, state);
         }
         if (stream.match(/^(true|false|nil)\b/)) {
@@ -301,28 +303,8 @@ defineMode('slim', (config) => {
         return state.tokenize(stream, state);
     }
 
-    function createMode(mode) {
-        const query = embedded[mode];
-        const spec = mimeModes[query];
-        if (spec) {
-            return getMode(config, spec);
-        }
-        const factory = modes[query];
-        if (factory) {
-            return factory(config, {name: query});
-        }
-        return getMode(config, 'null');
-    }
-
-    function getMode(mode, ...args) {
-        if (!modes.hasOwnProperty(mode)) {
-            return modes[mode] = createMode(mode);
-        }
-        return modes[mode];
-    }
-
     function startSubMode(mode, state) {
-        const subMode = getMode(mode);
+        const subMode = getMode({indentUnit: 2}, mode);
         const subState = startState(subMode);
 
         state.subMode = subMode;
@@ -345,7 +327,7 @@ defineMode('slim', (config) => {
 
     function startLine(stream, state) {
         const ch = stream.peek();
-        if (ch == '<') {
+        if (ch === '<') {
             return (state.tokenize = startHtmlLine(state.tokenize))(stream, state);
         }
         if (stream.match(/^[|']/)) {
@@ -418,7 +400,7 @@ defineMode('slim', (config) => {
             state.tokenize = slimAttributeAssign;
             return 'slimAttribute';
         }
-        if (stream.peek() == '*') {
+        if (stream.peek() === '*') {
             stream.next();
             state.tokenize = startRubySplat(slimContent);
             return null;
@@ -437,15 +419,15 @@ defineMode('slim', (config) => {
 
     function slimAttributeValue(stream, state) {
         const ch = stream.peek();
-        if (ch == '"' || ch == "\'") {
+        if (ch === '"' || ch === "\'") {
             state.tokenize = readQuoted(ch, 'string', true, false, slimAttribute);
             stream.next();
             return state.tokenize(stream, state);
         }
-        if (ch == '[') {
+        if (ch === '[') {
             return startRubySplat(slimAttribute)(stream, state);
         }
-        if (ch == ':') {
+        if (ch === ':') {
             return startRubySplat(slimAttributeSymbols)(stream, state);
         }
         if (stream.match(/^(true|false|nil)\b/)) {
@@ -466,26 +448,31 @@ defineMode('slim', (config) => {
     }
 
     function readQuoted(quote, style, embed, unescaped, nextTokenize) {
-        return function(stream, state) {
+        return (stream, state) => {
             finishContinue(state);
-            const fresh = stream.current().length == 0;
+            const fresh = stream.current().length === 0;
             if (stream.match(/^\\$/, fresh)) {
-                if (!fresh) return style;
+                if (!fresh) {
+                    return style;
+                }
                 continueLine(state, state.indented);
                 return 'lineContinuation';
             }
             if (stream.match(/^#\{/, fresh)) {
-                if (!fresh) return style;
+                if (!fresh) {
+                    return style;
+                }
                 state.tokenize = rubyInQuote('}', state.tokenize);
                 return null;
             }
-            let escaped = false, ch;
+            let escaped = false;
+            let ch;
             while ((ch = stream.next()) != null) {
-                if (ch == quote && (unescaped || !escaped)) {
+                if (ch === quote && (unescaped || !escaped)) {
                     state.tokenize = nextTokenize;
                     break;
                 }
-                if (embed && ch == '#' && !escaped) {
+                if (embed && ch === '#' && !escaped) {
                     if (stream.eat('{')) {
                         stream.backUp(2);
                         break;
@@ -519,7 +506,7 @@ defineMode('slim', (config) => {
 
     const mode = {
         // default to html mode
-        startState: function() {
+        startState: () => {
             const htmlState = startState(htmlMode);
             const rubyState = startState(rubyMode);
             return {
@@ -533,20 +520,18 @@ defineMode('slim', (config) => {
             };
         },
 
-        copyState: function(state) {
-            return {
-                htmlState: copyState(htmlMode, state.htmlState),
-                rubyState: copyState(rubyMode, state.rubyState),
-                subMode: state.subMode,
-                subState: state.subMode && copyState(state.subMode, state.subState),
-                stack: state.stack,
-                last: state.last,
-                tokenize: state.tokenize,
-                line: state.line
-            };
-        },
+        copyState: state => ({
+            htmlState: copyState(htmlMode, state.htmlState),
+            rubyState: copyState(rubyMode, state.rubyState),
+            subMode: state.subMode,
+            subState: state.subMode && copyState(state.subMode, state.subState),
+            stack: state.stack,
+            last: state.last,
+            tokenize: state.tokenize,
+            line: state.line
+        }),
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
                 state.indented = stream.indentation();
                 state.startOfLine = true;
@@ -558,21 +543,27 @@ defineMode('slim', (config) => {
                     state.subState = null;
                 }
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             const style = state.tokenize(stream, state);
             state.startOfLine = false;
-            if (style) state.last = style;
+            if (style) {
+                state.last = style;
+            }
             return styleMap.hasOwnProperty(style) ? styleMap[style] : style;
         },
 
-        blankLine: function(state) {
+        blankLine: state => {
             if (state.subMode && state.subMode.blankLine) {
                 return state.subMode.blankLine(state.subState);
             }
         },
 
-        innerMode: function(state) {
-            if (state.subMode) return {state: state.subState, mode: state.subMode};
+        innerMode: state => {
+            if (state.subMode) {
+                return {state: state.subState, mode: state.subMode};
+            }
             return {state: state, mode: mode};
         }
 

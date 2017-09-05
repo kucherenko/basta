@@ -4,8 +4,8 @@ block content
 
     .controls
         .pure-u.pure-button-active
-            button.pure-button(onclick="collapseAll()") Collapse All
-            button.pure-button(onclick="expandAll()") Expand All
+            button.pure-button(onclick="collapseExpandAll()") Collapse All
+            button.pure-button(onclick="collapseExpandAll()") Expand All
 
     table.pure-table.stats
         thead
@@ -19,7 +19,7 @@ block content
                 td= duplicated
                 td= rate + '%'
 
-    .clones
+    .clones.collapsed
         each mode, name in modes
             +mode(name, mode)
 
@@ -35,10 +35,10 @@ mixin mode(name, mode)
         if clone.mode === name
             section.clone
                 header
-                    button.pure-button.expand(onclick="expand()") +
-                    button.pure-button.collapse(onclick="collapse()") -
+                    button.pure-button.expand +
+                    button.pure-button.collapse -
                     .clone-title
                         != clone.first.id + ': ' + clone.first.start + '-' + (clone.first.start + clone.linesCount) + '<br/>'
                         = clone.second.id + ': ' + clone.second.start + '-' + (clone.second.start + clone.linesCount)
                 .clone-description
-                    pre= clone.content
+                    pre(data-first-start=clone.first.start, data-second-start=clone.second.start, data-length=clone.linesCount)= clone.content

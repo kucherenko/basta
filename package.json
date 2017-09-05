@@ -1,7 +1,7 @@
 {
   "name": "basta",
   "version": "1.0.0",
-  "description": "Basta is duplications detection tool (copy/paste detector), support 100+ programming languages. Developed by Andrey Kucherenko.",
+  "description": "Basta is clone detection tool (copy/paste detector), support 100+ programming languages. Developed by Andrey Kucherenko.",
   "main": "index.js",
   "author": "Andrey Kucherenko <kucherenko.andrey@gmail.com>",
   "license": "MIT",
@@ -10,7 +10,8 @@
     "lint:fix": "tslint 'src/**/*.ts{,x}' --fix",
     "test": "mocha ./test/index.js --compilers ts:ts-node/register,tsx:ts-node/register",
     "test:dev": "npm test -- --watch",
-    "build": "tsc --outDir lib src/**/*.ts"
+    "build": "tsc --outDir lib src/**/*.ts",
+    "wip": "ts-node ./src/cli.ts"
   },
   "devDependencies": {
     "@types/chai": "^3.5.2",

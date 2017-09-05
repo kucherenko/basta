@@ -899,8 +899,15 @@ export const modeInfo: FormatMetadata[] = [
         mimes: ['application/xml', 'text/xml'],
         mime: 'application/xml',
         mode: 'xml',
-        ext: ['xml', 'xsl', 'xsd', 'svg'],
+        ext: ['xml', 'xsl', 'xsd'],
         alias: ['rss', 'wsdl', 'xsd']
+    },
+    {
+        name: 'SVG',
+        mimes: ['image/svg+xml'],
+        mime: 'image/svg+xml',
+        mode: 'xml',
+        ext: ['svg']
     },
     {
         name: 'XQuery',

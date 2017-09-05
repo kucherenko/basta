@@ -7,13 +7,45 @@ html(lang='en')
         title Basta: duplication report
         link(rel='stylesheet', href='https://unpkg.com/purecss@1.0.0/build/pure-min.css', integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w", crossorigin="anonymous")
         script.
-            function collapseAll() {
-                var clones = document.querySelector('.clones').classList.add('collapsed');
+
+            function collapseExpandAll() {
+                document.querySelectorAll('.clone').forEach(function (cloneElement) {
+                    cloneElement.classList.remove('expanded');
+                });
+                document.querySelector('.clones').classList.toggle('collapsed');
             }
 
-            function expandAll() {
-                var clones = document.querySelector('.clones').classList.remove('collapsed');
+            function expandCollapse(event) {
+                if (event.target.classList.contains('expand') || event.target.classList.contains('collapse')) {
+                    this.classList.toggle('expanded');
+                }
+
             }
+
+            window.onload = function () {
+
+                var codes = document.querySelectorAll('pre');
+
+
+                codes.forEach(function (code) {
+                    code.innerHTML = '<span class="line-number"></span>' + code.innerHTML + '<span class="cl"></span>';
+
+                    var length = parseInt(code.getAttribute('data-length'));
+                    var firstStart = parseInt(code.getAttribute('data-first-start'));
+                    var secondStart = parseInt(code.getAttribute('data-second-start'));
+
+                    for (var j = 0; j <= length; j++) {
+                        var line_num = code.getElementsByTagName('span')[0];
+                        line_num.innerHTML += '<span>' + (firstStart + j) + ' ' + (secondStart + j) + '</span>';
+                    }
+
+                });
+
+                document.querySelectorAll('.clone').forEach(function (cloneElement) {
+                    cloneElement.addEventListener('click', expandCollapse)
+                });
+            }
+
         style.
             * {
                 -webkit-box-sizing: border-box;
@@ -100,7 +132,15 @@ html(lang='en')
             .clone header button {
                 float: left;
                 font-size: 110%;
-                margin: 0.3em;
+                margin: 0.1em 0.3em;
+            }
+
+            .clone .expand {
+                display: none;
+            }
+
+            .clone .collapse {
+                display: block;
             }
 
             .collapsed .clone pre {
@@ -115,16 +155,41 @@ html(lang='en')
                 display: none;
             }
 
-            .clone .expand {
-                display: none;
+            .clone.expanded .expand {
+                display: none !important;
             }
 
-            .clone .collapse {
-                display: block;
+            .clone.expanded .collapse {
+                display: block !important;
+            }
+
+            .clone.expanded pre {
+                display: block !important;
             }
 
             .clone pre {
                 max-width: 800px;
+            }
+
+            .clone pre .line-number {
+                font: normal normal 12px/14px "Courier New", Courier, Monospace;
+                color: black;
+                display: block;
+                float: left;
+                margin: 0 1em 0 -1em;
+                border-right: 1px solid;
+                text-align: right;
+            }
+
+            .clone pre .line-number span {
+                display: block;
+                padding: 0 .5em 0 1em;
+
+            }
+
+            .clone pre .cl {
+                display: block;
+                clear: both;
             }
 
             .clone-title {
@@ -167,21 +232,17 @@ html(lang='en')
                 margin: 1em 0;
             }
 
-            /*.post-category-design {*/
-            /*background: #5aba59;*/
-            /*}*/
+            .clones-excellent {
+                background: #5aba59;
+            }
 
-            /*.post-category-pure {*/
-            /*background: #4d85d1;*/
-            /*}*/
+            .clones-fine {
+                background: #4d85d1;
+            }
 
-            /*.post-category-yui {*/
-            /*background: #8156a7;*/
-            /*}*/
-
-            /*.post-category-js {*/
-            /*background: #df2d4f;*/
-            /*}*/
+            .clones-danger {
+                background: #df2d4f;
+            }
 
             .footer {
                 padding: 1em 0;

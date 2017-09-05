@@ -32,7 +32,7 @@ export function detect(source: ISource, mode, content, options: IOptions) {
                 linesCount: numLines,
                 tokensCount: lastToken - firstToken,
                 mode: mode.name,
-                content: content.toString().split("\n").slice(firstLine, lastLine).join("\n")
+                content: content.toString().split("\n").slice(firstLine-1, lastLine + 1).join("\n")
             };
             statistic.addDuplicated(mode.name, numLines);
             clones.saveClone(clone);
@@ -55,12 +55,12 @@ export function detect(source: ISource, mode, content, options: IOptions) {
         statistic.addTotal(mode.name, tokensPositions[tokensPositions.length - 1]);
     }
 
-    while (tokenPosition <= tokensPositions.length - tokensLimit) {
+    while (tokenPosition <= tokensPositions.length) {
         const mapFrame = map.substring(
             tokenPosition * TOKEN_HASH_LENGTH,
             tokenPosition * TOKEN_HASH_LENGTH + tokensLimit * TOKEN_HASH_LENGTH
         );
-        const hash = createHash('md5').update(mapFrame).digest('hex').substr(0, 10);
+        const hash = createHash('md5').update(mapFrame).digest('hex');
 
         if (maps.hasHash(hash, mode.name)) {
             isClone = true;

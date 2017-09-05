@@ -1,6 +1,8 @@
 import {defineMIME, defineMode} from '../index';
 function words(str) {
-    const obj = {}, words = str.split(',');
+    const obj = {};
+    const words = str.split(',');
+
     for (let i = 0; i < words.length; ++i) {
         const allCaps = words[i].toUpperCase();
         const firstCap = words[i].charAt(0).toUpperCase() + words[i].slice(1);
@@ -17,10 +19,10 @@ function metaHook(stream) {
 }
 
 defineMode('vhdl', function(config, parserConfig) {
-    const indentUnit = config.indentUnit,
-        atoms = parserConfig.atoms || words('null'),
-        hooks = parserConfig.hooks || {'`': metaHook, '$': metaHook},
-        multiLineStrings = parserConfig.multiLineStrings;
+    const indentUnit = config.indentUnit;
+    const atoms = parserConfig.atoms || words('null');
+    const hooks = parserConfig.hooks || {'`': metaHook, '$': metaHook};
+    const multiLineStrings = parserConfig.multiLineStrings;
 
     const keywords = words('abs,access,after,alias,all,and,architecture,array,assert,attribute,begin,block,' +
         'body,buffer,bus,case,component,configuration,constant,disconnect,downto,else,elsif,end,end block,end case,' +

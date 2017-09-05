@@ -6,6 +6,14 @@ html(lang='en')
         meta(name='viewport', content='width=device-width, initial-scale=1')
         title Basta: duplication report
         link(rel='stylesheet', href='https://unpkg.com/purecss@1.0.0/build/pure-min.css', integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w", crossorigin="anonymous")
+        script.
+            function collapseAll() {
+                var clones = document.querySelector('.clones').classList.add('collapsed');
+            }
+
+            function expandAll() {
+                var clones = document.querySelector('.clones').classList.remove('collapsed');
+            }
         style.
             * {
                 -webkit-box-sizing: border-box;
@@ -40,20 +48,6 @@ html(lang='en')
             .sidebar {
                 background: rgb(61, 79, 93);
                 color: #fff;
-            }
-
-            .brand-title,
-            .brand-tagline {
-                margin: 0;
-            }
-
-            .brand-title {
-                text-transform: uppercase;
-            }
-
-            .brand-tagline {
-                font-weight: 300;
-                color: rgb(176, 202, 219);
             }
 
             .nav-list {
@@ -100,6 +94,37 @@ html(lang='en')
 
             .clone {
                 padding-bottom: 2em;
+
+            }
+
+            .clone header button {
+                float: left;
+                font-size: 110%;
+                margin: 0.3em;
+            }
+
+            .collapsed .clone pre {
+                display: none;
+            }
+
+            .collapsed .clone .expand {
+                display: block;
+            }
+
+            .collapsed .clone .collapse {
+                display: none;
+            }
+
+            .clone .expand {
+                display: none;
+            }
+
+            .clone .collapse {
+                display: block;
+            }
+
+            .clone pre {
+                max-width: 800px;
             }
 
             .clone-title {
@@ -138,7 +163,7 @@ html(lang='en')
             }
 
             .stats {
-                width: 80%;
+                width: 100%;
                 margin: 1em 0;
             }
 
@@ -192,7 +217,7 @@ html(lang='en')
             .sidebar.pure-u-1.pure-u-md-1-4
                 .header
                     h1 Basta
-                    h2 Duplication report
+                    h2 Duplications Report
                     nav.nav
                         ul.nav-list
                             each mode, name in modes

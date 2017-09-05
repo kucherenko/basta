@@ -448,7 +448,7 @@ export const modeInfo: FormatMetadata[] = [
         name: 'Mathematica',
         mime: 'text/x-mathematica',
         mode: 'mathematica',
-        ext: ['m', 'nb']
+        ext: ['nb']
     },
     {
         name: 'Modelica',

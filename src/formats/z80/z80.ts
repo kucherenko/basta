@@ -1,8 +1,9 @@
 import {defineMIME, defineMode} from '../index';
 
-defineMode('z80', function(_config, parserConfig) {
+defineMode('z80', (_config, parserConfig) => {
     const ez80 = parserConfig.ez80;
-    let keywords1, keywords2;
+    let keywords1;
+    let keywords2;
     if (ez80) {
         keywords1 = /^(exx?|(ld|cp)([di]r?)?|[lp]ea|pop|push|ad[cd]|cpl|daa|dec|inc|neg|sbc|sub|and|bit|[cs]cf|x?or|res|set|r[lr]c?a?|r[lr]d|s[lr]a|srl|djnz|nop|[de]i|halt|im|in([di]mr?|ir?|irx|2r?)|ot(dmr?|[id]rx|imr?)|out(0?|[di]r?|[di]2r?)|tst(io)?|slp)(\.([sl]?i)?[sl])?\b/i;
         keywords2 = /^(((call|j[pr]|rst|ret[in]?)(\.([sl]?i)?[sl])?)|(rs|st)mix)\b/i;
@@ -17,17 +18,17 @@ defineMode('z80', function(_config, parserConfig) {
     const numbers = /^([\da-f]+h|[0-7]+o|[01]+b|\d+d?)\b/i;
 
     return {
-        startState: function() {
-            return {
-                context: 0
-            };
-        },
-        token: function(stream, state) {
-            if (!stream.column())
+        startState: () => ({
+            context: 0
+        }),
+        token: (stream, state) => {
+            if (!stream.column()) {
                 state.context = 0;
+            }
 
-            if (stream.eatSpace())
+            if (stream.eatSpace()) {
                 return null;
+            }
 
             let w;
 
@@ -38,7 +39,7 @@ defineMode('z80', function(_config, parserConfig) {
                 w = stream.current();
 
                 if (stream.indentation()) {
-                    if ((state.context == 1 || state.context == 4) && variables1.test(w)) {
+                    if ((state.context === 1 || state.context === 4) && variables1.test(w)) {
                         state.context = 4;
                         return 'var2';
                     }

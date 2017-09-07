@@ -2,13 +2,12 @@ import {Command} from 'commander';
 import {IOptions} from './options.interface';
 import {basta} from "./basta";
 import {resolve} from "path";
+import 'colors';
 
 const packageJson = require('../package.json');
 
-
 function prepareOptions(commander): IOptions {
     const options: IOptions = {
-        types: commander.languages ? commander.languages.split[','] : ['*'],
         minLines: commander['min-lines'] || 5,
         minTokens: commander['min-tokens'] || 70,
         path: commander.path ? resolve(commander['path']) : process.cwd(),
@@ -17,8 +16,7 @@ function prepareOptions(commander): IOptions {
         limit: commander.limit,
         blame: commander.blame,
         debug: commander.debug,
-        skipComments: commander['skip-comments'],
-        verbose: commander.verbose
+        skipComments: commander['skip-comments']
     };
     return options;
 }

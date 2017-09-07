@@ -2,17 +2,25 @@ import {IStatistic} from "../statistic.interface";
 
 
 const total = 0;
+const files = 0;
 const duplicated = 0;
 const rate = 0.00;
 
 const statistic = {
     modes: {},
+    files,
     total,
     duplicated,
     rate
 };
 
 export class StatisticMemory implements IStatistic {
+
+    addFiles(mode: string, count: number) {
+        this._initStatistic(mode);
+        statistic.modes[mode].files += count;
+        statistic.files += count;
+    }
 
     addDuplicated(mode: string, lines: number) {
         this._initStatistic(mode);
@@ -35,7 +43,7 @@ export class StatisticMemory implements IStatistic {
     }
 
     private _initStatistic(mode: string) {
-        statistic.modes[mode] = statistic.modes[mode] || {total, duplicated, rate};
+        statistic.modes[mode] = statistic.modes[mode] || {total, duplicated, rate, files};
     }
 
     private _calculateRate(total: number, duplicated: number): number {

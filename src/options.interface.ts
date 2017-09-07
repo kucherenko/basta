@@ -1,5 +1,4 @@
 export interface IOptions {
-    types: string[];
     minLines: number;
     minTokens: number;
     path: string;
@@ -9,5 +8,4 @@ export interface IOptions {
     blame?: boolean;
     debug?: boolean;
     skipComments?: boolean;
-    verbose?: boolean;
 }

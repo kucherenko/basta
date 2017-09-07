@@ -14,18 +14,22 @@ export class ConsoleReporter implements IReporter {
             console.log(` ${clone.second.id.green}: ${clone.second.start}-${clone.second.start + clone.linesCount}\n`);
         });
 
-        const {modes, total, duplicated, rate} = statistic.get();
+        const {modes, files, total, duplicated, rate} = statistic.get();
 
         const statTable = new Table({
             head: ['Format', 'Duplicated lines', 'Total Lines', '%']
         });
 
         for (const mode of Object.keys(modes)) {
-            statTable.push([mode, modes[mode].duplicated, modes[mode].total, modes[mode].rate + '%']);
+            if (modes[mode].total > 0) {
+                statTable.push([mode, modes[mode].duplicated, modes[mode].total, modes[mode].rate + '%']);
+            }
         }
+
         console.log(statTable.toString());
 
-        console.log(`Total lines: ${total}`.bold.red);
-        console.log(`Duplicated lines: ${duplicated} (${rate}%)`.bold.red);
+        console.log(`Total files: ${files}`.bold.green);
+        console.log(`Total source lines: ${total}`.bold.green);
+        console.log(`Duplicated lines: ${duplicated} (${rate}%)`.bold.green);
     }
 }

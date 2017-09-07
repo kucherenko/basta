@@ -173,11 +173,10 @@ html(lang='en')
 
             .clone pre .line-number {
                 font: normal normal 12px/14px "Courier New", Courier, Monospace;
-                color: black;
                 display: block;
                 float: left;
                 margin: 0 1em 0 -1em;
-                border-right: 1px solid;
+                border-right: 0.1em solid #444;
                 text-align: right;
             }
 
@@ -278,12 +277,13 @@ html(lang='en')
             .sidebar.pure-u-1.pure-u-md-1-4
                 .header
                     h1 Basta
-                    h2 Duplications Report
+                    h2 Clone Detection Report
                     nav.nav
                         ul.nav-list
                             each mode, name in modes
-                                li.nav-item
-                                    a.pure-button(href="#" + name)= name
+                                if mode.total > 0
+                                    li.nav-item
+                                        a.pure-button(href="#" + name)= name
 
             .content.pure-u-1.pure-u-md-3-4
                 block content

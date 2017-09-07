@@ -51,16 +51,19 @@ export function detect(source: ISource, mode, content, options: IOptions) {
         map += generateTokenHash(token);
     });
 
+    console.log(tokens);
+    console.log('!!!!!!!!!!!!!!!!!!');
+
     if (tokensPositions.length) {
         statistic.addTotal(mode.name, tokensPositions[tokensPositions.length - 1]);
     }
 
-    while (tokenPosition <= tokensPositions.length) {
+    while (tokenPosition <= tokensPositions.length - tokensLimit) {
         const mapFrame = map.substring(
             tokenPosition * TOKEN_HASH_LENGTH,
             tokenPosition * TOKEN_HASH_LENGTH + tokensLimit * TOKEN_HASH_LENGTH
         );
-        const hash = createHash('md5').update(mapFrame).digest('hex');
+        const hash = createHash('md5').update(mapFrame).digest('hex').substring(0, 10);
 
         if (maps.hasHash(hash, mode.name)) {
             isClone = true;

@@ -44,15 +44,12 @@ export function detect(source: ISource, mode, content, options: IOptions) {
     let firstHash = null;
     let firstToken = null;
     let tokenPosition = 0;
-    let isClone = false;
+    let isClone = true;
 
     tokens.forEach((token) => {
         tokensPositions.push(token.line);
         map += generateTokenHash(token);
     });
-
-    console.log(tokens);
-    console.log('!!!!!!!!!!!!!!!!!!');
 
     if (tokensPositions.length) {
         statistic.addTotal(mode.name, tokensPositions[tokensPositions.length - 1]);
@@ -63,8 +60,8 @@ export function detect(source: ISource, mode, content, options: IOptions) {
             tokenPosition * TOKEN_HASH_LENGTH,
             tokenPosition * TOKEN_HASH_LENGTH + tokensLimit * TOKEN_HASH_LENGTH
         );
-        const hash = createHash('md5').update(mapFrame).digest('hex').substring(0, 10);
-
+        const hash = createHash('md5').update(mapFrame).digest('hex');
+        console.log(hash);
         if (maps.hasHash(hash, mode.name)) {
             isClone = true;
             if (!firstLine) {
@@ -85,6 +82,7 @@ export function detect(source: ISource, mode, content, options: IOptions) {
         }
         tokenPosition++;
     }
+    console.log('±±±±±±±');
     if (isClone) {
         addClone(tokensPositions.length - 1, firstLine, tokensPositions[tokensPositions.length - 1]);
     }

@@ -1,4 +1,4 @@
 #!/usr/bin/env node
 'use strict';
 
-let cli = require('./lib/cli');
+var cli = require('./lib/cli');

@@ -3,11 +3,14 @@ import {IClones} from "../storage/clones.interface";
 import {IStatistic} from "../storage/statistic.interface";
 import {IClone} from "../clone.interface";
 import 'colors';
+import {IOptions} from "../options.interface";
+import {IMaps} from "../storage/maps.interface";
 
 const Table = require("cli-table2");
 
 export class ConsoleReporter implements IReporter {
-    report(clones: IClones, statistic: IStatistic) {
+
+    report(options: IOptions, {clones, statistic, maps}: { clones: IClones; statistic: IStatistic; maps: IMaps }) {
 
         clones.get().forEach((clone: IClone) => {
             console.log(` - ${clone.first.id.green}: ${clone.first.start}-${clone.first.start + clone.linesCount}`);

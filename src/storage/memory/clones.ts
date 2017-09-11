@@ -9,7 +9,7 @@ export class ClonesMemory implements IClones {
         clones.push(clone);
     }
 
-    getClones(): IClone[] {
+    get(): IClone[] {
         return clones;
     }
 }

@@ -4,5 +4,5 @@ export interface IClones {
 
     saveClone(clone: IClone);
 
-    getClones(): IClone[];
+    get(): IClone[];
 }

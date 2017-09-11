@@ -7,7 +7,7 @@ import {writeFileSync} from "fs";
 export class HtmlReporter implements IReporter {
     report(clones: IClones, statistic: IStatistic) {
         const reportFunction = compileFile(__dirname + '/html/report.pug');
-        const html = reportFunction({...statistic.get(), clones: clones.getClones()});
+        const html = reportFunction({...statistic.get(), clones: clones.get()});
         writeFileSync('report.html', html);
     }
 

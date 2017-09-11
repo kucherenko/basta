@@ -7,5 +7,5 @@ export interface IMaps {
 
     addHash(hash: string, mode: string, info: IHash);
 
-    getMaps();
+    get();
 }

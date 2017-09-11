@@ -1,6 +1,10 @@
-import {IClones} from "../storage/clones.interface";
-import {IStatistic} from "../storage/statistic.interface";
+import {IOptions} from "../options.interface";
 
 export interface IReporter {
-    report(clones: IClones, statistic: IStatistic);
+    report(options: IOptions,
+           {
+               clones: IClones,
+               statistic: IStatistic,
+               maps: IMaps
+           });
 }

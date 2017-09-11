@@ -9,7 +9,7 @@ const Table = require("cli-table2");
 export class ConsoleReporter implements IReporter {
     report(clones: IClones, statistic: IStatistic) {
 
-        clones.getClones().forEach((clone: IClone) => {
+        clones.get().forEach((clone: IClone) => {
             console.log(` - ${clone.first.id.green}: ${clone.first.start}-${clone.first.start + clone.linesCount}`);
             console.log(` ${clone.second.id.green}: ${clone.second.start}-${clone.second.start + clone.linesCount}\n`);
         });

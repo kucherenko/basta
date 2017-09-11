@@ -8,9 +8,10 @@ const packageJson = require('../package.json');
 
 function prepareOptions(commander): IOptions {
     const options: IOptions = {
-        minLines: commander['min-lines'] || 5,
+        minLines: commander['min-lines'] || 3,
         minTokens: commander['min-tokens'] || 70,
-        path: commander.path ? resolve(commander['path']) : process.cwd(),
+        path: commander.path ? resolve(commander.path) : process.cwd(),
+        output: commander.output ? resolve(commander.output, './report') : resolve(process.cwd(), './report'),
         exclude: commander.exclude,
         reporter: commander.reporter,
         limit: commander.limit,
@@ -30,7 +31,8 @@ cli.option('-t, --min-tokens [number]', 'min size of duplication in tokens (Defa
 cli.option('-p, --path [string]', 'base directory');
 cli.option('-e, --exclude [string]', 'glob pattern for files what should be excluded from duplication detection');
 cli.option('-g, --languages [string]', 'list of languages which scan for duplicates');
-cli.option('-r, --reporter [string]', 'reporter to use (Default is xml)');
+cli.option('-r, --reporter [string]', 'reporter to use (Default is console)');
+cli.option('-o, --output [string]', 'reporter to use (Default is ./report/)');
 cli.option('-b, --blame', 'blame authors of duplications (get information about authors from git)');
 cli.option('-d, --debug', 'show debug information(options list and selected files)');
 cli.option('--limit [number]', 'limit of allowed duplications, if real duplications percent more then limit ' +

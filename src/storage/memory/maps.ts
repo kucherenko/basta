@@ -20,7 +20,7 @@ export class MapsMemory implements IMaps {
         maps[mode][hash] = info;
     }
 
-    getMaps() {
+    get() {
         return maps;
     }
 }

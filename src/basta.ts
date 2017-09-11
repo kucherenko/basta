@@ -1,3 +1,4 @@
+import "colors";
 import {IOptions} from "./options.interface";
 import {lstatSync, readFileSync} from "fs";
 import {findModeByFileName} from "./formats/meta";
@@ -5,7 +6,6 @@ import {detect} from "./detect";
 import {getClonesStorage, getStatisticStorage} from "./storage/index";
 import {IClones} from "./storage/clones.interface";
 import {IStatistic} from "./storage/statistic.interface";
-import "colors";
 import {ConsoleReporter} from "./reporters/console";
 import {HtmlReporter} from "./reporters/html";
 import {relative} from "path";
@@ -13,11 +13,11 @@ import {relative} from "path";
 const create = require('glob-stream');
 
 export function basta(options: IOptions) {
-    const timer = Date.now();
+    console.time('Working Time'.grey);
 
-    const stream = create('./fixtures/**/*.py');
+    const stream = create('./fixtures/**/*');
 
-    console.log(require(__dirname + '/../package.json').description + '\n\n');
+    console.log(require(__dirname + '/../package.json').description.grey + '\n\n');
 
     if (options.debug) {
         console.log('Options:'.bold);
@@ -38,7 +38,7 @@ export function basta(options: IOptions) {
                 const content = readFileSync(path);
                 detect({id: relative(options.path, path)}, mode, content, options);
             } else {
-                console.log(relative(options.path, path).green);
+                console.log(` - ${relative(options.path, path).green}`);
             }
 
         }
@@ -50,7 +50,8 @@ export function basta(options: IOptions) {
 
         if (!options.debug) {
             [new ConsoleReporter(), new HtmlReporter()].map((reporter) => reporter.report(clones, statistic));
+            console.timeEnd('Working Time'.grey);
         }
-        console.log(`Working time: ${(Date.now() - timer) /1000}s`.gray);
+
     });
 }

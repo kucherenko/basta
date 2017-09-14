@@ -9,6 +9,7 @@ const tokenTypes = {};
 
 export function isValidToken(token) {
     let isValid = token.hasOwnProperty('type');
+    // console.log(tokenTypes);
     isValid = isValid && token.type !== 'comment';
     // isValid = isValid && !(token.type === 'blank' && token.value.match(/^\s*$/));
     return isValid;

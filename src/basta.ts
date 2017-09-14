@@ -3,7 +3,7 @@ import {IOptions} from "./options.interface";
 import {lstatSync, readFileSync} from "fs";
 import {findModeByFileName} from "./formats/meta";
 import {detect} from "./detect";
-import {getClonesStorage, getMapsStorage, getStatisticStorage} from "./storage/index";
+import {getClonesStorage, getMapsStorage, getStatisticStorage} from "./storage/";
 import {IClones} from "./storage/clones.interface";
 import {IStatistic} from "./storage/statistic.interface";
 import {ConsoleReporter} from "./reporters/console";
@@ -16,16 +16,11 @@ const create = require('glob-stream');
 export function basta(options: IOptions) {
     console.time('Working Time'.grey);
 
-
     const paths = [`${options.path}/**/*`];
 
     const ignores = options.exclude.map(pattern => `!${options.path}/${pattern}`);
 
-
-    console.log(paths);
-
     const stream = create([...paths, ...ignores]);
-
 
     console.log(require(__dirname + '/../package.json').description.grey + '\n\n');
 

@@ -6,11 +6,11 @@
   "author": "Andrey Kucherenko <kucherenko.andrey@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "lint": "tslint 'src/**/*.ts{,x}'",
-    "lint:fix": "tslint 'src/**/*.ts{,x}' --fix",
+    "lint": "tslint 'src/**/*.ts'",
+    "lint:fix": "tslint 'src/**/*.ts' --fix",
     "test": "mocha ./test/index.js --compilers ts:ts-node/register,tsx:ts-node/register",
     "test:dev": "npm test -- --watch",
-    "build": "tsc --outDir lib src/**/*.ts",
+    "build": "tsc --outDir lib -d",
     "wip": "ts-node ./src/cli.ts"
   },
   "devDependencies": {

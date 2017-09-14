@@ -6,3 +6,5 @@ yarn-error.log
 .idea
 .editorconfig
 fixtures/
+report/
+test/

@@ -1,0 +1,6 @@
+{
+  "excludes": [
+    "**/node_modules/**",
+    "*.min.js"
+  ]
+}

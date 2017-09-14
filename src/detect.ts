@@ -1,5 +1,5 @@
 import {createHash} from "crypto";
-import {runMode} from "./formats/index";
+import {runMode} from "./formats/";
 import {IOptions} from "./options.interface";
 import {ISource} from "./source.interface";
 import {IHash} from "./hash.interface";
@@ -8,7 +8,7 @@ import {IMaps} from "./storage/maps.interface";
 import {IClones} from "./storage/clones.interface";
 import {IStatistic} from "./storage/statistic.interface";
 import {getClonesStorage, getMapsStorage, getStatisticStorage} from "./storage/";
-import {generateTokenHash, isValidToken, TOKEN_HASH_LENGTH} from "./tokens";
+import {generateTokenHash, isValidToken, TOKEN_HASH_LENGTH} from "./tokens/";
 
 
 function getCloneBody(content, firstLine, lastLine) {

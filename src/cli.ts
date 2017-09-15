@@ -2,29 +2,64 @@ import 'colors';
 import {Command} from 'commander';
 import {IOptions} from './options.interface';
 import {basta} from "./basta";
-import {resolve} from "path";
-import {existsSync} from "fs-extra";
+import {dirname, isAbsolute, resolve} from "path";
+import {existsSync, readJSONSync} from "fs-extra";
 
 const packageJson = require('../package.json');
 
 function prepareOptions(cli: Command): IOptions {
-    const path = cli.args[0] ? resolve(cli.args[0]) : process.cwd();
-    let config = cli.config ? resolve(cli.config) : resolve(path, './.basta.json');
+    let config = cli.config ? resolve(cli.config) : resolve('.basta.json');
+    let storedConfig: any = {};
+    let argsConfig: any;
+
+    argsConfig = {
+        minLines: cli['min-lines'],
+        debug: cli['debug'],
+        output: cli['output'],
+        'dont-skip-comments': cli['dont-skip-comments'],
+    };
+
+    if (cli['reporter']) {
+        argsConfig.reporter = cli.reporter.split(',');
+    }
+
+    if (cli['exclude']) {
+        argsConfig.exclude = cli.exclude.split(',');
+    }
+
+    if (cli.args[0]) {
+        argsConfig.path = cli.args[0];
+    }
+
+    Object.keys(argsConfig).forEach(key => {
+        if (typeof argsConfig[key] === 'undefined') {
+            delete argsConfig[key];
+        }
+    });
 
     if (!existsSync(config)) {
         config = null;
+    } else {
+        storedConfig = readJSONSync(config);
+        if (storedConfig.hasOwnProperty('path') && !isAbsolute(storedConfig.path)) {
+            storedConfig.path = resolve(dirname(config), storedConfig.path);
+        }
     }
 
     return {
-        path,
-        config,
-        minLines: cli['min-lines'] || 5,
-        minTokens: 50,
-        output: cli.output ? resolve(cli.output) : resolve(path, './report'),
-        reporter: cli.reporter ? cli.reporter.split(',') : ['html', 'console'],
-        exclude: cli.exclude ? cli.exclude.split(',') : [],
-        blame: cli.blame,
-        debug: cli.debug
+        ...{
+            config,
+            path: process.cwd(),
+            minLines: 5,
+            minTokens: 50,
+            output: './report',
+            reporter: ['html', 'console'],
+            exclude: [],
+            debug: false,
+            'dont-skip-comments': false
+        },
+        ...storedConfig,
+        ...argsConfig
     };
 }
 

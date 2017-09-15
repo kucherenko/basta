@@ -40,9 +40,11 @@ defineSimpleMode('handlebars-tags', {
     ]
 });
 
-defineMode('handlebars', function(config, parserConfig) {
+defineMode('handlebars', (config, parserConfig) => {
     const handlebars = getMode(config, 'handlebars-tags');
-    if (!parserConfig || !parserConfig.base) return handlebars;
+    if (!parserConfig || !parserConfig.base) {
+        return handlebars;
+    }
     return multiplexingMode(
         getMode(config, parserConfig.base),
         {open: '{{', close: '}}', mode: handlebars, parseDelimiters: true}

@@ -11,6 +11,7 @@
     "test": "mocha ./test/index.js --compilers ts:ts-node/register,tsx:ts-node/register",
     "test:dev": "npm test -- --watch",
     "build": "tsc --outDir lib -d",
+    "prepublish": "yarn build",
     "wip": "ts-node ./src/cli.ts"
   },
   "devDependencies": {
@@ -42,7 +43,6 @@
     "colors": "^1.1.2",
     "commander": "^2.9.0",
     "fs-extra": "^4.0.1",
-    "gitignore-to-glob": "^0.3.0",
     "glob-stream": "^6.1.0",
     "pug": "^2.0.0-rc.3"
   }

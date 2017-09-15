@@ -1,32 +1,33 @@
 import {defineMIME, defineMode, getMode, startState} from '../index';
 
-defineMode('ebnf', function(config) {
+defineMode('ebnf', config => {
     const commentType = {slash: 0, parenthesis: 1};
     const stateType = {comment: 0, _string: 1, characterClass: 2};
     let bracesMode = null;
 
-    if (config.bracesMode)
+    if (config.bracesMode) {
         bracesMode = getMode(config, config.bracesMode);
+    }
 
     return {
-        startState: function() {
-            return {
-                stringType: null,
-                commentType: null,
-                braced: 0,
-                lhs: true,
-                localState: null,
-                stack: [],
-                inDefinition: false
-            };
-        },
-        token: function(stream, state) {
-            if (!stream) return;
+        startState: () => ({
+            stringType: null,
+            commentType: null,
+            braced: 0,
+            lhs: true,
+            localState: null,
+            stack: [],
+            inDefinition: false
+        }),
+        token: (stream, state) => {
+            if (!stream) {
+                return;
+            }
 
             //check for state changes
             if (state.stack.length === 0) {
                 //strings
-                if ((stream.peek() == '"') || (stream.peek() == "'")) {
+                if ((stream.peek() === '"') || (stream.peek() === "'")) {
                     state.stringType = stream.peek();
                     stream.next(); // Skip quote
                     state.stack.unshift(stateType._string);
@@ -82,11 +83,12 @@ defineMode('ebnf', function(config) {
             const peek = stream.peek();
 
             if (bracesMode !== null && (state.braced || peek === '{')) {
-                if (state.localState === null)
+                if (state.localState === null) {
                     state.localState = startState(bracesMode);
+                }
 
-                let token = bracesMode.token(stream, state.localState),
-                    text = stream.current();
+                let token = bracesMode.token(stream, state.localState);
+                const text = stream.current();
 
                 if (!token) {
                     for (let i = 0; i < text.length; i++) {
@@ -169,7 +171,7 @@ defineMode('ebnf', function(config) {
                     return 'def';
                 }
                 return 'variable-2';
-            } else if (['[', ']', '(', ')'].indexOf(stream.peek()) != -1) {
+            } else if (['[', ']', '(', ')'].indexOf(stream.peek()) !== -1) {
                 stream.next();
                 return 'bracket';
             } else if (!stream.eatSpace()) {

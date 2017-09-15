@@ -6,7 +6,7 @@ Version: **1.x**
  - Tokens reducers
     - comment reducer
     - variable reducer
- - Config file processing
+ - ~~Config file processing~~
  - Custom reporter
     - register reporters
     - auto-register reporters
@@ -18,6 +18,9 @@ Version: **1.x**
     - auto-register storages
     - options for custom storage
  - Blame
+ - add help command for get all supported formats
+ - file for execute as cli
+ - gitignore support
  - Documentation 
 
 Version: **2.x** 
@@ -28,4 +31,6 @@ Version: **2.x**
     - sublimetext?
     - eclipse/netbeans?
  
- 
+ Improvements:
+  - ~~Improve JSX tokenizer~~
+  - Fix dependend formats

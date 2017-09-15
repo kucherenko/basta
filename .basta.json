@@ -1,6 +1,8 @@
 {
-  "excludes": [
+  "exclude": [
     "**/node_modules/**",
-    "*.min.js"
-  ]
+    "**/*.min.js",
+    "**/*.!(md|js|jsx|tsx)"
+  ],
+  "path": "./fixtures/"
 }

@@ -7,7 +7,7 @@ const FRONTMATTER = 1;
 const BODY = 2;
 
 // a mixed mode for Markdown text with an optional YAML front matter
-defineMode('yaml-frontmatter', function (config, parserConfig) {
+defineMode('yaml-frontmatter', (config, parserConfig) => {
     const yamlMode = getMode(config, 'yaml');
     const innerMode = getMode(config, parserConfig && parserConfig.base || 'gfm');
 

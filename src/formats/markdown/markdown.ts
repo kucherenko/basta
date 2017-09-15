@@ -1,10 +1,11 @@
+import "../htmlembedded/htmlembedded";
 import {findModeByName} from '../meta';
-import {defineMIME, defineMode, getMode, innerMode, startState, copyState} from '../index';
+import {defineMIME, defineMode, getMode, innerMode, startState, copyState} from '../';
 
-defineMode('markdown', function(cmCfg, modeCfg) {
+defineMode('markdown', (cmCfg, modeCfg) => {
 
     const htmlMode = getMode(cmCfg, 'text/html');
-    const htmlModeMissing = htmlMode.name == 'null';
+    const htmlModeMissing = htmlMode.name === 'null';
 
     function getModeByName(name) {
         const found = findModeByName(name);
@@ -12,18 +13,20 @@ defineMode('markdown', function(cmCfg, modeCfg) {
             name = found.mime || found.mimes[0];
         }
         const mode = getMode(cmCfg, name);
-        return mode.name == 'null' ? null : mode;
+        return mode.name === 'null' ? null : mode;
     }
 
     // Should characters that affect highlighting be highlighted separate?
     // Does not include characters that will be output (such as `1.` and `-` for lists)
-    if (modeCfg.highlightFormatting === undefined)
+    if (modeCfg.highlightFormatting === undefined) {
         modeCfg.highlightFormatting = false;
+    }
 
     // Maximum number of nested blockquotes. Set to 0 for infinite nesting.
     // Excess `>` will emit `error` token.
-    if (modeCfg.maxBlockquoteDepth === undefined)
+    if (modeCfg.maxBlockquoteDepth === undefined) {
         modeCfg.maxBlockquoteDepth = 0;
+    }
 
     // Use `fencedCodeBlocks` to configure fenced code blocks. false to
     // disable, string to specify a precise regexp that the fence should
@@ -31,15 +34,19 @@ defineMode('markdown', function(cmCfg, modeCfg) {
     // per CommonMark).
 
     // Turn on task lists? ("- [ ] " and "- [x] ")
-    if (modeCfg.taskLists === undefined) modeCfg.taskLists = false;
+    if (modeCfg.taskLists === undefined) {
+        modeCfg.taskLists = false;
+    }
 
     // Turn on strikethrough syntax
-    if (modeCfg.strikethrough === undefined)
+    if (modeCfg.strikethrough === undefined) {
         modeCfg.strikethrough = false;
+    }
 
     // Allow token types to be overridden by user-provided token types.
-    if (modeCfg.tokenTypeOverrides === undefined)
+    if (modeCfg.tokenTypeOverrides === undefined) {
         modeCfg.tokenTypeOverrides = {};
+    }
 
     const tokenTypes = {
         header: 'header',
@@ -68,16 +75,15 @@ defineMode('markdown', function(cmCfg, modeCfg) {
         }
     }
 
-    const hrRE = /^([*\-_])(?:\s*\1){2,}\s*$/
-        , listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/
-        , taskListRE = /^\[(x| )\](?=\s)/ // Must follow listRE
-        , atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/
-        , setextHeaderRE = /^ *(?:\={1,}|-{1,})\s*$/
-        , textRE = /^[^#!\[\]*_\\<>` "'(~]+/
-        ,
-        fencedCodeRE = new RegExp('^(' + (modeCfg.fencedCodeBlocks === true ? '~~~+|```+' : modeCfg.fencedCodeBlocks) +
-            ')[ \\t]*([\\w+#\-]*)')
-        , punctuation = /[!\"#$%&\'()*+,\-\.\/:;<=>?@\[\\\]^_`{|}~—]/;
+    const hrRE = /^([*\-_])(?:\s*\1){2,}\s*$/;
+    const listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/;
+    const taskListRE = /^\[(x| )\](?=\s)/;
+    const atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/;
+    const setextHeaderRE = /^ *(?:\={1,}|-{1,})\s*$/;
+    const textRE = /^[^#!\[\]*_\\<>` "'(~]+/;
+    const fencedCodeRE = new RegExp('^(' + (modeCfg.fencedCodeBlocks === true ? '~~~+|```+' : modeCfg.fencedCodeBlocks) +
+        ')[ \\t]*([\\w+#\-]*)');
+    const punctuation = /[!\"#$%&\'()*+,\-\.\/:;<=>?@\[\\\]^_`{|}~—]/;
 
     function switchInline(stream, state, f) {
         state.f = state.inline = f;
@@ -108,7 +114,7 @@ defineMode('markdown', function(cmCfg, modeCfg) {
         state.quote = 0;
         // Reset state.indentedCode
         state.indentedCode = false;
-        if (state.f == htmlBlock) {
+        if (state.f === htmlBlock) {
             state.f = inlineNormal;
             state.block = blockNormal;
         }
@@ -124,8 +130,8 @@ defineMode('markdown', function(cmCfg, modeCfg) {
     function blockNormal(stream, state) {
         const sol = stream.sol();
 
-        const prevLineIsList = state.list !== false,
-            prevLineIsIndentedCode = state.indentedCode;
+        const prevLineIsList = state.list !== false;
+        const prevLineIsIndentedCode = state.indentedCode;
 
         state.indentedCode = false;
 
@@ -157,7 +163,7 @@ defineMode('markdown', function(cmCfg, modeCfg) {
             return getType(state);
         } else if (!lineIsEmpty(state.prevLine) && !state.quote && !prevLineIsList &&
             !prevLineIsIndentedCode && (match = stream.match(setextHeaderRE))) {
-            state.header = match[0].charAt(0) == '=' ? 1 : 2;
+            state.header = match[0].charAt(0) === '=' ? 1 : 2;
             if (modeCfg.highlightFormatting) state.formatting = 'header';
             state.f = state.inline;
             return getType(state);

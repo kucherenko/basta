@@ -102,14 +102,17 @@ export function overlayMode(base, overlay, combine = null) {
         },
         electricChars: base.electricChars,
 
-        innerMode: function (state) {
-            return {state: state.base, mode: base};
-        },
+        innerMode: state => ({state: state.base, mode: base}),
 
-        blankLine: function (state) {
-            let baseToken, overlayToken;
-            if (base.blankLine) baseToken = base.blankLine(state.base);
-            if (overlay.blankLine) overlayToken = overlay.blankLine(state.overlay);
+        blankLine: state => {
+            let baseToken;
+            let overlayToken;
+            if (base.blankLine) {
+                baseToken = base.blankLine(state.base);
+            }
+            if (overlay.blankLine) {
+                overlayToken = overlay.blankLine(state.overlay);
+            }
 
             return overlayToken == null ?
                 baseToken :
@@ -123,7 +126,7 @@ export function overlayMode(base, overlay, combine = null) {
 export function resolveMode(spec) {
     if (typeof spec === 'string' && mimeModes.hasOwnProperty(spec)) {
         spec = mimeModes[spec];
-    } else if (spec && typeof spec.name == 'string' && mimeModes.hasOwnProperty(spec.name)) {
+    } else if (spec && typeof spec.name === 'string' && mimeModes.hasOwnProperty(spec.name)) {
         let found = mimeModes[spec.name];
         if (typeof found === 'string') {
             found = {name: found};

@@ -2,12 +2,12 @@ import {defineMIME, defineMode, getMode} from '../index';
 import {multiplexingMode} from '../multiplex';
 
 
-defineMode('twig:inner', function() {
-    let keywords: any = ['and', 'as', 'autoescape', 'endautoescape', 'block', 'do', 'endblock', 'else', 'elseif', 'extends', 'for', 'endfor', 'embed', 'endembed', 'filter', 'endfilter', 'flush', 'from', 'if', 'endif', 'in', 'is', 'include', 'import', 'not', 'or', 'set', 'spaceless', 'endspaceless', 'with', 'endwith', 'trans', 'endtrans', 'blocktrans', 'endblocktrans', 'macro', 'endmacro', 'use', 'verbatim', 'endverbatim'],
-        operator = /^[+\-*&%=<>!?|~^]/,
-        sign = /^[:\[\(\{]/,
-        atom: any = ['true', 'false', 'null', 'empty', 'defined', 'divisibleby', 'divisible by', 'even', 'odd', 'iterable', 'sameas', 'same as'],
-        number = /^(\d[+\-\*\/])?\d+(\.\d+)?/;
+defineMode('twig:inner', () => {
+    let keywords: any = ['and', 'as', 'autoescape', 'endautoescape', 'block', 'do', 'endblock', 'else', 'elseif', 'extends', 'for', 'endfor', 'embed', 'endembed', 'filter', 'endfilter', 'flush', 'from', 'if', 'endif', 'in', 'is', 'include', 'import', 'not', 'or', 'set', 'spaceless', 'endspaceless', 'with', 'endwith', 'trans', 'endtrans', 'blocktrans', 'endblocktrans', 'macro', 'endmacro', 'use', 'verbatim', 'endverbatim'];
+    const operator = /^[+\-*&%=<>!?|~^]/;
+    const sign = /^[:\[\(\{]/;
+    let atom: any = ['true', 'false', 'null', 'empty', 'defined', 'divisibleby', 'divisible by', 'even', 'odd', 'iterable', 'sameas', 'same as'];
+    const number = /^(\d[+\-\*\/])?\d+(\.\d+)?/;
 
     keywords = new RegExp('((' + keywords.join(')|(') + '))\\b');
     atom = new RegExp('((' + atom.join(')|(') + '))\\b');
@@ -110,18 +110,16 @@ defineMode('twig:inner', function() {
     }
 
     return {
-        startState: function() {
-            return {};
-        },
-        token: function(stream, state) {
-            return tokenBase(stream, state);
-        }
+        startState: () => ({}),
+        token: (stream, state) => tokenBase(stream, state)
     };
 });
 
-defineMode('twig', function(config, parserConfig) {
+defineMode('twig', (config, parserConfig) => {
     const twigInner = getMode(config, 'twig:inner');
-    if (!parserConfig || !parserConfig.base) return twigInner;
+    if (!parserConfig || !parserConfig.base) {
+        return twigInner;
+    }
     return multiplexingMode(
         getMode(config, parserConfig.base), {
             open: /\{[{#%]/, close: /[}#%]\}/, mode: twigInner, parseDelimiters: true

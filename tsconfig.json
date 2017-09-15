@@ -26,6 +26,6 @@
   "exclude": [
     "src/**/*.test.ts",
     "src/test",
-    "fixtures"
+    "fixtures/"
   ]
 }

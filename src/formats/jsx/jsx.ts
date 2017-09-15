@@ -2,11 +2,15 @@
 // context 0 means not in tag, 1 means in tag, and 2 means in tag
 // and js block comment.
 import {copyState, defineMIME, defineMode, getMode, startState} from '../index';
-function Context(state, mode, depth = undefined, prev = undefined) {
+
+import "../javascript/javascript";
+import "../xml/xml";
+
+function Context(state, mode, ...args) {
     this.state = state;
     this.mode = mode;
-    this.depth = depth;
-    this.prev = prev;
+    this.depth = args[0];
+    this.prev = args[1];
 }
 
 function copyContext(context) {
@@ -16,9 +20,10 @@ function copyContext(context) {
         context.prev && copyContext(context.prev));
 }
 
-defineMode('jsx', function(config, modeConfig) {
-    const xmlMode = getMode(config, {name: 'xml', allowMissing: true, multilineTagIndentPastTag: false});
-    const jsMode = getMode(config, modeConfig && modeConfig.base || 'javascript');
+defineMode('jsx', (config, modeConfig) => {
+    const xmlMode = getMode(config, {name: 'xml', mode: 'xml', allowMissing: true, multilineTagIndentPastTag: false});
+    const typescript = modeConfig && modeConfig.base && modeConfig.base.typescript;
+    const jsMode = getMode(config, {name: 'javascript', mode: 'javascript', typescript});
 
     function flatXMLIndent(state) {
         const tagName = state.tagName;
@@ -29,33 +34,41 @@ defineMode('jsx', function(config, modeConfig) {
     }
 
     function token(stream, state) {
-        if (state.context.mode == xmlMode)
+        if (state.context.mode === xmlMode) {
             return xmlToken(stream, state, state.context);
-        else
+        } else {
             return jsToken(stream, state, state.context);
+        }
     }
 
     function xmlToken(stream, state, cx) {
-        if (cx.depth == 2) { // Inside a JS /* */ comment
-            if (stream.match(/^.*?\*\//)) cx.depth = 1;
-            else stream.skipToEnd();
+        if (cx.depth === 2) { // Inside a JS /* */ comment
+            if (stream.match(/^.*?\*\//)) {
+                cx.depth = 1;
+            } else {
+                stream.skipToEnd();
+            }
             return 'comment';
         }
 
-        if (stream.peek() == '{') {
+        if (stream.peek() === '{') {
             xmlMode.skipAttribute(cx.state);
 
-            let indent = flatXMLIndent(cx.state), xmlContext = cx.state.context;
+            let indent = flatXMLIndent(cx.state);
+            let xmlContext = cx.state.context;
             // If JS starts on same line as tag
             if (xmlContext && stream.match(/^[^>]*>\s*$/, false)) {
-                while (xmlContext.prev && !xmlContext.startOfLine)
+                while (xmlContext.prev && !xmlContext.startOfLine) {
                     xmlContext = xmlContext.prev;
+                }
                 // If tag starts the line, use XML indentation level
-                if (xmlContext.startOfLine) indent -= config.indentUnit;
-                // Else use JS indentation level
-                else if (cx.prev.state.lexical) indent = cx.prev.state.lexical.indented;
+                if (xmlContext.startOfLine) {
+                    indent -= config.indentUnit;
+                } else if (cx.prev.state.lexical) {
+                    indent = cx.prev.state.lexical.indented;
+                }
                 // Else if inside of tag
-            } else if (cx.depth == 1) {
+            } else if (cx.depth === 1) {
                 indent += config.indentUnit;
             }
 
@@ -64,8 +77,8 @@ defineMode('jsx', function(config, modeConfig) {
             return null;
         }
 
-        if (cx.depth == 1) { // Inside of tag
-            if (stream.peek() == '<') { // Tag inside of tag
+        if (cx.depth === 1) { // Inside of tag
+            if (stream.peek() === '<') { // Tag inside of tag
                 xmlMode.skipAttribute(cx.state);
                 state.context = new Context(startState(xmlMode, flatXMLIndent(cx.state)),
                     xmlMode, 0, state.context);
@@ -79,11 +92,16 @@ defineMode('jsx', function(config, modeConfig) {
             }
         }
 
-        let style = xmlMode.token(stream, cx.state), cur = stream.current(), stop;
+        let style = xmlMode.token(stream, cx.state);
+        let cur = stream.current();
+        let stop;
         if (/\btag\b/.test(style)) {
             if (/>$/.test(cur)) {
-                if (cx.state.context) cx.depth = 0;
-                else state.context = state.context.prev;
+                if (cx.state.context) {
+                    cx.depth = 0;
+                } else {
+                    state.context = state.context.prev;
+                }
             } else if (/^</.test(cur)) {
                 cx.depth = 1;
             }
@@ -94,7 +112,7 @@ defineMode('jsx', function(config, modeConfig) {
     }
 
     function jsToken(stream, state, cx) {
-        if (stream.peek() == '<' && jsMode.expressionAllowed(stream, cx.state)) {
+        if (stream.peek() === '<' && jsMode.expressionAllowed(stream, cx.state)) {
             jsMode.skipExpression(cx.state);
             state.context = new Context(startState(xmlMode, jsMode.indent(cx.state, '')),
                 xmlMode, 0, state.context);
@@ -104,35 +122,29 @@ defineMode('jsx', function(config, modeConfig) {
         const style = jsMode.token(stream, cx.state);
         if (!style && cx.depth != null) {
             const cur = stream.current();
-            if (cur == '{') {
+            if (cur === '{') {
                 cx.depth++;
-            } else if (cur == '}') {
-                if (--cx.depth == 0) state.context = state.context.prev;
+            } else if (cur === '}') {
+                if (--cx.depth === 0) {
+                    state.context = state.context.prev;
+                }
             }
         }
         return style;
     }
 
     return {
-        startState: function() {
-            return {context: new Context(startState(jsMode), jsMode)};
-        },
+        startState: () => ({context: new Context(startState(jsMode), jsMode)}),
 
-        copyState: function(state) {
-            return {context: copyContext(state.context)};
-        },
+        copyState: state => ({context: copyContext(state.context)}),
 
         token: token,
 
-        indent: function(state, textAfter, fullLine) {
-            return state.context.mode.indent(state.context.state, textAfter, fullLine);
-        },
+        indent: (state, textAfter, fullLine) => state.context.mode.indent(state.context.state, textAfter, fullLine),
 
-        innerMode: function(state) {
-            return state.context;
-        }
+        innerMode: state => state.context
     };
 }, 'xml', 'javascript');
 
 defineMIME('text/jsx', 'jsx');
-defineMIME('text/typescript-jsx', {name: 'jsx', base: {name: 'javascript', typescript: true}});
+defineMIME('text/typescript-jsx', {name: 'jsx', base: {name: 'javascript', mode: 'javascript', typescript: true}});

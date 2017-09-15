@@ -13,4 +13,4 @@ module.exports = (sourceDir) =>
         (spec) => require(spec)
     );
 
-}
+};

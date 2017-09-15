@@ -121,7 +121,6 @@ export function generateMap(content, mode) {
         map += generateTokenHash(token);
     });
 
-
     return {map, tokensPositions};
 }
 

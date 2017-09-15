@@ -2,7 +2,7 @@
   "name": "basta",
   "version": "1.0.0",
   "description": "Basta is clone detection tool (copy/paste detector), support 100+ programming languages. Developed by Andrey Kucherenko.",
-  "main": "index.js",
+  "main": "lib/index.js",
   "author": "Andrey Kucherenko <kucherenko.andrey@gmail.com>",
   "license": "MIT",
   "scripts": {

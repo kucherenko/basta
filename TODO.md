@@ -1,11 +1,9 @@
 #Navigation Map for Basta Copy/Paste Detection Tool
 
 
-Version: **1.x**
+##Version: **1.x**
  - ~~Export basta API~~
- - Tokens reducers
-    - comment reducer
-    - variable reducer
+ - ~~Tokens reducers~~
  - ~~Config file processing~~
  - Custom reporter
     - register reporters
@@ -20,10 +18,10 @@ Version: **1.x**
  - Blame
  - add help command for get all supported formats
  - file for execute as cli
- - gitignore support
  - Documentation 
 
-Version: **2.x** 
+##Version: **2.x** 
+ - gitignore support
  - Integration with IDE
     - atom
     - vscode
@@ -33,4 +31,4 @@ Version: **2.x**
  
  Improvements:
   - ~~Improve JSX tokenizer~~
-  - Fix dependend formats
+  - Fix depended formats

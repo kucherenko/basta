@@ -8,5 +8,5 @@ export interface IOptions {
     reporter?: string[];
     blame?: boolean;
     debug?: boolean;
-    'dont-skip-comments'?: boolean;
+    dontSkipComments?: boolean;
 }

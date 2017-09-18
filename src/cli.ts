@@ -16,7 +16,7 @@ function prepareOptions(cli: Command): IOptions {
         minLines: cli['min-lines'],
         debug: cli['debug'],
         output: cli['output'],
-        'dont-skip-comments': cli['dont-skip-comments'],
+        dontSkipComments: cli.dontSkipComments,
     };
 
     if (cli['reporter']) {
@@ -56,7 +56,7 @@ function prepareOptions(cli: Command): IOptions {
             reporter: ['html', 'console'],
             exclude: [],
             debug: false,
-            'dont-skip-comments': false
+            dontSkipComments: false
         },
         ...storedConfig,
         ...argsConfig
@@ -76,7 +76,7 @@ cli.option('-r, --reporter [string]', 'reporter to use (Default is console)');
 cli.option('-o, --output [string]', 'reporter to use (Default is ./report/)');
 cli.option('-b, --blame', 'blame authors of duplications (get information about authors from git)');
 cli.option('-d, --debug', 'show debug information(options list and selected files)');
-cli.option('--dont-skip-comments', `don't skip comments`);
+cli.option('--dontSkipComments', `don't skip comments`);
 
 cli.parse(process.argv);
 

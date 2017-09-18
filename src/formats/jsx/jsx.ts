@@ -92,8 +92,8 @@ defineMode('jsx', (config, modeConfig) => {
             }
         }
 
-        let style = xmlMode.token(stream, cx.state);
-        let cur = stream.current();
+        const style = xmlMode.token(stream, cx.state);
+        const cur = stream.current();
         let stop;
         if (/\btag\b/.test(style)) {
             if (/>$/.test(cur)) {

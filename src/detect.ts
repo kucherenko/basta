@@ -8,7 +8,7 @@ import {IMaps} from "./storage/maps.interface";
 import {IClones} from "./storage/clones.interface";
 import {IStatistic} from "./storage/statistic.interface";
 import {getClonesStorage, getMapsStorage, getStatisticStorage} from "./storage/";
-import {generateTokenHash, isValidToken, TOKEN_HASH_LENGTH} from "./tokens/";
+import {generateTokenHash, TOKEN_HASH_LENGTH, validateToken} from "./tokens/";
 
 
 function getCloneBody(content, firstLine, lastLine) {
@@ -111,12 +111,12 @@ export function detectByMap(source: ISource, mode, content, map, tokensPositions
 
 }
 
-export function generateMap(content, mode) {
+export function generateMap(content, mode, options: IOptions) {
     const tokensPositions = [];
 
     let map = '';
 
-    runMode(content, mode, {}).filter(isValidToken).forEach((token) => {
+    runMode(content, mode, {}).filter(validateToken(options, mode)).forEach((token) => {
         tokensPositions.push(token.line + 1);
         map += generateTokenHash(token);
     });
@@ -126,7 +126,7 @@ export function generateMap(content, mode) {
 
 export function detect(source: ISource, mode, content, options: IOptions) {
 
-    const {map, tokensPositions} = generateMap(content, mode);
+    const {map, tokensPositions} = generateMap(content, mode, options);
 
     detectByMap(
         source,

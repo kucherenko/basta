@@ -1,4 +1,5 @@
 import {createHash} from "crypto";
+import {IOptions} from "../options.interface";
 
 
 export const TOKEN_TYPE_HASH_LENGTH = 3;
@@ -7,12 +8,14 @@ export const TOKEN_HASH_LENGTH = TOKEN_TYPE_HASH_LENGTH + TOKEN_VALUE_HASH_LENGT
 
 const tokenTypes = {};
 
-export function isValidToken(token) {
-    let isValid = token.hasOwnProperty('type');
-    // console.log(tokenTypes);
-    isValid = isValid && token.type !== 'comment';
-    // isValid = isValid && !(token.type === 'blank' && token.value.match(/^\s*$/));
-    return isValid;
+export function validateToken(options: IOptions, mode) {
+    return token => {
+        let isValid = token.hasOwnProperty('type');
+        if (!options.dontSkipComments) {
+            isValid = isValid && token.type !== 'comment';
+        }
+        return isValid;
+    };
 }
 
 export function generateTokenTypeHash(tokenType: string): string {

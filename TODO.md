@@ -6,7 +6,7 @@
  - ~~Tokens reducers~~
  - ~~Config file processing~~
  - Custom reporter
-    - register reporters
+    - ~~register reporters~~
     - auto-register reporters
     - move reporters to separate packages
  - Thresholds

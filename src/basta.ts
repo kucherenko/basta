@@ -6,10 +6,9 @@ import {detect} from "./detect";
 import {getClonesStorage, getMapsStorage, getStatisticStorage} from "./storage/";
 import {IClones} from "./storage/clones.interface";
 import {IStatistic} from "./storage/statistic.interface";
-import {ConsoleReporter} from "./reporters/console";
-import {HtmlReporter} from "./reporters/html";
 import {relative} from "path";
 import {IMaps} from "./storage/maps.interface";
+import {getReporter, hasReporter, registerReporter} from "./reporters/index";
 
 const create = require('glob-stream');
 
@@ -60,8 +59,13 @@ export function basta(options: IOptions) {
         const maps: IMaps = getMapsStorage(options);
 
         if (!options.debug) {
-            [new ConsoleReporter(), new HtmlReporter()]
-                .map((reporter) => reporter.report(options, {clones, statistic, maps}));
+            options.reporter.map((reporter) => {
+                if (hasReporter(reporter)) {
+                    getReporter(reporter).report(options, {clones, statistic, maps});
+                } else {
+                    console.warn(`Reporter named "${reporter}" not registered`.yellow);
+                }
+            });
             console.timeEnd('Working Time'.grey);
         }
 

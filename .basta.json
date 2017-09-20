@@ -2,7 +2,7 @@
   "exclude": [
     "**/node_modules/**",
     "**/*.min.js",
-    "**/*.!(js)"
+    "**/*.!(pug)"
   ],
   "path": "./fixtures/"
 }

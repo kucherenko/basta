@@ -1,4 +1,4 @@
-import {defineMIME, defineMode, getMode, mimeModes} from "../index";
+import {copyState, defineMIME, defineMode, getMode, mimeModes, startState} from "../index";
 
 defineMode("pug", (config) => {
     // token types
@@ -57,7 +57,7 @@ defineMode("pug", (config) => {
      *
      * @return {State}
      */
-    State.prototype.copy = () => {
+    State.prototype.copy = function () {
         const res = new State();
         res.javaScriptLine = this.javaScriptLine;
         res.javaScriptLineExcludesColon = this.javaScriptLineExcludesColon;
@@ -298,6 +298,7 @@ defineMode("pug", (config) => {
                 state.isEach = false;
             } else if (stream.next()) {
                 while (!stream.match(/^ in\b/, false) && stream.next()) {
+
                 }
                 return 'variable';
             }
@@ -385,7 +386,7 @@ defineMode("pug", (config) => {
                 if (stream.peek() === '=' || stream.peek() === '!') {
                     state.inAttributeName = false;
                     state.jsState = startState(jsMode);
-                    state.attributeIsType = (state.lastTag === 'script' && stream.current().trim().toLowerCase() === 'type');
+                    state.attributeIsType = state.lastTag === 'script' && stream.current().trim().toLowerCase() === 'type';
                 }
                 return 'attribute';
             }
@@ -396,7 +397,7 @@ defineMode("pug", (config) => {
             }
             if (state.attrsNest.length === 0 && (tok === 'string' || tok === 'variable' || tok === 'keyword')) {
                 try {
-                    Function('', 'const x ' + state.attrValue.replace(/,\s*$/, '').replace(/^!/, ''));
+                    Function('', 'var x ' + state.attrValue.replace(/,\s*$/, '').replace(/^!/, ''));
                     state.inAttributeName = true;
                     state.attrValue = '';
                     stream.backUp(stream.current().length);
@@ -418,7 +419,7 @@ defineMode("pug", (config) => {
         }
     }
 
-    function indent(stream, state) {
+    function indent(stream, ...args) {
         if (stream.sol() && stream.eatSpace()) {
             return 'indent';
         }
@@ -432,7 +433,7 @@ defineMode("pug", (config) => {
         }
     }
 
-    function colon(stream, state) {
+    function colon(stream, ...args) {
         if (stream.match(/^: */)) {
             return 'colon';
         }
@@ -463,7 +464,7 @@ defineMode("pug", (config) => {
         }
     }
 
-    function fail(stream, state) {
+    function fail(stream, ...args) {
         stream.next();
         return null;
     }
@@ -489,9 +490,7 @@ defineMode("pug", (config) => {
                 if (!state.innerState) {
                     state.innerState = state.innerMode.startState ? startState(state.innerMode, stream.indentation()) : {};
                 }
-                return stream.hideFirstChars(state.indentOf + 2, () => {
-                    return state.innerMode.token(stream, state.innerState) || true;
-                });
+                return stream.hideFirstChars(state.indentOf + 2, () => state.innerMode.token(stream, state.innerState) || true);
             } else {
                 stream.skipToEnd();
                 return state.indentToken;
@@ -515,15 +514,6 @@ defineMode("pug", (config) => {
             state.restOfLine = '';
             return tok;
         }
-    }
-
-
-    function startState(...args) {
-        return new State();
-    }
-
-    function copyState(state, ...args) {
-        return state.copy();
     }
 
     /**
@@ -578,12 +568,11 @@ defineMode("pug", (config) => {
     }
 
     return {
-        startState: startState,
-        copyState: copyState,
+        startState: () => new State(),
+        copyState: state => state.copy(),
         token: nextToken
     };
 }, 'javascript', 'css', 'htmlmixed');
 
 defineMIME('text/x-pug', 'pug');
 defineMIME('text/x-jade', 'pug');
-

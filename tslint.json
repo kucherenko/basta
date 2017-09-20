@@ -14,6 +14,7 @@
     "no-unused-variable": false,
     "object-literal-sort-keys": false,
     "object-literal-key-quotes": false,
+    "no-conditional-assignment": false,
     "object-literal-shorthand": false,
     "variable-name": [
       true,

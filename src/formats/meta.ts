@@ -343,13 +343,13 @@ export const modeInfo: FormatMetadata[] = [
         mode: 'idl',
         ext: ['pro']
     },
-    // {
-    //     name: 'Pug',
-    //     mime: 'text/x-pug',
-    //     mode: 'pug',
-    //     ext: ['jade', 'pug'],
-    //     alias: ['jade']
-    // },
+    {
+        name: 'Pug(jade)',
+        mime: 'text/x-pug',
+        mode: 'pug',
+        ext: ['jade', 'pug'],
+        alias: ['jade']
+    },
     {
         name: 'Java',
         mime: 'text/x-java',

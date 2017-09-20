@@ -5,22 +5,23 @@
  - ~~Export basta API~~
  - ~~Tokens reducers~~
  - ~~Config file processing~~
- - Custom reporter
+ - ~~Custom reporter
     - ~~register reporters~~
-    - auto-register reporters
-    - move reporters to separate packages
+    - ~~register existing reporters~~
  - Thresholds
-    - setup separate limits for different modes
+    - setup separate limits for different formats
  - Custom storage
     - register storage
     - auto-register storages
     - options for custom storage
  - Blame
- - add help command for get all supported formats
+ - ~~add help command for get all supported formats~~
  - file for execute as cli
  - Documentation 
 
-##Version: **2.x** 
+##Version: **2.x**
+ - tree structure duplication detection
+ - image duplication detection
  - gitignore support
  - Integration with IDE
     - atom
@@ -28,7 +29,8 @@
     - Idea?
     - sublimetext?
     - eclipse/netbeans?
- 
- Improvements:
+- move reporters to separate packages
+
+##Improvements && bugs:
   - ~~Improve JSX tokenizer~~
   - Fix depended formats

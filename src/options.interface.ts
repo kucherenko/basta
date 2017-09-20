@@ -8,5 +8,6 @@ export interface IOptions {
     reporter?: string[];
     blame?: boolean;
     debug?: boolean;
+    list?: boolean;
     dontSkipComments?: boolean;
 }

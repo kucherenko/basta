@@ -11,7 +11,7 @@ export interface FormatMetadata {
     alias?: string[];
 }
 
-export const modeInfo: FormatMetadata[] = [
+export const modesInfo: FormatMetadata[] = [
     {
         name: 'APL',
         mime: 'text/apl',
@@ -344,7 +344,7 @@ export const modeInfo: FormatMetadata[] = [
         ext: ['pro']
     },
     {
-        name: 'Pug(jade)',
+        name: 'Pug',
         mime: 'text/x-pug',
         mode: 'pug',
         ext: ['jade', 'pug'],
@@ -391,11 +391,6 @@ export const modeInfo: FormatMetadata[] = [
         mime: 'text/jsx',
         mode: 'jsx',
         ext: ['jsx']
-    },
-    {
-        name: 'Jinja2',
-        mime: 'null',
-        mode: 'jinja2'
     },
     {
         name: 'Julia',
@@ -957,19 +952,16 @@ export const modeInfo: FormatMetadata[] = [
 
 export function findModeByMIME(mime) {
     mime = mime.toLowerCase();
-    for (let i = 0; i < modeInfo.length; i++) {
-        const info = modeInfo[i];
+
+    modesInfo.forEach((info: FormatMetadata) => {
         if (info.mime === mime) {
             return info;
         }
-        if (info.mimes) {
-            for (let j = 0; j < info.mimes.length; j++) {
-                if (info.mimes[j] === mime) {
-                    return info;
-                }
-            }
+        if (info.mimes.includes(mime)) {
+            return info;
         }
-    }
+    });
+
     if (/\+xml$/.test(mime)) {
         return findModeByMIME('application/xml');
     }
@@ -979,8 +971,7 @@ export function findModeByMIME(mime) {
 }
 
 export function findModeByExtension(ext): FormatMetadata {
-    for (let i = 0; i < modeInfo.length; i++) {
-        const format: FormatMetadata = modeInfo[i];
+    for (const format of modesInfo) {
         if (format.ext && format.ext.includes(ext)) {
             return requireFormat(format);
         }
@@ -988,8 +979,7 @@ export function findModeByExtension(ext): FormatMetadata {
 }
 
 export function findModeByFileName(filename: string): FormatMetadata {
-    for (let i = 0; i < modeInfo.length; i++) {
-        const format: FormatMetadata = modeInfo[i];
+    for (const format of modesInfo) {
         if (format.file && format.file.test(filename)) {
             return requireFormat(format);
         }
@@ -1003,14 +993,13 @@ export function findModeByFileName(filename: string): FormatMetadata {
 
 export function findModeByName(name): FormatMetadata {
     name = name.toLowerCase();
-    for (let i = 0; i < modeInfo.length; i++) {
-        const format: FormatMetadata = modeInfo[i];
+    for (const format of modesInfo) {
         if (format.name.toLowerCase() === name) {
             return format;
         }
         if (format.alias) {
-            for (let j = 0; j < format.alias.length; j++) {
-                if (format.alias[j].toLowerCase() === name) {
+            for (const alias of format.alias) {
+                if (alias.toLowerCase() === name) {
                     return requireFormat(format);
                 }
             }
@@ -1019,7 +1008,7 @@ export function findModeByName(name): FormatMetadata {
 }
 
 
-function requireFormat(format: FormatMetadata): FormatMetadata {
+export function requireFormat(format: FormatMetadata): FormatMetadata {
     if (!hasFormat(format.mode)) {
         require(resolve(`${__dirname}/${format.mode}/${format.mode}`));
     }

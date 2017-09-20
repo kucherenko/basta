@@ -9,6 +9,7 @@ import {IClones} from "./storage/clones.interface";
 import {IStatistic} from "./storage/statistic.interface";
 import {getClonesStorage, getMapsStorage, getStatisticStorage} from "./storage/";
 import {generateTokenHash, TOKEN_HASH_LENGTH, validateToken} from "./tokens/";
+import {findModeByMIME, findModeByName} from "./formats/meta";
 
 
 function getCloneBody(content, firstLine, lastLine) {
@@ -124,7 +125,8 @@ export function generateMap(content, mode, options: IOptions) {
     return {map, tokensPositions};
 }
 
-export function detect(source: ISource, mode, content, options: IOptions) {
+export function detect(source: ISource, format, content, options: IOptions) {
+    const mode = format.name ? format : findModeByName(format) || findModeByMIME(format);
 
     const {map, tokensPositions} = generateMap(content, mode, options);
 

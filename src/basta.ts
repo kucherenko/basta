@@ -1,16 +1,17 @@
 import "colors";
 import {IOptions} from "./options.interface";
 import {lstatSync, readFileSync} from "fs";
-import {findModeByFileName} from "./formats/meta";
+import {findModeByFileName, FormatMetadata, modesInfo} from "./formats/meta";
 import {detect} from "./detect";
 import {getClonesStorage, getMapsStorage, getStatisticStorage} from "./storage/";
 import {IClones} from "./storage/clones.interface";
 import {IStatistic} from "./storage/statistic.interface";
 import {relative} from "path";
 import {IMaps} from "./storage/maps.interface";
-import {getReporter, hasReporter, registerReporter} from "./reporters/index";
+import {getReporter, hasReporter} from "./reporters/index";
 
 const create = require('glob-stream');
+const Table = require("cli-table2");
 
 export function basta(options: IOptions) {
     console.time('Working Time'.grey);
@@ -33,6 +34,23 @@ export function basta(options: IOptions) {
         console.log(ignores);
         console.log('---------'.blue);
         console.log('Files:'.bold);
+    }
+
+    if (options.list) {
+        const formatsTable = new Table({
+            head: ['Format', 'Mode', 'Mimes', 'Extensions']
+        });
+
+        modesInfo.forEach((mode: FormatMetadata) => {
+            formatsTable.push([
+                mode.name,
+                mode.mode,
+                mode.mimes ? mode.mimes.toString() : mode.mime,
+                mode.ext ? mode.ext.toString() : '-'
+            ]);
+        });
+
+        return console.log(formatsTable.toString());
     }
 
     stream.on('data', ({path}, encoding, callback) => {

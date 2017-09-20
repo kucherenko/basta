@@ -16,6 +16,7 @@ function prepareOptions(cli: Command): IOptions {
         minLines: cli['min-lines'],
         debug: cli['debug'],
         output: cli['output'],
+        list: cli['list'],
         dontSkipComments: cli.dontSkipComments,
     };
 
@@ -76,6 +77,7 @@ cli.option('-r, --reporter [string]', 'reporter to use (Default is console)');
 cli.option('-o, --output [string]', 'reporter to use (Default is ./report/)');
 cli.option('-b, --blame', 'blame authors of duplications (get information about authors from git)');
 cli.option('-d, --debug', 'show debug information(options list and selected files)');
+cli.option('--list', 'show list of all supported formats');
 cli.option('--dontSkipComments', `don't skip comments`);
 
 cli.parse(process.argv);

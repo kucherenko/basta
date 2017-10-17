@@ -1,6 +1,7 @@
 export interface IOptions {
     minLines: number;
     minTokens: number;
+    threshold?: number;
     output: string;
     path: string;
     config?: string;

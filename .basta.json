@@ -1,8 +1,7 @@
 {
   "exclude": [
     "**/node_modules/**",
-    "**/*.min.js",
-    "**/*.!(pug|js|ts|scala)"
+    "**/*.min.js"
   ],
   "path": "./fixtures/"
 }

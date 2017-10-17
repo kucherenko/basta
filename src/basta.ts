@@ -53,7 +53,7 @@ export function basta(options: IOptions) {
         return console.log(formatsTable.toString());
     }
 
-    stream.on('data', ({path}, encoding, callback) => {
+    stream.on('data', ({path}) => {
         if (lstatSync(path).isFile()) {
             const statistic: IStatistic = getStatisticStorage({});
             const mode = findModeByFileName(path);
@@ -85,7 +85,11 @@ export function basta(options: IOptions) {
                 }
             });
             console.timeEnd('Working Time'.grey);
+            const rate = statistic.get().rate;
+            if (options.threshold && options.threshold <= rate) {
+                console.error(`Error: duplication rate(${rate}%) less then threshold(${options.threshold}%)`.bold.red);
+                process.exit(1);
+            }
         }
-
     });
 }

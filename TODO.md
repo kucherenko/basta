@@ -8,8 +8,7 @@
  - ~~Custom reporter
     - ~~register reporters~~
     - ~~register existing reporters~~
- - Thresholds
-    - setup separate limits for different formats
+ - ~~Threshold~~
  - Custom storage
     - register storage
     - auto-register storages
@@ -20,6 +19,7 @@
  - Documentation 
 
 ##Version: **2.x**
+ - setup separate threshold for different formats
  - tree structure duplication detection
  - image duplication detection
  - gitignore support
@@ -33,4 +33,4 @@
 
 ##Improvements && bugs:
   - ~~Improve JSX tokenizer~~
-  - Fix depended formats
+  - ~~Fix depended formats~~

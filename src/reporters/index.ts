@@ -2,7 +2,7 @@ import {IReporter} from "./reporter.interface";
 import {ConsoleReporter} from "./console";
 import {HtmlReporter} from "./html";
 
-interface IReporters {
+export interface IReporters {
     [name: string]: IReporter;
 }
 

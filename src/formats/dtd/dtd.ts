@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('dtd', function(config) {
     let indentUnit = config.indentUnit, type;
 
@@ -10,27 +11,36 @@ defineMode('dtd', function(config) {
     function tokenBase(stream, state) {
         const ch = stream.next();
 
-        if (ch == '<' && stream.eat('!')) {
+        if (ch === '<' && stream.eat('!')) {
             if (stream.eatWhile(/[\-]/)) {
                 state.tokenize = tokenSGMLComment;
                 return tokenSGMLComment(stream, state);
-            } else if (stream.eatWhile(/[\w]/)) return ret('keyword', 'doindent');
-        } else if (ch == '<' && stream.eat('?')) { //xml declaration
+            } else if (stream.eatWhile(/[\w]/)) {
+                return ret('keyword', 'doindent');
+            }
+        } else if (ch === '<' && stream.eat('?')) { //xml declaration
             state.tokenize = inBlock('meta', '?>');
             return ret('meta', ch);
-        } else if (ch == '#' && stream.eatWhile(/[\w]/)) return ret('atom', 'tag');
-        else if (ch == '|') return ret('keyword', 'seperator');
-        else if (ch.match(/[\(\)\[\]\-\.,\+\?>]/)) return ret(null, ch);//if(ch === ">") return ret(null, "endtag"); else
-        else if (ch.match(/[\[\]]/)) return ret('rule', ch);
-        else if (ch == '"' || ch == "'") {
+        } else if (ch === '#' && stream.eatWhile(/[\w]/)) {
+            return ret('atom', 'tag');
+        } else if (ch === '|') {
+            return ret('keyword', 'seperator');
+        } else if (ch.match(/[\(\)\[\]\-\.,\+\?>]/)) {
+            return ret(null, ch);
+        } else if (ch.match(/[\[\]]/)) {
+            return ret('rule', ch);
+        } else if (ch === '"' || ch === "'") {
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         } else if (stream.eatWhile(/[a-zA-Z\?\+\d]/)) {
             const sc = stream.current();
-            if (sc.substr(sc.length - 1, sc.length).match(/\?|\+/) !== null) stream.backUp(1);
+            if (sc.substr(sc.length - 1, sc.length).match(/\?|\+/) !== null) {
+                stream.backUp(1);
+            }
             return ret('tag', 'tag');
-        } else if (ch == '%' || ch == '*') return ret('number', 'number');
-        else {
+        } else if (ch === '%' || ch === '*') {
+            return ret('number', 'number');
+        } else {
             stream.eatWhile(/[\w\\\-_%.{,]/);
             return ret(null, null);
         }
@@ -38,12 +48,12 @@ defineMode('dtd', function(config) {
 
     function tokenSGMLComment(stream, state) {
         let dashes = 0, ch;
-        while ((ch = stream.next()) != null) {
-            if (dashes >= 2 && ch == '>') {
+        while ((ch = stream.next()) !== null) {
+            if (dashes >= 2 && ch === '>') {
                 state.tokenize = tokenBase;
                 break;
             }
-            dashes = (ch == '-') ? dashes + 1 : 0;
+            dashes = (ch === '-') ? dashes + 1 : 0;
         }
         return ret('comment', 'comment');
     }
@@ -51,12 +61,12 @@ defineMode('dtd', function(config) {
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, ch;
-            while ((ch = stream.next()) != null) {
-                if (ch == quote && !escaped) {
+            while ((ch = stream.next()) !== null) {
+                if (ch === quote && !escaped) {
                     state.tokenize = tokenBase;
                     break;
                 }
-                escaped = !escaped && ch == '\\';
+                escaped = !escaped && ch === '\\';
             }
             return ret('string', 'tag');
         };
@@ -84,43 +94,54 @@ defineMode('dtd', function(config) {
             };
         },
 
-        token: function(stream, state) {
-            if (stream.eatSpace()) return null;
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
+                return null;
+            }
             const style = state.tokenize(stream, state);
 
             const context = state.stack[state.stack.length - 1];
-            if (stream.current() == '[' || type === 'doindent' || type == '[') state.stack.push('rule');
-            else if (type === 'endtag') state.stack[state.stack.length - 1] = 'endtag';
-            else if (stream.current() == ']' || type == ']' || (type == '>' && context == 'rule')) state.stack.pop();
-            else if (type == '[') state.stack.push('[');
+            if (stream.current() === '[' || type === 'doindent' || type === '[') {
+                state.stack.push('rule');
+            } else if (type === 'endtag') {
+                state.stack[state.stack.length - 1] = 'endtag';
+            } else if (stream.current() === ']' || type === ']' || (type === '>' && context === 'rule')) {
+                state.stack.pop();
+            } else if (type === '[') {
+                state.stack.push('[');
+            }
             return style;
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             let n = state.stack.length;
 
-            if (textAfter.match(/\]\s+|\]/)) n = n - 1;
-            else if (textAfter.substr(textAfter.length - 1, textAfter.length) === '>') {
+            if (textAfter.match(/\]\s+|\]/)) {
+                n = n - 1;
+            } else if (textAfter.substr(textAfter.length - 1, textAfter.length) === '>') {
                 if (textAfter.substr(0, 1) === '<') {
+                } else if (type === 'doindent' && textAfter.length > 1) {
+                } else if (type === 'doindent') {
+                    n--;
+                } else if (type === '>' && textAfter.length > 1) {
+                } else if (type === 'tag' && textAfter !== '>') {
+                } else if (type === 'tag' && state.stack[state.stack.length - 1] === 'rule') {
+                    n--;
+                } else if (type === 'tag') {
+                    n++;
+                } else if (textAfter === '>' && state.stack[state.stack.length - 1] === 'rule' && type === '>') {
+                    n--;
+                } else if (textAfter === '>' && state.stack[state.stack.length - 1] === 'rule') {
+                } else if (textAfter.substr(0, 1) !== '<' && textAfter.substr(0, 1) === '>') {
+                    n = n - 1;
+                } else if (textAfter === '>') {
+                } else {
+                    n = n - 1;
                 }
-                else if (type == 'doindent' && textAfter.length > 1) {
-                }
-                else if (type == 'doindent') n--;
-                else if (type == '>' && textAfter.length > 1) {
-                }
-                else if (type == 'tag' && textAfter !== '>') {
-                }
-                else if (type == 'tag' && state.stack[state.stack.length - 1] == 'rule') n--;
-                else if (type == 'tag') n++;
-                else if (textAfter === '>' && state.stack[state.stack.length - 1] == 'rule' && type === '>') n--;
-                else if (textAfter === '>' && state.stack[state.stack.length - 1] == 'rule') {
-                }
-                else if (textAfter.substr(0, 1) !== '<' && textAfter.substr(0, 1) === '>') n = n - 1;
-                else if (textAfter === '>') {
-                }
-                else n = n - 1;
                 //over rule them all
-                if (type == null || type == ']') n--;
+                if (type === null || type === ']') {
+                    n--;
+                }
             }
 
             return state.baseIndent + n * indentUnit;

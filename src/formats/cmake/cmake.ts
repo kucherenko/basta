@@ -5,8 +5,8 @@ defineMode('cmake', function() {
 
     function tokenString(stream, state) {
         let current, prev, found_var = false;
-        while (!stream.eol() && (current = stream.next()) != state.pending) {
-            if (current === '$' && prev != '\\' && state.pending == '"') {
+        while (!stream.eol() && (current = stream.next()) !== state.pending) {
+            if (current === '$' && prev !== '\\' && state.pending === '"') {
                 found_var = true;
                 break;
             }
@@ -15,7 +15,7 @@ defineMode('cmake', function() {
         if (found_var) {
             stream.backUp(1);
         }
-        state.continueString = current != state.pending;
+        state.continueString = current !== state.pending;
         return 'string';
     }
 
@@ -41,18 +41,18 @@ defineMode('cmake', function() {
             stream.backUp(1);
             return 'def';
         }
-        if (ch == '#') {
+        if (ch === '#') {
             stream.skipToEnd();
             return 'comment';
         }
         // Have we found a string?
-        if (ch == "'" || ch == '"') {
+        if (ch === "'" || ch === '"') {
             // Store the type (single or double)
             state.pending = ch;
             // Perform the looping function to find the end
             return tokenString(stream, state);
         }
-        if (ch == '(' || ch == ')') {
+        if (ch === '(' || ch === ')') {
             return 'bracket';
         }
         if (ch.match(/[0-9]/)) {
@@ -63,7 +63,7 @@ defineMode('cmake', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 inDefinition: false,
                 inInclude: false,
@@ -71,8 +71,10 @@ defineMode('cmake', function() {
                 pending: false
             };
         },
-        token: function(stream, state) {
-            if (stream.eatSpace()) return null;
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
+                return null;
+            }
             return tokenize(stream, state);
         }
     };

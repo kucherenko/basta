@@ -48,12 +48,12 @@ defineMode('twig:inner', () => {
             }
 
             if (state.instring) {
-                if (ch == state.instring) {
+                if (ch === state.instring) {
                     state.instring = false;
                 }
                 stream.next();
                 return 'string';
-            } else if (ch == "'" || ch == '"') {
+            } else if (ch === "'" || ch === '"') {
                 state.instring = ch;
                 stream.next();
                 return 'string';
@@ -99,7 +99,7 @@ defineMode('twig:inner', () => {
             } else if (ch = stream.eat(/\{|%/)) {
                 //Cache close tag
                 state.intag = ch;
-                if (ch == '{') {
+                if (ch === '{') {
                     state.intag = '}';
                 }
                 stream.eat('-');

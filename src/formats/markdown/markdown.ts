@@ -1,6 +1,6 @@
 import "../htmlembedded/htmlembedded";
 import {findModeByName} from '../meta';
-import {defineMIME, defineMode, getMode, innerMode, startState, copyState} from '../';
+import {copyState, defineMIME, defineMode, getMode, innerMode, startState} from '../';
 
 defineMode('markdown', (cmCfg, modeCfg) => {
 
@@ -158,18 +158,24 @@ defineMode('markdown', (cmCfg, modeCfg) => {
             return null;
         } else if ((match = stream.match(atxHeaderRE)) && match[1].length <= 6) {
             state.header = match[1].length;
-            if (modeCfg.highlightFormatting) state.formatting = 'header';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'header';
+            }
             state.f = state.inline;
             return getType(state);
         } else if (!lineIsEmpty(state.prevLine) && !state.quote && !prevLineIsList &&
             !prevLineIsIndentedCode && (match = stream.match(setextHeaderRE))) {
             state.header = match[0].charAt(0) === '=' ? 1 : 2;
-            if (modeCfg.highlightFormatting) state.formatting = 'header';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'header';
+            }
             state.f = state.inline;
             return getType(state);
         } else if (stream.eat('>')) {
             state.quote = sol ? 1 : state.quote + 1;
-            if (modeCfg.highlightFormatting) state.formatting = 'quote';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'quote';
+            }
             stream.eatSpace();
             return getType(state);
         } else if (stream.peek() === '[') {
@@ -196,15 +202,21 @@ defineMode('markdown', (cmCfg, modeCfg) => {
                 state.taskList = true;
             }
             state.f = state.inline;
-            if (modeCfg.highlightFormatting) state.formatting = ['list', 'list-' + listType];
+            if (modeCfg.highlightFormatting) {
+                state.formatting = ['list', 'list-' + listType];
+            }
             return getType(state);
         } else if (modeCfg.fencedCodeBlocks && (match = stream.match(fencedCodeRE, true))) {
             state.fencedChars = match[1];
             // try switching mode
             state.localMode = getModeByName(match[2]);
-            if (state.localMode) state.localState = startState(state.localMode);
+            if (state.localMode) {
+                state.localState = startState(state.localMode);
+            }
             state.f = state.block = local;
-            if (modeCfg.highlightFormatting) state.formatting = 'code-block';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'code-block';
+            }
             state.code = -1;
             return getType(state);
         }
@@ -216,7 +228,7 @@ defineMode('markdown', (cmCfg, modeCfg) => {
         const style = htmlMode.token(stream, state.htmlState);
         if (!htmlModeMissing) {
             const inner = innerMode(htmlMode, state.htmlState);
-            if ((inner.mode.name == 'xml' && inner.state.tagStart === null &&
+            if ((inner.mode.name === 'xml' && inner.state.tagStart === null &&
                 (!inner.state.context && inner.state.tokenize.isInText)) ||
                 (state.md_inside && stream.current().indexOf('>') > -1)) {
                 state.f = inlineNormal;
@@ -229,7 +241,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
 
     function local(stream, state) {
         if (state.fencedChars && stream.match(state.fencedChars)) {
-            if (modeCfg.highlightFormatting) state.formatting = 'code-block';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'code-block';
+            }
             const returnType = getType(state);
             state.localMode = state.localState = null;
             state.block = blockNormal;
@@ -254,7 +268,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
         if (state.formatting) {
             styles.push(tokenTypes.formatting);
 
-            if (typeof state.formatting === 'string') state.formatting = [state.formatting];
+            if (typeof state.formatting === 'string') {
+                state.formatting = [state.formatting];
+            }
 
             for (let i = 0; i < state.formatting.length; i++) {
                 styles.push(tokenTypes.formatting + '-' + state.formatting[i]);
@@ -357,8 +373,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
 
     function inlineNormal(stream, state) {
         const style = state.text(stream, state);
-        if (typeof style !== 'undefined')
+        if (typeof style !== 'undefined') {
             return style;
+        }
 
         if (state.list) { // List marker (*, +, -, 1., etc)
             state.list = null;
@@ -367,9 +384,14 @@ defineMode('markdown', (cmCfg, modeCfg) => {
 
         if (state.taskList) {
             const taskOpen = stream.match(taskListRE, true)[1] !== 'x';
-            if (taskOpen) state.taskOpen = true;
-            else state.taskClosed = true;
-            if (modeCfg.highlightFormatting) state.formatting = 'task';
+            if (taskOpen) {
+                state.taskOpen = true;
+            } else {
+                state.taskClosed = true;
+            }
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'task';
+            }
             state.taskList = false;
             return getType(state);
         }
@@ -378,7 +400,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
         state.taskClosed = false;
 
         if (state.header && stream.match(/^#+$/, true)) {
-            if (modeCfg.highlightFormatting) state.formatting = 'header';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'header';
+            }
             return getType(state);
         }
 
@@ -401,13 +425,15 @@ defineMode('markdown', (cmCfg, modeCfg) => {
         // If this block is changed, it may need to be updated in GFM mode
         if (ch === '`') {
             const previousFormatting = state.formatting;
-            if (modeCfg.highlightFormatting) state.formatting = 'code';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'code';
+            }
             stream.eatWhile('`');
             const count = stream.current().length;
-            if (state.code == 0) {
+            if (state.code === 0) {
                 state.code = count;
                 return getType(state);
-            } else if (count == state.code) { // Must be exact
+            } else if (count === state.code) { // Must be exact
                 const t = getType(state);
                 state.code = 0;
                 return t;
@@ -431,19 +457,25 @@ defineMode('markdown', (cmCfg, modeCfg) => {
         if (ch === '!' && stream.match(/\[[^\]]*\] ?(?:\(|\[)/, false)) {
             state.imageMarker = true;
             state.image = true;
-            if (modeCfg.highlightFormatting) state.formatting = 'image';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'image';
+            }
             return getType(state);
         }
 
         if (ch === '[' && state.imageMarker && stream.match(/[^\]]*\](\(.*?\)| ?\[.*?\])/, false)) {
             state.imageMarker = false;
             state.imageAltText = true;
-            if (modeCfg.highlightFormatting) state.formatting = 'image';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'image';
+            }
             return getType(state);
         }
 
         if (ch === ']' && state.imageAltText) {
-            if (modeCfg.highlightFormatting) state.formatting = 'image';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'image';
+            }
             const type = getType(state);
             state.imageAltText = false;
             state.image = false;
@@ -453,12 +485,16 @@ defineMode('markdown', (cmCfg, modeCfg) => {
 
         if (ch === '[' && !state.image) {
             state.linkText = true;
-            if (modeCfg.highlightFormatting) state.formatting = 'link';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'link';
+            }
             return getType(state);
         }
 
         if (ch === ']' && state.linkText) {
-            if (modeCfg.highlightFormatting) state.formatting = 'link';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'link';
+            }
             const type = getType(state);
             state.linkText = false;
             state.inline = state.f = stream.match(/\(.*?\)| ?\[.*?\]/, false) ? linkHref : inlineNormal;
@@ -467,7 +503,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
 
         if (ch === '<' && stream.match(/^(https?|ftps?):\/\/(?:[^\\>]|\\.)+>/, false)) {
             state.f = state.inline = linkInline;
-            if (modeCfg.highlightFormatting) state.formatting = 'link';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'link';
+            }
             let type = getType(state);
             if (type) {
                 type += ' ';
@@ -479,7 +517,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
 
         if (ch === '<' && stream.match(/^[^> \\]+@(?:[^\\>]|\\.)+>/, false)) {
             state.f = state.inline = linkInline;
-            if (modeCfg.highlightFormatting) state.formatting = 'link';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'link';
+            }
             let type = getType(state);
             if (type) {
                 type += ' ';
@@ -491,9 +531,11 @@ defineMode('markdown', (cmCfg, modeCfg) => {
 
         if (ch === '<' && stream.match(/^(!--|[a-z]+(?:\s+[a-z_:.\-]+(?:\s*=\s*[^ >]+)?)*\s*>)/i, false)) {
             const end = stream.string.indexOf('>', stream.pos);
-            if (end != -1) {
+            if (end !== -1) {
                 const atts = stream.string.substring(stream.start, end);
-                if (/markdown\s*=\s*('|"){0,1}1('|"){0,1}/.test(atts)) state.md_inside = true;
+                if (/markdown\s*=\s*('|"){0,1}1('|"){0,1}/.test(atts)) {
+                    state.md_inside = true;
+                }
             }
             stream.backUp(1);
             state.htmlState = startState(htmlMode);
@@ -504,32 +546,46 @@ defineMode('markdown', (cmCfg, modeCfg) => {
             state.md_inside = false;
             return 'tag';
         } else if (ch === '*' || ch === '_') {
-            let len = 1, before = stream.pos == 1 ? ' ' : stream.string.charAt(stream.pos - 2);
-            while (len < 3 && stream.eat(ch)) len++;
+            let len = 1, before = stream.pos === 1 ? ' ' : stream.string.charAt(stream.pos - 2);
+            while (len < 3 && stream.eat(ch)) {
+                len++;
+            }
             const after = stream.peek() || ' ';
             // See http://spec.commonmark.org/0.27/#emphasis-and-strong-emphasis
             const leftFlanking = !/\s/.test(after) && (!punctuation.test(after) || /\s/.test(before) || punctuation.test(before));
             const rightFlanking = !/\s/.test(before) && (!punctuation.test(before) || /\s/.test(after) || punctuation.test(after));
             let setEm = null, setStrong = null;
             if (len % 2) { // Em
-                if (!state.em && leftFlanking && (ch === '*' || !rightFlanking || punctuation.test(before)))
+                if (!state.em && leftFlanking && (ch === '*' || !rightFlanking || punctuation.test(before))) {
                     setEm = true;
-                else if (state.em == ch && rightFlanking && (ch === '*' || !leftFlanking || punctuation.test(after)))
+                } else if (state.em === ch && rightFlanking && (ch === '*' || !leftFlanking || punctuation.test(after))) {
                     setEm = false;
+                }
             }
             if (len > 1) { // Strong
-                if (!state.strong && leftFlanking && (ch === '*' || !rightFlanking || punctuation.test(before)))
+                if (!state.strong && leftFlanking && (ch === '*' || !rightFlanking || punctuation.test(before))) {
                     setStrong = true;
-                else if (state.strong == ch && rightFlanking && (ch === '*' || !leftFlanking || punctuation.test(after)))
+                } else if (state.strong === ch && rightFlanking && (ch === '*' || !leftFlanking || punctuation.test(after))) {
                     setStrong = false;
+                }
             }
-            if (setStrong != null || setEm != null) {
-                if (modeCfg.highlightFormatting) state.formatting = setEm == null ? 'strong' : setStrong == null ? 'em' : 'strong em';
-                if (setEm === true) state.em = ch;
-                if (setStrong === true) state.strong = ch;
+            if (setStrong !== null || setEm !== null) {
+                if (modeCfg.highlightFormatting) {
+                    state.formatting = setEm === null ? 'strong' : setStrong === null ? 'em' : 'strong em';
+                }
+                if (setEm === true) {
+                    state.em = ch;
+                }
+                if (setStrong === true) {
+                    state.strong = ch;
+                }
                 const t = getType(state);
-                if (setEm === false) state.em = false;
-                if (setStrong === false) state.strong = false;
+                if (setEm === false) {
+                    state.em = false;
+                }
+                if (setStrong === false) {
+                    state.strong = false;
+                }
                 return t;
             }
         } else if (ch === ' ') {
@@ -545,13 +601,17 @@ defineMode('markdown', (cmCfg, modeCfg) => {
         if (modeCfg.strikethrough) {
             if (ch === '~' && stream.eatWhile(ch)) {
                 if (state.strikethrough) {// Remove strikethrough
-                    if (modeCfg.highlightFormatting) state.formatting = 'strikethrough';
+                    if (modeCfg.highlightFormatting) {
+                        state.formatting = 'strikethrough';
+                    }
                     const t = getType(state);
                     state.strikethrough = false;
                     return t;
                 } else if (stream.match(/^[^\s]/, false)) {// Add strikethrough
                     state.strikethrough = true;
-                    if (modeCfg.highlightFormatting) state.formatting = 'strikethrough';
+                    if (modeCfg.highlightFormatting) {
+                        state.formatting = 'strikethrough';
+                    }
                     return getType(state);
                 }
             } else if (ch === ' ') {
@@ -581,7 +641,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
 
         if (ch === '>') {
             state.f = state.inline = inlineNormal;
-            if (modeCfg.highlightFormatting) state.formatting = 'link';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'link';
+            }
             let type = getType(state);
             if (type) {
                 type += ' ';
@@ -604,7 +666,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
         const ch = stream.next();
         if (ch === '(' || ch === '[') {
             state.f = state.inline = getLinkHrefInside(ch === '(' ? ')' : ']');
-            if (modeCfg.highlightFormatting) state.formatting = 'link-string';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'link-string';
+            }
             state.linkHref = true;
             return getType(state);
         }
@@ -622,7 +686,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
 
             if (ch === endChar) {
                 state.f = state.inline = inlineNormal;
-                if (modeCfg.highlightFormatting) state.formatting = 'link-string';
+                if (modeCfg.highlightFormatting) {
+                    state.formatting = 'link-string';
+                }
                 const returnState = getType(state);
                 state.linkHref = false;
                 return returnState;
@@ -638,7 +704,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
         if (stream.match(/^([^\]\\]|\\.)*\]:/, false)) {
             state.f = footnoteLinkInside;
             stream.next(); // Consume [
-            if (modeCfg.highlightFormatting) state.formatting = 'link';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'link';
+            }
             state.linkText = true;
             return getType(state);
         }
@@ -648,7 +716,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
     function footnoteLinkInside(stream, state) {
         if (stream.match(/^\]:/, true)) {
             state.f = state.inline = footnoteUrl;
-            if (modeCfg.highlightFormatting) state.formatting = 'link';
+            if (modeCfg.highlightFormatting) {
+                state.formatting = 'link';
+            }
             const returnType = getType(state);
             state.linkText = false;
             return returnType;
@@ -677,7 +747,7 @@ defineMode('markdown', (cmCfg, modeCfg) => {
     }
 
     const mode = {
-        startState: function() {
+        startState: () => {
             return {
                 f: blockNormal,
 
@@ -748,12 +818,12 @@ defineMode('markdown', (cmCfg, modeCfg) => {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
 
             // Reset state.formatting
             state.formatting = false;
 
-            if (stream != state.thisLine) {
+            if (stream !== state.thisLine) {
                 const forceBlankLine = state.header || state.hr;
 
                 // Reset state.header and state.hr
@@ -762,7 +832,9 @@ defineMode('markdown', (cmCfg, modeCfg) => {
 
                 if (stream.match(/^\s*$/, true) || forceBlankLine) {
                     blankLine(state);
-                    if (!forceBlankLine) return null;
+                    if (!forceBlankLine) {
+                        return null;
+                    }
                     state.prevLine = null;
                 }
 
@@ -780,14 +852,20 @@ defineMode('markdown', (cmCfg, modeCfg) => {
                 const indentation = stream.match(/^\s*/, true)[0].replace(/\t/g, '    ').length;
                 state.indentationDiff = Math.min(indentation - state.indentation, 4);
                 state.indentation = state.indentation + state.indentationDiff;
-                if (indentation > 0) return null;
+                if (indentation > 0) {
+                    return null;
+                }
             }
             return state.f(stream, state);
         },
 
-        innerMode: function(state) {
-            if (state.block == htmlBlock) return {state: state.htmlState, mode: htmlMode};
-            if (state.localState) return {state: state.localState, mode: state.localMode};
+        innerMode: (state) => {
+            if (state.block === htmlBlock) {
+                return {state: state.htmlState, mode: htmlMode};
+            }
+            if (state.localState) {
+                return {state: state.localState, mode: state.localMode};
+            }
             return {state: state, mode: mode};
         },
 

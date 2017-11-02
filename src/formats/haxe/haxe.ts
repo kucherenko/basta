@@ -1,5 +1,6 @@
 import {defineMIME, defineMode} from '../index';
-defineMode('haxe', function(config, parserConfig) {
+
+defineMode('haxe', (config, parserConfig) => {
     const indentUnit = config.indentUnit;
 
     // Tokenizer
@@ -8,9 +9,12 @@ defineMode('haxe', function(config, parserConfig) {
         return {type: type, style: 'keyword'};
     }
 
-    const A = kw('keyword a'), B = kw('keyword b'), C = kw('keyword c');
-    const operator = kw('operator'), atom = {type: 'atom', style: 'atom'},
-        attribute = {type: 'attribute', style: 'attribute'};
+    const A = kw('keyword a');
+    const B = kw('keyword b');
+    const C = kw('keyword c');
+    const operator = kw('operator');
+    const atom = {type: 'atom', style: 'atom'};
+    const attribute = {type: 'attribute', style: 'attribute'};
     let type = kw('typedef');
     const keywords = {
         'if': A,
@@ -64,11 +68,13 @@ defineMode('haxe', function(config, parserConfig) {
     }
 
     function toUnescaped(stream, end) {
-        let escaped = false, next;
-        while ((next = stream.next()) != null) {
-            if (next == end && !escaped)
+        let escaped = false;
+        let next;
+        while ((next = stream.next()) !== null) {
+            if (next === end && !escaped) {
                 return true;
-            escaped = !escaped && next == '\\';
+            }
+            escaped = !escaped && next === '\\';
         }
     }
 
@@ -76,7 +82,7 @@ defineMode('haxe', function(config, parserConfig) {
     // consing up tons of objects.
     let content;
 
-    function ret(tp, style = undefined, cont = undefined) {
+    function ret(tp, style?, cont?) {
         type = tp;
         content = cont;
         return style;
@@ -84,21 +90,21 @@ defineMode('haxe', function(config, parserConfig) {
 
     function haxeTokenBase(stream, state) {
         const ch = stream.next();
-        if (ch == '"' || ch == "'") {
+        if (ch === '"' || ch === "'") {
             return chain(stream, state, haxeTokenString(ch));
         } else if (/[\[\]{}\(\),;\:\.]/.test(ch)) {
             return ret(ch);
-        } else if (ch == '0' && stream.eat(/x/i)) {
+        } else if (ch === '0' && stream.eat(/x/i)) {
             stream.eatWhile(/[\da-f]/i);
             return ret('number', 'number');
-        } else if (/\d/.test(ch) || ch == '-' && stream.eat(/\d/)) {
+        } else if (/\d/.test(ch) || ch === '-' && stream.eat(/\d/)) {
             stream.match(/^\d*(?:\.\d*(?!\.))?(?:[eE][+\-]?\d+)?/);
             return ret('number', 'number');
-        } else if (state.reAllowed && (ch == '~' && stream.eat(/\//))) {
+        } else if (state.reAllowed && (ch === '~' && stream.eat(/\//))) {
             toUnescaped(stream, '/');
             stream.eatWhile(/[gimsu]/);
             return ret('regexp', 'string-2');
-        } else if (ch == '/') {
+        } else if (ch === '/') {
             if (stream.eat('*')) {
                 return chain(stream, state, haxeTokenComment);
             } else if (stream.eat('/')) {
@@ -108,10 +114,10 @@ defineMode('haxe', function(config, parserConfig) {
                 stream.eatWhile(isOperatorChar);
                 return ret('operator', null, stream.current());
             }
-        } else if (ch == '#') {
+        } else if (ch === '#') {
             stream.skipToEnd();
             return ret('conditional', 'meta');
-        } else if (ch == '@') {
+        } else if (ch === '@') {
             stream.eat(/:/);
             stream.eatWhile(/[\w_]/);
             return ret('metadata', 'meta');
@@ -126,7 +132,8 @@ defineMode('haxe', function(config, parserConfig) {
                 return ret('type', 'variable-3', word);
             } else {
                 stream.eatWhile(/[\w_]/);
-                const word = stream.current(), known = keywords.propertyIsEnumerable(word) && keywords[word];
+                const word = stream.current();
+                const known = keywords.propertyIsEnumerable(word) && keywords[word];
                 return (known && state.kwAllowed) ? ret(known.type, known.style, word) :
                     ret('variable', 'variable', word);
             }
@@ -134,21 +141,23 @@ defineMode('haxe', function(config, parserConfig) {
     }
 
     function haxeTokenString(quote) {
-        return function(stream, state) {
-            if (toUnescaped(stream, quote))
+        return (stream, state) => {
+            if (toUnescaped(stream, quote)) {
                 state.tokenize = haxeTokenBase;
+            }
             return ret('string', 'string');
         };
     }
 
     function haxeTokenComment(stream, state) {
-        let maybeEnd = false, ch;
+        let maybeEnd = false;
+        let ch;
         while (ch = stream.next()) {
-            if (ch == '/' && maybeEnd) {
+            if (ch === '/' && maybeEnd) {
                 state.tokenize = haxeTokenBase;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return ret('comment', 'comment');
     }
@@ -157,18 +166,23 @@ defineMode('haxe', function(config, parserConfig) {
 
     const atomicTypes = {'atom': true, 'number': true, 'variable': true, 'string': true, 'regexp': true};
 
-    function HaxeLexical(indented, column, type, align, prev = undefined, info = undefined) {
+    function HaxeLexical(indented, column, type, align, prev?, info?) {
         this.indented = indented;
         this.column = column;
         this.type = type;
         this.prev = prev;
         this.info = info;
-        if (align != null) this.align = align;
+        if (align !== null) {
+            this.align = align;
+        }
     }
 
     function inScope(state, varname) {
-        for (let v = state.localVars; v; v = v.next)
-            if (v.name == varname) return true;
+        for (let v = state.localVars; v; v = v.next) {
+            if (v.name === varname) {
+                return true;
+            }
+        }
     }
 
     function parseHaxe(state, style, type, content, stream) {
@@ -177,36 +191,52 @@ defineMode('haxe', function(config, parserConfig) {
         // (Less wasteful than consing up a hundred closures on every call.)
         cx.state = state;
         cx['stream'] = stream;
-        cx.marked = null, cx.cc = cc;
+        cx.marked = null;
+        cx.cc = cc;
 
-        if (!state.lexical.hasOwnProperty('align'))
+        if (!state.lexical.hasOwnProperty('align')) {
             state.lexical.align = true;
+        }
 
         while (true) {
             const combinator = cc.length ? cc.pop() : statement;
             if (combinator(type, content)) {
-                while (cc.length && cc[cc.length - 1].lex)
+                while (cc.length && cc[cc.length - 1].lex) {
                     cc.pop()();
-                if (cx.marked) return cx.marked;
-                if (type == 'variable' && inScope(state, content)) return 'variable-2';
-                if (type == 'variable' && imported(state, content)) return 'variable-3';
+                }
+                if (cx.marked) {
+                    return cx.marked;
+                }
+                if (type === 'variable' && inScope(state, content)) {
+                    return 'variable-2';
+                }
+                if (type === 'variable' && imported(state, content)) {
+                    return 'variable-3';
+                }
                 return style;
             }
         }
     }
 
     function imported(state, typename) {
-        if (/[a-z]/.test(typename.charAt(0)))
+        if (/[a-z]/.test(typename.charAt(0))) {
             return false;
+        }
         const len = state.importedtypes.length;
-        for (let i = 0; i < len; i++)
-            if (state.importedtypes[i] == typename) return true;
+        for (let i = 0; i < len; i++) {
+            if (state.importedtypes[i] === typename) {
+                return true;
+            }
+        }
     }
 
     function registerimport(importname) {
         const state = cx.state;
-        for (let t = state.importedtypes; t; t = t.next)
-            if (t.name == importname) return;
+        for (let t = state.importedtypes; t; t = t.next) {
+            if (t.name === importname) {
+                return;
+            }
+        }
         state.importedtypes = {name: importname, next: state.importedtypes};
     }
 
@@ -215,7 +245,9 @@ defineMode('haxe', function(config, parserConfig) {
     const cx = {state: null, column: null, marked: null, cc: null};
 
     function pass(...args) {
-        for (let i = args.length - 1; i >= 0; i--) cx.cc.push(args[i]);
+        for (let i = args.length - 1; i >= 0; i--) {
+            cx.cc.push(args[i]);
+        }
     }
 
     function cont(...args) {
@@ -224,8 +256,11 @@ defineMode('haxe', function(config, parserConfig) {
     }
 
     function inList(name, list) {
-        for (let v = list; v; v = v.next)
-            if (v.name == name) return true;
+        for (let v = list; v; v = v.next) {
+            if (v.name === name) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -233,10 +268,14 @@ defineMode('haxe', function(config, parserConfig) {
         const state = cx.state;
         if (state.context) {
             cx.marked = 'def';
-            if (inList(varname, state.localVars)) return;
+            if (inList(varname, state.localVars)) {
+                return;
+            }
             state.localVars = {name: varname, next: state.localVars};
         } else if (state.globalVars) {
-            if (inList(varname, state.globalVars)) return;
+            if (inList(varname, state.globalVars)) {
+                return;
+            }
             state.globalVars = {name: varname, next: state.globalVars};
         }
     }
@@ -246,7 +285,9 @@ defineMode('haxe', function(config, parserConfig) {
     const defaultVars = {name: 'this', next: null};
 
     function pushcontext() {
-        if (!cx.state.context) cx.state.localVars = defaultVars;
+        if (!cx.state.context) {
+            cx.state.localVars = defaultVars;
+        }
         cx.state.context = {prev: cx.state.context, vars: cx.state.localVars};
     }
 
@@ -256,8 +297,9 @@ defineMode('haxe', function(config, parserConfig) {
     }
 
     popcontext['lex'] = true;
-    function pushlex(type, info = undefined) {
-        const result = function() {
+
+    function pushlex(type, info?) {
+        const result = () => {
             const state = cx.state;
             state.lexical = new HaxeLexical(state.indented, cx['stream'].column(), type, null, state.lexical, info);
         };
@@ -268,8 +310,9 @@ defineMode('haxe', function(config, parserConfig) {
     function poplex() {
         const state = cx.state;
         if (state.lexical.prev) {
-            if (state.lexical.type == ')')
+            if (state.lexical.type === ')') {
                 state.indented = state.lexical.indented;
+            }
             state.lexical = state.lexical.prev;
         }
     }
@@ -278,134 +321,229 @@ defineMode('haxe', function(config, parserConfig) {
 
     function expect(wanted) {
         function f(type) {
-            if (type == wanted) return cont();
-            else if (wanted == ';') return pass();
-            else return cont(f);
+            if (type === wanted) {
+                return cont();
+            } else if (wanted === ';') {
+                return pass();
+            } else {
+                return cont(f);
+            }
         }
 
         return f;
     }
 
-    function statement(type) {
-        if (type == '@') return cont(metadef);
-        if (type == 'let') return cont(pushlex('vardef'), vardef1, expect(';'), poplex);
-        if (type == 'keyword a') return cont(pushlex('form'), expression, statement, poplex);
-        if (type == 'keyword b') return cont(pushlex('form'), statement, poplex);
-        if (type == '{') return cont(pushlex('}'), pushcontext, block, poplex, popcontext);
-        if (type == ';') return cont();
-        if (type == 'attribute') return cont(maybeattribute);
-        if (type == 'function') return cont(functiondef);
-        if (type == 'for') return cont(pushlex('form'), expect('('), pushlex(')'), forspec1, expect(')'),
-            poplex, statement, poplex);
-        if (type == 'variable') return cont(pushlex('stat'), maybelabel);
-        if (type == 'switch') return cont(pushlex('form'), expression, pushlex('}', 'switch'), expect('{'),
-            block, poplex, poplex);
-        if (type == 'case') return cont(expression, expect(':'));
-        if (type == 'default') return cont(expect(':'));
-        if (type == 'catch') return cont(pushlex('form'), pushcontext, expect('('), funarg, expect(')'),
-            statement, poplex, popcontext);
-        if (type == 'import') return cont(importdef, expect(';'));
-        if (type == 'typedef') return cont(typedef);
+    function statement(type, content?) {
+        if (type === '@') {
+            return cont(metadef);
+        }
+        if (type === 'let') {
+            return cont(pushlex('vardef'), vardef1, expect(';'), poplex);
+        }
+        if (type === 'keyword a') {
+            return cont(pushlex('form'), expression, statement, poplex);
+        }
+        if (type === 'keyword b') {
+            return cont(pushlex('form'), statement, poplex);
+        }
+        if (type === '{') {
+            return cont(pushlex('}'), pushcontext, block, poplex, popcontext);
+        }
+        if (type === ';') {
+            return cont();
+        }
+        if (type === 'attribute') {
+            return cont(maybeattribute);
+        }
+        if (type === 'function') {
+            return cont(functiondef);
+        }
+        if (type === 'for') {
+            return cont(pushlex('form'), expect('('), pushlex(')'), forspec1, expect(')'),
+                poplex, statement, poplex);
+        }
+        if (type === 'variable') {
+            return cont(pushlex('stat'), maybelabel);
+        }
+        if (type === 'switch') {
+            return cont(pushlex('form'), expression, pushlex('}', 'switch'), expect('{'),
+                block, poplex, poplex);
+        }
+        if (type === 'case') {
+            return cont(expression, expect(':'));
+        }
+        if (type === 'default') {
+            return cont(expect(':'));
+        }
+        if (type === 'catch') {
+            return cont(pushlex('form'), pushcontext, expect('('), funarg, expect(')'),
+                statement, poplex, popcontext);
+        }
+        if (type === 'import') {
+            return cont(importdef, expect(';'));
+        }
+        if (type === 'typedef') {
+            return cont(typedef);
+        }
         return pass(pushlex('stat'), expression, expect(';'), poplex);
     }
 
     function expression(type) {
-        if (atomicTypes.hasOwnProperty(type)) return cont(maybeoperator);
-        if (type == 'type') return cont(maybeoperator);
-        if (type == 'function') return cont(functiondef);
-        if (type == 'keyword c') return cont(maybeexpression);
-        if (type == '(') return cont(pushlex(')'), maybeexpression, expect(')'), poplex, maybeoperator);
-        if (type == 'operator') return cont(expression);
-        if (type == '[') return cont(pushlex(']'), commasep(maybeexpression, ']'), poplex, maybeoperator);
-        if (type == '{') return cont(pushlex('}'), commasep(objprop, '}'), poplex, maybeoperator);
+        if (atomicTypes.hasOwnProperty(type)) {
+            return cont(maybeoperator);
+        }
+        if (type === 'type') {
+            return cont(maybeoperator);
+        }
+        if (type === 'function') {
+            return cont(functiondef);
+        }
+        if (type === 'keyword c') {
+            return cont(maybeexpression);
+        }
+        if (type === '(') {
+            return cont(pushlex(')'), maybeexpression, expect(')'), poplex, maybeoperator);
+        }
+        if (type === 'operator') {
+            return cont(expression);
+        }
+        if (type === '[') {
+            return cont(pushlex(']'), commasep(maybeexpression, ']'), poplex, maybeoperator);
+        }
+        if (type === '{') {
+            return cont(pushlex('}'), commasep(objprop, '}'), poplex, maybeoperator);
+        }
         return cont();
     }
 
     function maybeexpression(type) {
-        if (type.match(/[;\}\)\],]/)) return pass();
+        if (type.match(/[;\}\)\],]/)) {
+            return pass();
+        }
         return pass(expression);
     }
 
     function maybeoperator(type, value) {
-        if (type == 'operator' && /\+\+|--/.test(value)) return cont(maybeoperator);
-        if (type == 'operator' || type == ':') return cont(expression);
-        if (type == ';') return;
-        if (type == '(') return cont(pushlex(')'), commasep(expression, ')'), poplex, maybeoperator);
-        if (type == '.') return cont(property, maybeoperator);
-        if (type == '[') return cont(pushlex(']'), expression, expect(']'), poplex, maybeoperator);
+        if (type === 'operator' && /\+\+|--/.test(value)) {
+            return cont(maybeoperator);
+        }
+        if (type === 'operator' || type === ':') {
+            return cont(expression);
+        }
+        if (type === ';') {
+            return;
+        }
+        if (type === '(') {
+            return cont(pushlex(')'), commasep(expression, ')'), poplex, maybeoperator);
+        }
+        if (type === '.') {
+            return cont(property, maybeoperator);
+        }
+        if (type === '[') {
+            return cont(pushlex(']'), expression, expect(']'), poplex, maybeoperator);
+        }
     }
 
     function maybeattribute(type) {
-        if (type == 'attribute') return cont(maybeattribute);
-        if (type == 'function') return cont(functiondef);
-        if (type == 'let') return cont(vardef1);
+        if (type === 'attribute') {
+            return cont(maybeattribute);
+        }
+        if (type === 'function') {
+            return cont(functiondef);
+        }
+        if (type === 'let') {
+            return cont(vardef1);
+        }
     }
 
     function metadef(type) {
-        if (type == ':') return cont(metadef);
-        if (type == 'variable') return cont(metadef);
-        if (type == '(') return cont(pushlex(')'), commasep(metaargs, ')'), poplex, statement);
+        if (type === ':') {
+            return cont(metadef);
+        }
+        if (type === 'variable') {
+            return cont(metadef);
+        }
+        if (type === '(') {
+            return cont(pushlex(')'), commasep(metaargs, ')'), poplex, statement);
+        }
     }
 
     function metaargs(type) {
-        if (type == 'variable') return cont();
+        if (type === 'variable') {
+            return cont();
+        }
     }
 
     function importdef(type, value) {
-        if (type == 'variable' && /[A-Z]/.test(value.charAt(0))) {
+        if (type === 'variable' && /[A-Z]/.test(value.charAt(0))) {
             registerimport(value);
             return cont();
+        } else if (type === 'variable' || type === 'property' || type === '.' || value === '*') {
+            return cont(importdef);
         }
-        else if (type == 'variable' || type == 'property' || type == '.' || value == '*') return cont(importdef);
     }
 
     function typedef(type, value) {
-        if (type == 'variable' && /[A-Z]/.test(value.charAt(0))) {
+        if (type === 'variable' && /[A-Z]/.test(value.charAt(0))) {
             registerimport(value);
             return cont();
-        }
-        else if (type == 'type' && /[A-Z]/.test(value.charAt(0))) {
+        } else if (type === 'type' && /[A-Z]/.test(value.charAt(0))) {
             return cont();
         }
     }
 
     function maybelabel(type) {
-        if (type == ':') return cont(poplex, statement);
+        if (type === ':') {
+            return cont(poplex, statement);
+        }
         return pass(maybeoperator, expect(';'), poplex);
     }
 
     function property(type) {
-        if (type == 'variable') {
+        if (type === 'variable') {
             cx.marked = 'property';
             return cont();
         }
     }
 
     function objprop(type) {
-        if (type == 'variable') cx.marked = 'property';
-        if (atomicTypes.hasOwnProperty(type)) return cont(expect(':'), expression);
+        if (type === 'variable') {
+            cx.marked = 'property';
+        }
+        if (atomicTypes.hasOwnProperty(type)) {
+            return cont(expect(':'), expression);
+        }
     }
 
     function commasep(what, end) {
         function proceed(type) {
-            if (type == ',') return cont(what, proceed);
-            if (type == end) return cont();
+            if (type === ',') {
+                return cont(what, proceed);
+            }
+            if (type === end) {
+                return cont();
+            }
             return cont(expect(end));
         }
 
-        return function(type) {
-            if (type == end) return cont();
-            else return pass(what, proceed);
+        return type => {
+            if (type === end) {
+                return cont();
+            } else {
+                return pass(what, proceed);
+            }
         };
     }
 
     function block(type) {
-        if (type == '}') return cont();
+        if (type === '}') {
+            return cont();
+        }
         return pass(statement, block);
     }
 
     function vardef1(type, value) {
-        if (type == 'variable') {
+        if (type === 'variable') {
             register(value);
             return cont(typeuse, vardef2);
         }
@@ -413,12 +551,16 @@ defineMode('haxe', function(config, parserConfig) {
     }
 
     function vardef2(type, value) {
-        if (value == '=') return cont(expression, vardef2);
-        if (type == ',') return cont(vardef1);
+        if (value === '=') {
+            return cont(expression, vardef2);
+        }
+        if (type === ',') {
+            return cont(vardef1);
+        }
     }
 
     function forspec1(type, value) {
-        if (type == 'variable') {
+        if (type === 'variable') {
             register(value);
             return cont(forin, expression);
         } else {
@@ -427,35 +569,51 @@ defineMode('haxe', function(config, parserConfig) {
     }
 
     function forin(_type, value) {
-        if (value == 'in') return cont();
+        if (value === 'in') {
+            return cont();
+        }
     }
 
     function functiondef(type, value) {
         //function names starting with upper-case letters are recognised as types, so cludging them together here.
-        if (type == 'variable' || type == 'type') {
+        if (type === 'variable' || type === 'type') {
             register(value);
             return cont(functiondef);
         }
-        if (value == 'new') return cont(functiondef);
-        if (type == '(') return cont(pushlex(')'), pushcontext, commasep(funarg, ')'), poplex, typeuse, statement, popcontext);
+        if (value === 'new') {
+            return cont(functiondef);
+        }
+        if (type === '(') {
+            return cont(pushlex(')'), pushcontext, commasep(funarg, ')'), poplex, typeuse, statement, popcontext);
+        }
     }
 
     function typeuse(type) {
-        if (type == ':') return cont(typestring);
+        if (type === ':') {
+            return cont(typestring);
+        }
     }
 
     function typestring(type) {
-        if (type == 'type') return cont();
-        if (type == 'variable') return cont();
-        if (type == '{') return cont(pushlex('}'), commasep(typeprop, '}'), poplex);
+        if (type === 'type') {
+            return cont();
+        }
+        if (type === 'variable') {
+            return cont();
+        }
+        if (type === '{') {
+            return cont(pushlex('}'), commasep(typeprop, '}'), poplex);
+        }
     }
 
     function typeprop(type) {
-        if (type == 'variable') return cont(typeuse);
+        if (type === 'variable') {
+            return cont(typeuse);
+        }
     }
 
     function funarg(type, value) {
-        if (type == 'variable') {
+        if (type === 'variable') {
             register(value);
             return cont(typeuse);
         }
@@ -463,7 +621,7 @@ defineMode('haxe', function(config, parserConfig) {
 
     // Interface
     return {
-        startState: function(basecolumn) {
+        startState: basecolumn => {
             const defaulttypes = ['Int', 'Float', 'String', 'Void', 'Std', 'Bool', 'Dynamic', 'Array'];
             const state = {
                 tokenize: haxeTokenBase,
@@ -476,39 +634,56 @@ defineMode('haxe', function(config, parserConfig) {
                 context: parserConfig.localVars && {vars: parserConfig.localVars},
                 indented: 0
             };
-            if (parserConfig.globalVars && typeof parserConfig.globalVars == 'object')
+            if (parserConfig.globalVars && typeof parserConfig.globalVars === 'object') {
                 state['globalVars'] = parserConfig.globalVars;
+            }
             return state;
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
-                if (!state.lexical.hasOwnProperty('align'))
+                if (!state.lexical.hasOwnProperty('align')) {
                     state.lexical.align = false;
+                }
                 state.indented = stream.indentation();
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             const style = state.tokenize(stream, state);
-            if (type as any == 'comment') {
+            if (type as any === 'comment') {
                 return style;
             }
-            state.reAllowed = !!(type as any == 'operator' || type as any == 'keyword c' || (type as any).match(/^[\[{}\(,;:]$/));
-            state.kwAllowed = type as any != '.';
+            state.reAllowed = !!(type as any === 'operator' || type as any === 'keyword c' || (type as any).match(/^[\[{}\(,;:]$/));
+            state.kwAllowed = type as any !== '.';
             return parseHaxe(state, style, type, content, stream);
         },
 
-        indent: function(state, textAfter) {
-            if (state.tokenize != haxeTokenBase) return 0;
-            let firstChar = textAfter && textAfter.charAt(0), lexical = state.lexical;
-            if (lexical.type == 'stat' && firstChar == '}') lexical = lexical.prev;
-            const type = lexical.type, closing = firstChar == type;
-            if (type == 'vardef') return lexical.indented + 4;
-            else if (type == 'form' && firstChar == '{') return lexical.indented;
-            else if (type == 'stat' || type == 'form') return lexical.indented + indentUnit;
-            else if (lexical.info == 'switch' && !closing)
+        indent: (state, textAfter) => {
+            let firstChar: any | string;
+            if (state.tokenize !== haxeTokenBase) {
+                return 0;
+            }
+            firstChar = textAfter && textAfter.charAt(0);
+            let lexical = state.lexical;
+            if (lexical.type === 'stat' && firstChar === '}') {
+                lexical = lexical.prev;
+            }
+            const type = lexical.type;
+            const closing = firstChar === type;
+            if (type === 'vardef') {
+                return lexical.indented + 4;
+            } else if (type === 'form' && firstChar === '{') {
+                return lexical.indented;
+            } else if (type === 'stat' || type === 'form') {
+                return lexical.indented + indentUnit;
+            } else if (lexical.info === 'switch' && !closing) {
                 return lexical.indented + (/^(?:case|default)\b/.test(textAfter) ? indentUnit : 2 * indentUnit);
-            else if (lexical.align) return lexical.column + (closing ? 0 : 1);
-            else return lexical.indented + (closing ? 0 : indentUnit);
+            } else if (lexical.align) {
+                return lexical.column + (closing ? 0 : 1);
+            } else {
+                return lexical.indented + (closing ? 0 : indentUnit);
+            }
         },
 
         electricChars: '{}',
@@ -520,72 +695,67 @@ defineMode('haxe', function(config, parserConfig) {
 
 defineMIME('text/x-haxe', 'haxe');
 
-defineMode('hxml', function() {
+defineMode('hxml', () => ({
+    startState: () => ({
+        define: false,
+        inString: false
+    }),
+    token: (stream, state) => {
+        let ch = stream.peek();
+        const sol = stream.sol();
 
-    return {
-        startState: function() {
-            return {
-                define: false,
-                inString: false
-            };
-        },
-        token: function(stream, state) {
-            let ch = stream.peek();
-            const sol = stream.sol();
+        ///* comments */
+        if (ch === '#') {
+            stream.skipToEnd();
+            return 'comment';
+        }
+        if (sol && ch === '-') {
+            let style = 'variable-2';
 
-            ///* comments */
-            if (ch == '#') {
-                stream.skipToEnd();
-                return 'comment';
-            }
-            if (sol && ch == '-') {
-                let style = 'variable-2';
+            stream.eat(/-/);
 
+            if (stream.peek() === '-') {
                 stream.eat(/-/);
-
-                if (stream.peek() == '-') {
-                    stream.eat(/-/);
-                    style = 'keyword a';
-                }
-
-                if (stream.peek() == 'D') {
-                    stream.eat(/[D]/);
-                    style = 'keyword c';
-                    state.define = true;
-                }
-
-                stream.eatWhile(/[A-Z]/i);
-                return style;
+                style = 'keyword a';
             }
 
-            ch = stream.peek();
-
-            if (state.inString == false && ch == "'") {
-                state.inString = true;
-                stream.next();
+            if (stream.peek() === 'D') {
+                stream.eat(/[D]/);
+                style = 'keyword c';
+                state.define = true;
             }
 
-            if (state.inString == true) {
-                if (stream.skipTo("'")) {
+            stream.eatWhile(/[A-Z]/i);
+            return style;
+        }
 
-                } else {
-                    stream.skipToEnd();
-                }
+        ch = stream.peek();
 
-                if (stream.peek() == "'") {
-                    stream.next();
-                    state.inString = false;
-                }
-
-                return 'string';
-            }
-
+        if (state.inString === false && ch === "'") {
+            state.inString = true;
             stream.next();
-            return null;
-        },
-        lineComment: '#'
-    };
-});
+        }
+
+        if (state.inString === true) {
+            if (stream.skipTo("'")) {
+
+            } else {
+                stream.skipToEnd();
+            }
+
+            if (stream.peek() === "'") {
+                stream.next();
+                state.inString = false;
+            }
+
+            return 'string';
+        }
+
+        stream.next();
+        return null;
+    },
+    lineComment: '#'
+}));
 
 defineMIME('text/x-hxml', 'hxml');
 

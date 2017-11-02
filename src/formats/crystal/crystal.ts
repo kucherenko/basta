@@ -50,16 +50,16 @@ defineMode('crystal', function(config) {
         }
 
         // Macros
-        if (state.lastToken != '\\' && stream.match('{%', false)) {
+        if (state.lastToken !== '\\' && stream.match('{%', false)) {
             return chain(tokenMacro('%', '%'), stream, state);
         }
 
-        if (state.lastToken != '\\' && stream.match('{{', false)) {
+        if (state.lastToken !== '\\' && stream.match('{{', false)) {
             return chain(tokenMacro('{', '}'), stream, state);
         }
 
         // Comments
-        if (stream.peek() == '#') {
+        if (stream.peek() === '#') {
             stream.skipToEnd();
             return 'comment';
         }
@@ -72,18 +72,18 @@ defineMode('crystal', function(config) {
             matched = stream.current();
             if (stream.eat(':')) {
                 return 'atom';
-            } else if (state.lastToken == '.') {
+            } else if (state.lastToken === '.') {
                 return 'property';
             } else if (keywords.test(matched)) {
                 if (indentKeywords.test(matched)) {
-                    if (!(matched == 'fun' && state.blocks.indexOf('lib') >= 0) && !(matched == 'def' && state.lastToken == 'abstract')) {
+                    if (!(matched === 'fun' && state.blocks.indexOf('lib') >= 0) && !(matched === 'def' && state.lastToken === 'abstract')) {
                         state.blocks.push(matched);
                         state.currentIndent += 1;
                     }
-                } else if ((state.lastStyle == 'operator' || !state.lastStyle) && indentExpressionKeywords.test(matched)) {
+                } else if ((state.lastStyle === 'operator' || !state.lastStyle) && indentExpressionKeywords.test(matched)) {
                     state.blocks.push(matched);
                     state.currentIndent += 1;
-                } else if (matched == 'end') {
+                } else if (matched === 'end') {
                     state.blocks.pop();
                     state.currentIndent -= 1;
                 }
@@ -103,7 +103,7 @@ defineMode('crystal', function(config) {
         // Class variables and instance variables
         // or attributes
         if (stream.eat('@')) {
-            if (stream.peek() == '[') {
+            if (stream.peek() === '[') {
                 return chain(tokenNest('[', ']', 'meta'), stream, state);
             }
 
@@ -135,7 +135,7 @@ defineMode('crystal', function(config) {
         }
 
         // Strings or regexps or macro variables or '%' operator
-        if (stream.peek() == '%') {
+        if (stream.peek() === '%') {
             let style = 'string';
             let embed = true;
             let delim;
@@ -223,7 +223,7 @@ defineMode('crystal', function(config) {
         return null;
     }
 
-    function tokenNest(begin, end, style, started = undefined) {
+    function tokenNest(begin, end, style, started?) {
         return function(stream, state) {
             if (!started && stream.match(begin)) {
                 state.tokenize[state.tokenize.length - 1] = tokenNest(begin, end, style, true);
@@ -242,7 +242,7 @@ defineMode('crystal', function(config) {
         };
     }
 
-    function tokenMacro(begin, end, started = undefined) {
+    function tokenMacro(begin, end, started?) {
         return function(stream, state) {
             if (!started && stream.match('{' + begin)) {
                 state.currentIndent += 1;
@@ -267,7 +267,7 @@ defineMode('crystal', function(config) {
 
         let matched;
         if (matched = stream.match(idents)) {
-            if (matched == 'def') {
+            if (matched === 'def') {
                 return 'keyword';
             }
             stream.eat(/[?!]/);
@@ -324,12 +324,12 @@ defineMode('crystal', function(config) {
 
                     const ch = stream.next();
 
-                    if (ch == end) {
+                    if (ch === end) {
                         state.tokenize.pop();
                         return style;
                     }
 
-                    escaped = embed && ch == '\\';
+                    escaped = embed && ch === '\\';
                 } else {
                     stream.next();
                     escaped = false;
@@ -368,7 +368,7 @@ defineMode('crystal', function(config) {
                         return 'string';
                     }
 
-                    escaped = embed && stream.next() == '\\';
+                    escaped = embed && stream.next() === '\\';
                 } else {
                     stream.next();
                     escaped = false;
@@ -380,7 +380,7 @@ defineMode('crystal', function(config) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: [tokenBase],
                 currentIndent: 0,
@@ -390,11 +390,11 @@ defineMode('crystal', function(config) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             const style = state.tokenize[state.tokenize.length - 1](stream, state);
             const token = stream.current();
 
-            if (style && style != 'comment') {
+            if (style && style !== 'comment') {
                 state.lastToken = token;
                 state.lastStyle = style;
             }
@@ -402,7 +402,7 @@ defineMode('crystal', function(config) {
             return style;
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             textAfter = textAfter.replace(/^\s*(?:\{%)?\s*|\s*(?:%\})?\s*$/g, '');
 
             if (dedentKeywords.test(textAfter) || dedentPunctuals.test(textAfter)) {

@@ -10,8 +10,9 @@ defineMode('commonlisp', function(config) {
     function readSym(stream) {
         let ch;
         while (ch = stream.next()) {
-            if (ch == '\\') stream.next();
-            else if (!symbol.test(ch)) {
+            if (ch === '\\') {
+                stream.next();
+            } else if (!symbol.test(ch)) {
                 stream.backUp(1);
                 break;
             }
@@ -24,60 +25,72 @@ defineMode('commonlisp', function(config) {
             type = 'ws';
             return null;
         }
-        if (stream.match(numLiteral)) return 'number';
+        if (stream.match(numLiteral)) {
+            return 'number';
+        }
         let ch = stream.next();
-        if (ch == '\\') ch = stream.next();
+        if (ch === '\\') {
+            ch = stream.next();
+        }
 
-        if (ch == '"') return (state.tokenize = inString)(stream, state);
-        else if (ch == '(') {
+        if (ch === '"') {
+            return (state.tokenize = inString)(stream, state);
+        } else if (ch === '(') {
             type = 'open';
             return 'bracket';
-        }
-        else if (ch == ')' || ch == ']') {
+        } else if (ch === ')' || ch === ']') {
             type = 'close';
             return 'bracket';
-        }
-        else if (ch == ';') {
+        } else if (ch === ';') {
             stream.skipToEnd();
             type = 'ws';
             return 'comment';
-        }
-        else if (/['`,@]/.test(ch)) return null;
-        else if (ch == '|') {
+        } else if (/['`,@]/.test(ch)) {
+            return null;
+        } else if (ch === '|') {
             if (stream.skipTo('|')) {
                 stream.next();
                 return 'symbol';
-            }
-            else {
+            } else {
                 stream.skipToEnd();
                 return 'error';
             }
-        } else if (ch == '#') {
+        } else if (ch === '#') {
             const ch = stream.next();
-            if (ch == '(') {
+            if (ch === '(') {
                 type = 'open';
                 return 'bracket';
-            }
-            else if (/[+\-=\.']/.test(ch)) return null;
-            else if (/\d/.test(ch) && stream.match(/^\d*#/)) return null;
-            else if (ch == '|') return (state.tokenize = inComment)(stream, state);
-            else if (ch == ':') {
+            } else if (/[+\-=\.']/.test(ch)) {
+                return null;
+            } else if (/\d/.test(ch) && stream.match(/^\d*#/)) {
+                return null;
+            } else if (ch === '|') {
+                return (state.tokenize = inComment)(stream, state);
+            } else if (ch === ':') {
                 readSym(stream);
                 return 'meta';
-            }
-            else if (ch == '\\') {
+            } else if (ch === '\\') {
                 stream.next();
                 readSym(stream);
                 return 'string-2';
+            } else {
+                return 'error';
             }
-            else return 'error';
         } else {
             const name = readSym(stream);
-            if (name == '.') return null;
+            if (name === '.') {
+                return null;
+            }
             type = 'symbol';
-            if (name == 'nil' || name == 't' || name.charAt(0) == ':') return 'atom';
-            if (state.lastType == 'open' && (specialForm.test(name) || assumeBody.test(name))) return 'keyword';
-            if (name.charAt(0) == '&') return 'variable-2';
+            if (name === 'nil' || name === 't' || name.charAt(0) === ':') {
+                return 'atom';
+            }
+            if (state.lastType === 'open' && (specialForm.test(name) || assumeBody.test(name))) {
+                return 'keyword';
+            }
+            if (name.charAt(0) === '&') {
+                return 'variable-2';
+            }
             return 'variable';
         }
     }
@@ -85,11 +98,11 @@ defineMode('commonlisp', function(config) {
     function inString(stream, state) {
         let escaped = false, next;
         while (next = stream.next()) {
-            if (next == '"' && !escaped) {
+            if (next === '"' && !escaped) {
                 state.tokenize = base;
                 break;
             }
-            escaped = !escaped && next == '\\';
+            escaped = !escaped && next === '\\';
         }
         return 'string';
     }
@@ -97,7 +110,7 @@ defineMode('commonlisp', function(config) {
     function inComment(stream, state) {
         let next, last;
         while (next = stream.next()) {
-            if (next == '#' && last == '|') {
+            if (next === '#' && last === '|') {
                 state.tokenize = base;
                 break;
             }
@@ -108,35 +121,40 @@ defineMode('commonlisp', function(config) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {ctx: {prev: null, start: 0, indentTo: 0}, lastType: null, tokenize: base};
         },
 
-        token: function(stream, state) {
-            if (stream.sol() && typeof state.ctx.indentTo != 'number')
+        token: (stream, state) => {
+            if (stream.sol() && typeof state.ctx.indentTo !== 'number') {
                 state.ctx.indentTo = state.ctx.start + 1;
+            }
 
             type = null;
             const style = state.tokenize(stream, state);
-            if (type != 'ws') {
-                if (state.ctx.indentTo == null) {
-                    if (type == 'symbol' && assumeBody.test(stream.current()))
+            if (type !== 'ws') {
+                if (state.ctx.indentTo === null) {
+                    if (type === 'symbol' && assumeBody.test(stream.current())) {
                         state.ctx.indentTo = state.ctx.start + config.indentUnit;
-                    else
+                    } else {
                         state.ctx.indentTo = 'next';
-                } else if (state.ctx.indentTo == 'next') {
+                    }
+                } else if (state.ctx.indentTo === 'next') {
                     state.ctx.indentTo = stream.column();
                 }
                 state.lastType = type;
             }
-            if (type == 'open') state.ctx = {prev: state.ctx, start: stream.column(), indentTo: null};
-            else if (type == 'close') state.ctx = state.ctx.prev || state.ctx;
+            if (type === 'open') {
+                state.ctx = {prev: state.ctx, start: stream.column(), indentTo: null};
+            } else if (type === 'close') {
+                state.ctx = state.ctx.prev || state.ctx;
+            }
             return style;
         },
 
-        indent: function(state, _textAfter) {
+        indent: (state, _textAfter) => {
             const i = state.ctx.indentTo;
-            return typeof i == 'number' ? i : state.ctx.start + 1;
+            return typeof i === 'number' ? i : state.ctx.start + 1;
         },
 
         closeBrackets: {pairs: '()[]{}""'},

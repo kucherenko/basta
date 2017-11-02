@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('smalltalk', function(config) {
 
     const specialChars = /[+\-\/\\*~<>=@%|&?!.,:;^]/;
@@ -26,7 +27,7 @@ defineMode('smalltalk', function(config) {
         this.userIndentationDelta = indentation > 0 ? (indentation / config.indentUnit - this.indentation) : 0;
     };
 
-    const next = function(stream, context, state) {
+    const next = (stream, context, state) => {
         let token = new Token(null, context, false);
         const aChar = stream.next();
 
@@ -41,10 +42,11 @@ defineMode('smalltalk', function(config) {
                 stream.next();
                 token = nextSymbol(stream, new Context(nextSymbol, context));
             } else {
-                if (stream.eatWhile(/[^\s.{}\[\]()]/))
+                if (stream.eatWhile(/[^\s.{}\[\]()]/)) {
                     token.name = 'string-2';
-                else
+                } else {
                     token.name = 'meta';
+                }
             }
 
         } else if (aChar === '$') {
@@ -87,22 +89,22 @@ defineMode('smalltalk', function(config) {
         return token;
     };
 
-    const nextComment = function(stream, context) {
+    const nextComment = (stream, context) => {
         stream.eatWhile(/[^"]/);
         return new Token('comment', stream.eat('"') ? context.parent : context, true);
     };
 
-    const nextString = function(stream, context) {
+    const nextString = (stream, context) => {
         stream.eatWhile(/[^']/);
         return new Token('string', stream.eat('\'') ? context.parent : context, false);
     };
 
-    const nextSymbol = function(stream, context) {
+    const nextSymbol = (stream, context) => {
         stream.eatWhile(/[^']/);
         return new Token('string-2', stream.eat('\'') ? context.parent : context, false);
     };
 
-    const nextTemporaries = function(stream, context) {
+    const nextTemporaries = (stream, context) => {
         const token = new Token(null, context, false);
         const aChar = stream.next();
 
@@ -119,11 +121,11 @@ defineMode('smalltalk', function(config) {
     };
 
     return {
-        startState: function() {
+        startState: () => {
             return new State;
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             state.userIndent(stream.indentation());
 
             if (stream.eatSpace()) {
@@ -137,11 +139,11 @@ defineMode('smalltalk', function(config) {
             return token.name;
         },
 
-        blankLine: function(state) {
+        blankLine: state => {
             state.userIndent(0);
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             const i = state.context.next === next && textAfter && textAfter.charAt(0) === ']' ? -1 : state.userIndentationDelta;
             return (state.indentation + i) * config.indentUnit;
         },

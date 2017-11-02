@@ -120,7 +120,7 @@ defineMode('jsx', (config, modeConfig) => {
         }
 
         const style = jsMode.token(stream, cx.state);
-        if (!style && cx.depth != null) {
+        if (!style && cx.depth !== null) {
             const cur = stream.current();
             if (cur === '{') {
                 cx.depth++;

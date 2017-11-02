@@ -39,11 +39,13 @@ defineMode('python', function (conf, parserConf) {
     const hangingIndent = parserConf.hangingIndent || conf.indentUnit;
     let singleOperators, identifiers, stringPrefixes;
     let myKeywords = commonKeywords, myBuiltins = commonBuiltins;
-    if (parserConf.extra_keywords != undefined)
+    if (parserConf.extra_keywords !== undefined) {
         myKeywords = myKeywords.concat(parserConf.extra_keywords);
+    }
 
-    if (parserConf.extra_builtins != undefined)
+    if (parserConf.extra_builtins !== undefined) {
         myBuiltins = myBuiltins.concat(parserConf.extra_builtins);
+    }
 
     const py3 = !(parserConf.version && Number(parserConf.version) < 3);
     if (py3) {
@@ -67,22 +69,26 @@ defineMode('python', function (conf, parserConf) {
 
     // tokenizers
     function tokenBase(stream, state) {
-        if (stream.sol()) state.indent = stream.indentation();
+        if (stream.sol()) {
+            state.indent = stream.indentation();
+        }
         // Handle scope changes
-        if (stream.sol() && top(state).type == 'py') {
+        if (stream.sol() && top(state).type === 'py') {
             const scopeOffset = top(state).offset;
             let style;
             if (stream.eatSpace()) {
                 const lineOffset = stream.indentation();
-                if (lineOffset > scopeOffset)
+                if (lineOffset > scopeOffset) {
                     pushPyScope(state);
-                else if (lineOffset < scopeOffset && dedent(stream, state) && stream.peek() != '#')
+                } else if (lineOffset < scopeOffset && dedent(stream, state) && stream.peek() !== '#') {
                     state.errorToken = true;
+                }
                 return null;
             } else {
                 style = tokenBaseInner(stream, state);
-                if (scopeOffset > 0 && dedent(stream, state))
+                if (scopeOffset > 0 && dedent(stream, state)) {
                     style += ' ' + ERRORCLASS;
+                }
                 return style;
             }
         }
@@ -90,12 +96,14 @@ defineMode('python', function (conf, parserConf) {
     }
 
     function tokenBaseInner(stream, state) {
-        if (stream.eatSpace()) return null;
+        if (stream.eatSpace()) {
+            return null;
+        }
 
         const ch = stream.peek();
 
         // Handle Comments
-        if (ch == '#') {
+        if (ch === '#') {
             stream.skipToEnd();
             return 'comment';
         }
@@ -121,11 +129,17 @@ defineMode('python', function (conf, parserConf) {
             // Integers
             let intLiteral = false;
             // Hex
-            if (stream.match(/^0x[0-9a-f_]+/i)) intLiteral = true;
+            if (stream.match(/^0x[0-9a-f_]+/i)) {
+                intLiteral = true;
+            }
             // Binary
-            if (stream.match(/^0b[01_]+/i)) intLiteral = true;
+            if (stream.match(/^0b[01_]+/i)) {
+                intLiteral = true;
+            }
             // Octal
-            if (stream.match(/^0o[0-7_]+/i)) intLiteral = true;
+            if (stream.match(/^0o[0-7_]+/i)) {
+                intLiteral = true;
+            }
             // Decimal
             if (stream.match(/^[1-9][\d_]*(e[+\-]?[\d_]+)?/)) {
                 // Decimal literals may be "imaginary"
@@ -134,7 +148,9 @@ defineMode('python', function (conf, parserConf) {
                 intLiteral = true;
             }
             // Zero by itself with no other piece of number.
-            if (stream.match(/^0(?![\dx])/i)) intLiteral = true;
+            if (stream.match(/^0(?![\dx])/i)) {
+                intLiteral = true;
+            }
             if (intLiteral) {
                 // Integer literals may be "long"
                 stream.eat(/L/i);
@@ -149,30 +165,38 @@ defineMode('python', function (conf, parserConf) {
         }
 
         // Handle operators and Delimiters
-        if (stream.match(tripleDelimiters) || stream.match(doubleDelimiters))
+        if (stream.match(tripleDelimiters) || stream.match(doubleDelimiters)) {
             return 'punctuation';
+        }
 
-        if (stream.match(doubleOperators) || stream.match(singleOperators))
+        if (stream.match(doubleOperators) || stream.match(singleOperators)) {
             return 'operator';
+        }
 
-        if (stream.match(singleDelimiters))
+        if (stream.match(singleDelimiters)) {
             return 'punctuation';
+        }
 
-        if (state.lastToken == '.' && stream.match(identifiers))
+        if (state.lastToken === '.' && stream.match(identifiers)) {
             return 'property';
+        }
 
-        if (stream.match(keywords) || stream.match(wordOperators))
+        if (stream.match(keywords) || stream.match(wordOperators)) {
             return 'keyword';
+        }
 
-        if (stream.match(builtins))
+        if (stream.match(builtins)) {
             return 'builtin';
+        }
 
-        if (stream.match(/^(self|cls)\b/))
+        if (stream.match(/^(self|cls)\b/)) {
             return 'variable-2';
+        }
 
         if (stream.match(identifiers)) {
-            if (state.lastToken == 'def' || state.lastToken == 'class')
+            if (state.lastToken === 'def' || state.lastToken === 'class') {
                 return 'def';
+            }
             return 'variable';
         }
 
@@ -186,7 +210,7 @@ defineMode('python', function (conf, parserConf) {
             delimiter = delimiter.substr(1);
         }
 
-        const singleline = delimiter.length == 1;
+        const singleline = delimiter.length === 1;
         const OUTCLASS = 'string';
 
         function tokenString(stream, state) {
@@ -194,8 +218,9 @@ defineMode('python', function (conf, parserConf) {
                 stream.eatWhile(/[^'"\\]/);
                 if (stream.eat('\\')) {
                     stream.next();
-                    if (singleline && stream.eol())
+                    if (singleline && stream.eol()) {
                         return OUTCLASS;
+                    }
                 } else if (stream.match(delimiter)) {
                     state.tokenize = tokenBase;
                     return OUTCLASS;
@@ -204,10 +229,11 @@ defineMode('python', function (conf, parserConf) {
                 }
             }
             if (singleline) {
-                if (parserConf.singleLineStringErrors)
+                if (parserConf.singleLineStringErrors) {
                     return ERRORCLASS;
-                else
+                } else {
                     state.tokenize = tokenBase;
+                }
             }
             return OUTCLASS;
         }
@@ -217,7 +243,9 @@ defineMode('python', function (conf, parserConf) {
     }
 
     function pushPyScope(state) {
-        while (top(state).type != 'py') state.scopes.pop();
+        while (top(state).type !== 'py') {
+            state.scopes.pop();
+        }
         state.scopes.push({
             offset: top(state).offset + conf.indentUnit,
             type: 'py',
@@ -237,47 +265,65 @@ defineMode('python', function (conf, parserConf) {
     function dedent(stream, state) {
         const indented = stream.indentation();
         while (state.scopes.length > 1 && top(state).offset > indented) {
-            if (top(state).type != 'py') return true;
+            if (top(state).type !== 'py') {
+                return true;
+            }
             state.scopes.pop();
         }
-        return top(state).offset != indented;
+        return top(state).offset !== indented;
     }
 
     function tokenLexer(stream, state) {
-        if (stream.sol()) state.beginningOfLine = true;
+        if (stream.sol()) {
+            state.beginningOfLine = true;
+        }
 
         let style = state.tokenize(stream, state);
         const current = stream.current();
 
         // Handle decorators
-        if (state.beginningOfLine && current == '@')
+        if (state.beginningOfLine && current === '@') {
             return stream.match(identifiers, false) ? 'meta' : py3 ? 'operator' : ERRORCLASS;
+        }
 
-        if (/\S/.test(current)) state.beginningOfLine = false;
+        if (/\S/.test(current)) {
+            state.beginningOfLine = false;
+        }
 
-        if ((style == 'variable' || style == 'builtin')
-            && state.lastToken == 'meta')
+        if ((style === 'variable' || style === 'builtin')
+            && state.lastToken === 'meta') {
             style = 'meta';
+        }
 
         // Handle scope changes.
-        if (current == 'pass' || current == 'return')
+        if (current === 'pass' || current === 'return') {
             state.dedent += 1;
+        }
 
-        if (current == 'lambda') state.lambda = true;
-        if (current == ':' && !state.lambda && top(state).type == 'py')
+        if (current === 'lambda') {
+            state.lambda = true;
+        }
+        if (current === ':' && !state.lambda && top(state).type === 'py') {
             pushPyScope(state);
+        }
 
-        let delimiter_index = current.length == 1 ? '[({'.indexOf(current) : -1;
-        if (delimiter_index != -1)
+        let delimiter_index = current.length === 1 ? '[({'.indexOf(current) : -1;
+        if (delimiter_index !== -1) {
             pushBracketScope(stream, state, '])}'.slice(delimiter_index, delimiter_index + 1));
+        }
 
         delimiter_index = '])}'.indexOf(current);
-        if (delimiter_index != -1) {
-            if (top(state).type == current) state.indent = state.scopes.pop().offset - hangingIndent;
-            else return ERRORCLASS;
+        if (delimiter_index !== -1) {
+            if (top(state).type === current) {
+                state.indent = state.scopes.pop().offset - hangingIndent;
+            } else {
+                return ERRORCLASS;
+            }
         }
-        if (state.dedent > 0 && stream.eol() && top(state).type == 'py') {
-            if (state.scopes.length > 1) state.scopes.pop();
+        if (state.dedent > 0 && stream.eol() && top(state).type === 'py') {
+            if (state.scopes.length > 1) {
+                state.scopes.pop();
+            }
             state.dedent -= 1;
         }
 
@@ -296,32 +342,37 @@ defineMode('python', function (conf, parserConf) {
             };
         },
 
-        token: function (stream, state) {
+        token: (stream, state) => {
             const addErr = state.errorToken;
-            if (addErr) state.errorToken = false;
+            if (addErr) {
+                state.errorToken = false;
+            }
             let style = tokenLexer(stream, state);
 
-            if (style && style != 'comment') {
-                state.lastToken = (style == 'keyword' || style == 'punctuation') ? stream.current() : style;
+            if (style && style !== 'comment') {
+                state.lastToken = (style === 'keyword' || style === 'punctuation') ? stream.current() : style;
             }
-            if (style == 'punctuation') {
+            if (style === 'punctuation') {
                 style = null;
             }
 
-            if (stream.eol() && state.lambda)
+            if (stream.eol() && state.lambda) {
                 state.lambda = false;
+            }
             return addErr ? style + ' ' + ERRORCLASS : style;
         },
 
-        indent: function (state, textAfter) {
-            if (state.tokenize != tokenBase)
+        indent: (state, textAfter) => {
+            if (state.tokenize !== tokenBase) {
                 return state.tokenize.isString ? Pass : 0;
+            }
 
-            const scope = top(state), closing = scope.type == textAfter.charAt(0);
-            if (scope.align != null)
+            const scope = top(state), closing = scope.type === textAfter.charAt(0);
+            if (scope.align !== null) {
                 return scope.align - (closing ? 1 : 0);
-            else
+            } else {
                 return scope.offset - (closing ? hangingIndent : 0);
+            }
         },
 
         electricInput: /^\s*[}\])]$/,

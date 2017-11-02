@@ -2,70 +2,139 @@ import {Pass} from './misc';
 import {copyState, defineMode, getMode, startState} from './index';
 
 export function defineSimpleMode(name, states) {
-    defineMode(name, function(config) {
-        return simpleMode(config, states);
-    });
+    defineMode(name, config => simpleMode(config, states));
 }
 
 export function simpleMode(config, states) {
     ensureState(states, 'start');
     let states_ = {}, meta = states.meta || {}, hasIndentation = false;
-    for (const state in states) if (state != meta && states.hasOwnProperty(state)) {
+    for (const state in states) if (state !== meta && states.hasOwnProperty(state)) {
+        {
+            {
+                {
+                    {
+                        {
+                            {
+                                {
+                                    {
+                                        {
+                                            {
         const list = states_[state] = [], orig = states[state];
         for (let i = 0; i < orig.length; i++) {
             const data = orig[i];
             list.push(new Rule(data, states));
-            if (data.indent || data.dedent) hasIndentation = true;
+            if (data.indent || data.dedent) {
+                hasIndentation = true;
+            }
+        }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     const mode = {
-        startState: function() {
+        startState: () => {
             return {
                 state: 'start', pending: null,
                 local: null, localState: null,
                 indent: hasIndentation ? [] : null
             };
         },
-        copyState: function(state) {
+        copyState: (state) => {
             const s: any = {
                 state: state.state, pending: state.pending,
                 local: state.local, localState: null,
                 indent: state.indent && state.indent.slice(0)
             };
-            if (state.localState)
+            if (state.localState) {
                 s.localState = copyState(state.local.mode, state.localState);
-            if (state.stack)
+            }
+            if (state.stack) {
                 s.stack = state.stack.slice(0);
-            for (let pers = state.persistentStates; pers; pers = pers.next)
+            }
+            for (let pers = state.persistentStates; pers; pers = pers.next) {
                 s.persistentStates = {
                     mode: pers.mode,
                     spec: pers.spec,
-                    state: pers.state == state.localState ? s.localState : copyState(pers.mode, pers.state),
+                    state: pers.state === state.localState ? s.localState : copyState(pers.mode, pers.state),
                     next: s.persistentStates
                 };
+            }
             return s;
         },
         token: tokenFunction(states_, config),
-        innerMode: function(state) {
+        innerMode: (state) => {
             return state.local && {mode: state.local.mode, state: state.localState};
         },
         indent: indentFunction(states_, meta)
     };
-    if (meta) for (const prop in meta) if (meta.hasOwnProperty(prop))
+    if (meta) for (const prop in meta) if (meta.hasOwnProperty(prop)) {
+        {
+            {
+                {
+                    {
+                        {
+                            {
+                                {
+                                    {
+                                        {
+                                            {
+                                                {
+                                                    {
+                                                        {
+                                                            {
+                                                                {
+                                                                    {
+                                                                        {
+                                                                            {
+                                                                                {
+                                                                                    {
         mode[prop] = meta[prop];
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     return mode;
 }
 
 function ensureState(states, name) {
-    if (!states.hasOwnProperty(name))
+    if (!states.hasOwnProperty(name)) {
         throw new Error('Undefined state ' + name + ' in simple mode');
+    }
 }
 
-function toRegex(val, caret = undefined) {
-    if (!val) return /(?:)/;
+function toRegex(val, caret?) {
+    if (!val) {
+        return /(?:)/;
+    }
     let flags = '';
     if (val instanceof RegExp) {
-        if (val.ignoreCase) flags = 'i';
+        if (val.ignoreCase) {
+            flags = 'i';
+        }
         val = val.source;
     } else {
         val = String(val);
@@ -74,16 +143,23 @@ function toRegex(val, caret = undefined) {
 }
 
 function asToken(val) {
-    if (!val) return null;
-    if (typeof val == 'string') return val.replace(/\./g, ' ');
+    if (!val) {
+        return null;
+    }
+    if (typeof val === 'string') {
+        return val.replace(/\./g, ' ');
+    }
     const result = [];
-    for (let i = 0; i < val.length; i++)
+    for (let i = 0; i < val.length; i++) {
         result.push(val[i] && val[i].replace(/\./g, ' '));
+    }
     return result;
 }
 
 function Rule(data, states) {
-    if (data.next || data.push) ensureState(states, data.next || data.push);
+    if (data.next || data.push) {
+        ensureState(states, data.next || data.push);
+    }
     this.regex = toRegex(data.regex);
     this.token = asToken(data.token);
     this.data = data;
@@ -93,7 +169,9 @@ function tokenFunction(states, config) {
     return function(stream, state) {
         if (state.pending) {
             const pend = state.pending.shift();
-            if (state.pending.length == 0) state.pending = null;
+            if (state.pending.length === 0) {
+                state.pending = null;
+            }
             stream.pos += pend.text.length;
             return pend.token;
         }
@@ -105,8 +183,9 @@ function tokenFunction(states, config) {
                 return tok;
             } else {
                 let tok = state.local.mode.token(stream, state.localState), m;
-                if (state.local.endScan && (m = state.local.endScan.exec(stream.current())))
+                if (state.local.endScan && (m = state.local.endScan.exec(stream.current()))) {
                     stream.pos = stream.start + m.index;
+                }
                 return tok;
             }
         }
@@ -125,17 +204,22 @@ function tokenFunction(states, config) {
                     state.state = state.stack.pop();
                 }
 
-                if (rule.data.mode)
+                if (rule.data.mode) {
                     enterLocalMode(config, state, rule.data.mode, rule.token);
-                if (rule.data.indent)
+                }
+                if (rule.data.indent) {
                     state.indent.push(stream.indentation() + config.indentUnit);
-                if (rule.data.dedent)
+                }
+                if (rule.data.dedent) {
                     state.indent.pop();
+                }
                 if (matches.length > 2) {
                     state.pending = [];
-                    for (let j = 2; j < matches.length; j++)
-                        if (matches[j])
+                    for (let j = 2; j < matches.length; j++) {
+                        if (matches[j]) {
                             state.pending.push({text: matches[j], token: rule.token[j - 1]});
+                        }
+                    }
                     stream.backUp(matches[0].length - (matches[1] ? matches[1].length : 0));
                     return rule.token[0];
                 } else if (rule.token && rule.token.join) {
@@ -151,25 +235,79 @@ function tokenFunction(states, config) {
 }
 
 function cmp(a, b) {
-    if (a === b) return true;
-    if (!a || typeof a != 'object' || !b || typeof b != 'object') return false;
+    if (a === b) {
+        return true;
+    }
+    if (!a || typeof a !== 'object' || !b || typeof b !== 'object') {
+        return false;
+    }
     let props = 0;
     for (const prop in a) if (a.hasOwnProperty(prop)) {
-        if (!b.hasOwnProperty(prop) || !cmp(a[prop], b[prop])) return false;
+        {
+            {
+                {
+                    {
+                        {
+                            {
+                                {
+                                    {
+                                        {
+                                            {
+                                                if (!b.hasOwnProperty(prop) || !cmp(a[prop], b[prop])) {
+                                                    return false;
+                                                }
         props++;
     }
-    for (const prop in b) if (b.hasOwnProperty(prop)) props--;
-    return props == 0;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for (const prop in b) {
+        if (b.hasOwnProperty(prop)) {
+            props--;
+        }
+    }
+    return props === 0;
 }
 
 function enterLocalMode(config, state, spec, token) {
     let pers;
-    if (spec.persistent) for (let p = state.persistentStates; p && !pers; p = p.next)
-        if (spec.spec ? cmp(spec.spec, p.spec) : spec.mode == p.mode) pers = p;
+    if (spec.persistent) for (let p = state.persistentStates; p && !pers; p = p.next) {
+        {
+            {
+                {
+                    {
+                        {
+                            {
+                                {
+                                    {
+                                        {
+                                            {
+                                                if (spec.spec ? cmp(spec.spec, p.spec) : spec.mode === p.mode) {
+                                                    pers = p;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     const mode = pers ? pers.mode : spec.mode || getMode(config, spec.spec);
     const lState = pers ? pers.state : startState(mode);
-    if (spec.persistent && !pers)
+    if (spec.persistent && !pers) {
         state.persistentStates = {mode: mode, spec: spec.spec, state: lState, next: state.persistentStates};
+    }
 
     state.localState = lState;
     state.local = {
@@ -181,16 +319,22 @@ function enterLocalMode(config, state, spec, token) {
 }
 
 function indexOf(val, arr) {
-    for (let i = 0; i < arr.length; i++) if (arr[i] === val) return true;
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i] === val) {
+            return true;
+        }
+    }
 }
 
 function indentFunction(states, meta) {
     return function(state, textAfter, line) {
-        if (state.local && state.local.mode.indent)
+        if (state.local && state.local.mode.indent) {
             return state.local.mode.indent(state.localState, textAfter, line);
-        if (state.indent == null || state.local || meta.dontIndentStates &&
-            indexOf(state.state, meta.dontIndentStates))
+        }
+        if (state.indent === null || state.local || meta.dontIndentStates &&
+            indexOf(state.state, meta.dontIndentStates)) {
             return Pass;
+        }
 
         let pos = state.indent.length - 1, rules = states[state.state];
         scan: for (; ;) {
@@ -200,7 +344,9 @@ function indentFunction(states, meta) {
                     const m = rule.regex.exec(textAfter);
                     if (m && m[0]) {
                         pos--;
-                        if (rule.next || rule.push) rules = states[rule.next || rule.push];
+                        if (rule.next || rule.push) {
+                            rules = states[rule.next || rule.push];
+                        }
                         textAfter = textAfter.slice(m[0].length);
                         continue scan;
                     }

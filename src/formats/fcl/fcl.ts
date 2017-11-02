@@ -38,9 +38,9 @@ defineMode('fcl', function(config) {
         const ch = stream.next();
 
         if (/[\d\.]/.test(ch)) {
-            if (ch == '.') {
+            if (ch === '.') {
                 stream.match(/^[0-9]+([eE][\-+]?[0-9]+)?/);
-            } else if (ch == '0') {
+            } else if (ch === '0') {
                 stream.match(/^[xX][0-9a-fA-F]+/) || stream.match(/^0[0-7]+/);
             } else {
                 stream.match(/^[0-9]*\.?[0-9]*([eE][\-+]?[0-9]+)?/);
@@ -48,7 +48,7 @@ defineMode('fcl', function(config) {
             return 'number';
         }
 
-        if (ch == '/' || ch == '(') {
+        if (ch === '/' || ch === '(') {
             if (stream.eat('*')) {
                 state.tokenize = tokenComment;
                 return tokenComment(stream, state);
@@ -70,7 +70,9 @@ defineMode('fcl', function(config) {
             end_blocks.propertyIsEnumerable(cur)) {
             return 'keyword';
         }
-        if (atoms.propertyIsEnumerable(cur)) return 'atom';
+        if (atoms.propertyIsEnumerable(cur)) {
+            return 'atom';
+        }
         return 'variable';
     }
 
@@ -78,16 +80,16 @@ defineMode('fcl', function(config) {
     function tokenComment(stream, state) {
         let maybeEnd = false, ch;
         while (ch = stream.next()) {
-            if ((ch == '/' || ch == ')') && maybeEnd) {
+            if ((ch === '/' || ch === ')') && maybeEnd) {
                 state.tokenize = tokenBase;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
 
-    function Context(indented, column, type, align, prev = undefined) {
+    function Context(indented, column, type, align, prev?) {
         this.indented = indented;
         this.column = column;
         this.type = type;
@@ -100,10 +102,13 @@ defineMode('fcl', function(config) {
     }
 
     function popContext(state) {
-        if (!state.context.prev) return;
+        if (!state.context.prev) {
+            return;
+        }
         const t = state.context.type;
-        if (t == 'end_block')
+        if (t === 'end_block') {
             state.indented = state.context.indented;
+        }
         return state.context = state.context.prev;
     }
 
@@ -119,35 +124,51 @@ defineMode('fcl', function(config) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             const ctx = state.context;
             if (stream.sol()) {
-                if (ctx.align == null) ctx.align = false;
+                if (ctx.align === null) {
+                    ctx.align = false;
+                }
                 state.indented = stream.indentation();
                 state.startOfLine = true;
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
 
             const style = (state.tokenize || tokenBase)(stream, state);
-            if (style == 'comment') return style;
-            if (ctx.align == null) ctx.align = true;
+            if (style === 'comment') {
+                return style;
+            }
+            if (ctx.align === null) {
+                ctx.align = true;
+            }
 
             const cur = stream.current().toLowerCase();
 
-            if (start_blocks.propertyIsEnumerable(cur)) pushContext(state, stream.column(), 'end_block');
-            else if (end_blocks.propertyIsEnumerable(cur)) popContext(state);
+            if (start_blocks.propertyIsEnumerable(cur)) {
+                pushContext(state, stream.column(), 'end_block');
+            } else if (end_blocks.propertyIsEnumerable(cur)) {
+                popContext(state);
+            }
 
             state.startOfLine = false;
             return style;
         },
 
-        indent: function(state, textAfter) {
-            if (state.tokenize != tokenBase && state.tokenize != null) return 0;
+        indent: (state, textAfter) => {
+            if (state.tokenize !== tokenBase && state.tokenize !== null) {
+                return 0;
+            }
             const ctx = state.context;
 
             const closing = end_blocks.propertyIsEnumerable(textAfter);
-            if (ctx.align) return ctx.column + (closing ? 0 : 1);
-            else return ctx.indented + (closing ? 0 : indentUnit);
+            if (ctx.align) {
+                return ctx.column + (closing ? 0 : 1);
+            } else {
+                return ctx.indented + (closing ? 0 : indentUnit);
+            }
         },
 
         electricChars: 'ryk',

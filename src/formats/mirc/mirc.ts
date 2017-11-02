@@ -5,7 +5,9 @@ defineMIME('text/mirc', 'mirc');
 defineMode('mirc', function() {
     function parseWords(str) {
         const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 
@@ -83,57 +85,50 @@ defineMode('mirc', function() {
         state.beforeParams = false;
         const ch = stream.next();
         if (/[\[\]{}\(\),\.]/.test(ch)) {
-            if (ch == '(' && beforeParams) state.inParams = true;
-            else if (ch == ')') state.inParams = false;
+            if (ch === '(' && beforeParams) {
+                state.inParams = true;
+            } else if (ch === ')') {
+                state.inParams = false;
+            }
             return null;
-        }
-        else if (/\d/.test(ch)) {
+        } else if (/\d/.test(ch)) {
             stream.eatWhile(/[\w\.]/);
             return 'number';
-        }
-        else if (ch == '\\') {
+        } else if (ch === '\\') {
             stream.eat('\\');
             stream.eat(/./);
             return 'number';
-        }
-        else if (ch == '/' && stream.eat('*')) {
+        } else if (ch === '/' && stream.eat('*')) {
             return chain(stream, state, tokenComment);
-        }
-        else if (ch == ';' && stream.match(/ *\( *\(/)) {
+        } else if (ch === ';' && stream.match(/ *\( *\(/)) {
             return chain(stream, state, tokenUnparsed);
-        }
-        else if (ch == ';' && !state.inParams) {
+        } else if (ch === ';' && !state.inParams) {
             stream.skipToEnd();
             return 'comment';
-        }
-        else if (ch == '"') {
+        } else if (ch === '"') {
             stream.eat(/"/);
             return 'keyword';
-        }
-        else if (ch == '$') {
+        } else if (ch === '$') {
             stream.eatWhile(/[$_a-z0-9A-Z\.:]/);
             if (specials && specials.propertyIsEnumerable(stream.current().toLowerCase())) {
                 return 'keyword';
-            }
-            else {
+            } else {
                 state.beforeParams = true;
                 return 'builtin';
             }
-        }
-        else if (ch == '%') {
+        } else if (ch === '%') {
             stream.eatWhile(/[^,\s()]/);
             state.beforeParams = true;
             return 'string';
-        }
-        else if (isOperatorChar.test(ch)) {
+        } else if (isOperatorChar.test(ch)) {
             stream.eatWhile(isOperatorChar);
             return 'operator';
-        }
-        else {
+        } else {
             stream.eatWhile(/[\w\$_{}]/);
             const word = stream.current().toLowerCase();
-            if (keywords && keywords.propertyIsEnumerable(word))
+            if (keywords && keywords.propertyIsEnumerable(word)) {
                 return 'keyword';
+            }
             if (functions && functions.propertyIsEnumerable(word)) {
                 state.beforeParams = true;
                 return 'keyword';
@@ -145,11 +140,11 @@ defineMode('mirc', function() {
     function tokenComment(stream, state) {
         let maybeEnd = false, ch;
         while (ch = stream.next()) {
-            if (ch == '/' && maybeEnd) {
+            if (ch === '/' && maybeEnd) {
                 state.tokenize = tokenBase;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
@@ -157,28 +152,31 @@ defineMode('mirc', function() {
     function tokenUnparsed(stream, state) {
         let maybeEnd = 0, ch;
         while (ch = stream.next()) {
-            if (ch == ';' && maybeEnd == 2) {
+            if (ch === ';' && maybeEnd === 2) {
                 state.tokenize = tokenBase;
                 break;
             }
-            if (ch == ')')
+            if (ch === ')') {
                 maybeEnd++;
-            else if (ch != ' ')
+            } else if (ch !== ' ') {
                 maybeEnd = 0;
+            }
         }
         return 'meta';
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 beforeParams: false,
                 inParams: false
             };
         },
-        token: function(stream, state) {
-            if (stream.eatSpace()) return null;
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
+                return null;
+            }
             return state.tokenize(stream, state);
         }
     };

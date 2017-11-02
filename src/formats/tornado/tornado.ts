@@ -14,7 +14,7 @@ defineMode('tornado:inner', function() {
     function tokenBase(stream, state) {
         stream.eatWhile(/[^\{]/);
         let ch = stream.next();
-        if (ch == '{') {
+        if (ch === '{') {
             if (ch = stream.eat(/\{|%|#/)) {
                 state.tokenize = inTag(ch);
                 return 'tag';
@@ -23,27 +23,27 @@ defineMode('tornado:inner', function() {
     }
 
     function inTag(close) {
-        if (close == '{') {
+        if (close === '{') {
             close = '}';
         }
         return function(stream, state) {
             const ch = stream.next();
-            if ((ch == close) && stream.eat('}')) {
+            if ((ch === close) && stream.eat('}')) {
                 state.tokenize = tokenBase;
                 return 'tag';
             }
             if (stream.match(keywords)) {
                 return 'keyword';
             }
-            return close == '#' ? 'comment' : 'string';
+            return close === '#' ? 'comment' : 'string';
         };
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokenize: tokenBase};
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             return state.tokenize(stream, state);
         }
     };

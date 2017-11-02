@@ -27,66 +27,59 @@ defineMode('sparql', function(config) {
     function tokenBase(stream, state) {
         const ch = stream.next();
         curPunc = null;
-        if (ch == '$' || ch == '?') {
-            if (ch == '?' && stream.match(/\s/, false)) {
+        if (ch === '$' || ch === '?') {
+            if (ch === '?' && stream.match(/\s/, false)) {
                 return 'operator';
             }
             stream.match(/^[\w\d]*/);
             return 'variable-2';
-        }
-        else if (ch == '<' && !stream.match(/^[\s\u00a0=]/, false)) {
+        } else if (ch === '<' && !stream.match(/^[\s\u00a0=]/, false)) {
             stream.match(/^[^\s\u00a0>]*>?/);
             return 'atom';
-        }
-        else if (ch == '"' || ch == "'") {
+        } else if (ch === '"' || ch === "'") {
             state.tokenize = tokenLiteral(ch);
             return state.tokenize(stream, state);
-        }
-        else if (/[{}\(\),\.;\[\]]/.test(ch)) {
+        } else if (/[{}\(\),\.;\[\]]/.test(ch)) {
             curPunc = ch;
             return 'bracket';
-        }
-        else if (ch == '#') {
+        } else if (ch === '#') {
             stream.skipToEnd();
             return 'comment';
-        }
-        else if (operatorChars.test(ch)) {
+        } else if (operatorChars.test(ch)) {
             stream.eatWhile(operatorChars);
             return 'operator';
-        }
-        else if (ch == ':') {
+        } else if (ch === ':') {
             stream.eatWhile(/[\w\d\._\-]/);
             return 'atom';
-        }
-        else if (ch == '@') {
+        } else if (ch === '@') {
             stream.eatWhile(/[a-z\d\-]/i);
             return 'meta';
-        }
-        else {
+        } else {
             stream.eatWhile(/[_\w\d]/);
             if (stream.eat(':')) {
                 stream.eatWhile(/[\w\d_\-]/);
                 return 'atom';
             }
             const word = stream.current();
-            if (ops.test(word))
+            if (ops.test(word)) {
                 return 'builtin';
-            else if (keywords.test(word))
+            } else if (keywords.test(word)) {
                 return 'keyword';
-            else
+            } else {
                 return 'variable';
+            }
         }
     }
 
     function tokenLiteral(quote) {
         return function(stream, state) {
             let escaped = false, ch;
-            while ((ch = stream.next()) != null) {
-                if (ch == quote && !escaped) {
+            while ((ch = stream.next()) !== null) {
+                if (ch === quote && !escaped) {
                     state.tokenize = tokenBase;
                     break;
                 }
-                escaped = !escaped && ch == '\\';
+                escaped = !escaped && ch === '\\';
             }
             return 'string';
         };
@@ -102,7 +95,7 @@ defineMode('sparql', function(config) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 context: null,
@@ -111,34 +104,44 @@ defineMode('sparql', function(config) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
-                if (state.context && state.context.align == null) state.context.align = false;
+                if (state.context && state.context.align === null) {
+                    state.context.align = false;
+                }
                 state.indent = stream.indentation();
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             const style = state.tokenize(stream, state);
 
-            if (style != 'comment' && state.context && state.context.align == null && state.context.type != 'pattern') {
+            if (style !== 'comment' && state.context && state.context.align === null && state.context.type !== 'pattern') {
                 state.context.align = true;
             }
 
-            if (curPunc == '(') pushContext(state, ')', stream.column());
-            else if (curPunc == '[') pushContext(state, ']', stream.column());
-            else if (curPunc == '{') pushContext(state, '}', stream.column());
-            else if (/[\]\}\)]/.test(curPunc)) {
-                while (state.context && state.context.type == 'pattern') popContext(state);
-                if (state.context && curPunc == state.context.type) {
+            if (curPunc === '(') {
+                pushContext(state, ')', stream.column());
+            } else if (curPunc === '[') {
+                pushContext(state, ']', stream.column());
+            } else if (curPunc === '{') {
+                pushContext(state, '}', stream.column());
+            } else if (/[\]\}\)]/.test(curPunc)) {
+                while (state.context && state.context.type === 'pattern') {
                     popContext(state);
-                    if (curPunc == '}' && state.context && state.context.type == 'pattern')
-                        popContext(state);
                 }
-            }
-            else if (curPunc == '.' && state.context && state.context.type == 'pattern') popContext(state);
-            else if (/atom|string|variable/.test(style) && state.context) {
-                if (/[\}\]]/.test(state.context.type))
+                if (state.context && curPunc === state.context.type) {
+                    popContext(state);
+                    if (curPunc === '}' && state.context && state.context.type === 'pattern') {
+                        popContext(state);
+                    }
+                }
+            } else if (curPunc === '.' && state.context && state.context.type === 'pattern') {
+                popContext(state);
+            } else if (/atom|string|variable/.test(style) && state.context) {
+                if (/[\}\]]/.test(state.context.type)) {
                     pushContext(state, 'pattern', stream.column());
-                else if (state.context.type == 'pattern' && !state.context.align) {
+                } else if (state.context.type === 'pattern' && !state.context.align) {
                     state.context.align = true;
                     state.context.col = stream.column();
                 }
@@ -147,21 +150,25 @@ defineMode('sparql', function(config) {
             return style;
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             const firstChar = textAfter && textAfter.charAt(0);
             let context = state.context;
-            if (/[\]\}]/.test(firstChar))
-                while (context && context.type == 'pattern') context = context.prev;
+            if (/[\]\}]/.test(firstChar)) {
+                while (context && context.type === 'pattern') {
+                    context = context.prev;
+                }
+            }
 
-            const closing = context && firstChar == context.type;
-            if (!context)
+            const closing = context && firstChar === context.type;
+            if (!context) {
                 return 0;
-            else if (context.type == 'pattern')
+            } else if (context.type === 'pattern') {
                 return context.col;
-            else if (context.align)
+            } else if (context.align) {
                 return context.col + (closing ? 0 : 1);
-            else
+            } else {
                 return context.indent + (closing ? 0 : indentUnit);
+            }
         },
 
         lineComment: '#'

@@ -1,7 +1,7 @@
 import {defineMIME, defineMode} from '../index';
 
 defineMode('julia', function(config, parserConf) {
-    function wordRegexp(words, end = undefined) {
+    function wordRegexp(words, end?) {
         if (typeof end === 'undefined') {
             end = '\\b';
         }
@@ -42,7 +42,7 @@ defineMode('julia', function(config, parserConf) {
         return inGenerator(state, '[');
     }
 
-    function inGenerator(state, bracket = undefined) {
+    function inGenerator(state, bracket?) {
         const curr = currentScope(state),
             prev = currentScope(state, 1);
         if (typeof(bracket) === 'undefined') {
@@ -54,7 +54,7 @@ defineMode('julia', function(config, parserConf) {
         return false;
     }
 
-    function currentScope(state, n = undefined) {
+    function currentScope(state, n?) {
         if (typeof(n) === 'undefined') {
             n = 0;
         }
@@ -137,7 +137,7 @@ defineMode('julia', function(config, parserConf) {
         }
 
         if (inArray(state)) {
-            if (state.lastToken == 'end' && stream.match(/^:/)) {
+            if (state.lastToken === 'end' && stream.match(/^:/)) {
                 return 'operator';
             }
             if (stream.match(/^end/)) {
@@ -236,9 +236,9 @@ defineMode('julia', function(config, parserConf) {
             return 'builtin';
         }
 
-        const isDefinition = state.isDefinition || state.lastToken == 'function' ||
-            state.lastToken == 'macro' || state.lastToken == 'type' ||
-            state.lastToken == 'immutable';
+        const isDefinition = state.isDefinition || state.lastToken === 'function' ||
+            state.lastToken === 'macro' || state.lastToken === 'type' ||
+            state.lastToken === 'immutable';
 
         if (stream.match(identifiers)) {
             if (isDefinition) {
@@ -264,12 +264,13 @@ defineMode('julia', function(config, parserConf) {
     function callOrDef(stream, state) {
         const match = stream.match(/^(\(\s*)/);
         if (match) {
-            if (state.firstParenPos < 0)
+            if (state.firstParenPos < 0) {
                 state.firstParenPos = state.scopes.length;
+            }
             state.scopes.push('(');
             state.charsAdvanced += match[1].length;
         }
-        if (currentScope(state) == '(' && stream.match(/^\)/)) {
+        if (currentScope(state) === '(' && stream.match(/^\)/)) {
             state.scopes.pop();
             state.charsAdvanced += 1;
             if (state.scopes.length <= state.firstParenPos) {
@@ -277,8 +278,9 @@ defineMode('julia', function(config, parserConf) {
                 stream.backUp(state.charsAdvanced);
                 state.firstParenPos = -1;
                 state.charsAdvanced = 0;
-                if (isDefinition)
+                if (isDefinition) {
                     return 'def';
+                }
                 return 'builtin';
             }
         }
@@ -287,8 +289,9 @@ defineMode('julia', function(config, parserConf) {
         // over two or more lines.
         if (stream.match(/^$/g, false)) {
             stream.backUp(state.charsAdvanced);
-            while (state.scopes.length > state.firstParenPos)
+            while (state.scopes.length > state.firstParenPos) {
                 state.scopes.pop();
+            }
             state.firstParenPos = -1;
             state.charsAdvanced = 0;
             return 'builtin';
@@ -306,7 +309,7 @@ defineMode('julia', function(config, parserConf) {
         }
         if (state.nestedLevels > 0) {
             stream.match(/.*?(?={|})/) || stream.next();
-        } else if (state.nestedLevels == 0) {
+        } else if (state.nestedLevels === 0) {
             state.tokenize = tokenBase;
         }
         return 'builtin';
@@ -321,8 +324,9 @@ defineMode('julia', function(config, parserConf) {
         }
         if (stream.match(/^=#/)) {
             state.nestedLevels--;
-            if (state.nestedLevels == 0)
+            if (state.nestedLevels === 0) {
                 state.tokenize = tokenBase;
+            }
         }
         return 'comment';
     }
@@ -382,7 +386,7 @@ defineMode('julia', function(config, parserConf) {
     }
 
     const external = {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 scopes: [],
@@ -395,7 +399,7 @@ defineMode('julia', function(config, parserConf) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             let style = state.tokenize(stream, state);
             const current = stream.current();
 
@@ -411,7 +415,7 @@ defineMode('julia', function(config, parserConf) {
             return style;
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             let delta = 0;
             if (textAfter === ']' || textAfter === ')' || textAfter === 'end' ||
                 textAfter === 'else' || textAfter === 'catch' || textAfter === 'elseif' ||

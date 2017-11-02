@@ -1,12 +1,13 @@
 // Collect all Dockerfile directives
 import {defineMIME} from '../index';
 import {defineSimpleMode} from '../simple';
+
 const instructions = ['from', 'maintainer', 'run', 'cmd', 'expose', 'env',
-        'add', 'copy', 'entrypoint', 'volume', 'user',
-        'workdir', 'onbuild'],
-    instructionRegex = '(' + instructions.join('|') + ')',
-    instructionOnlyLine = new RegExp(instructionRegex + '\\s*$', 'i'),
-    instructionWithArguments = new RegExp(instructionRegex + '(\\s+)', 'i');
+    'add', 'copy', 'entrypoint', 'volume', 'user',
+    'workdir', 'onbuild'];
+const instructionRegex = '(' + instructions.join('|') + ')';
+const instructionOnlyLine = new RegExp(instructionRegex + '\\s*$', 'i');
+const instructionWithArguments = new RegExp(instructionRegex + '(\\s+)', 'i');
 
 defineSimpleMode('dockerfile', {
     start: [

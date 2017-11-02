@@ -40,27 +40,27 @@ defineMode('asterisk', function() {
         let cur = '';
         const ch = stream.next();
         // comment
-        if (ch == ';') {
+        if (ch === ';') {
             stream.skipToEnd();
             return 'comment';
         }
         // context
-        if (ch == '[') {
+        if (ch === '[') {
             stream.skipTo(']');
             stream.eat(']');
             return 'header';
         }
         // string
-        if (ch == '"') {
+        if (ch === '"') {
             stream.skipTo('"');
             return 'string';
         }
-        if (ch == "'") {
+        if (ch === "'") {
             stream.skipTo("'");
             return 'string-2';
         }
         // dialplan commands
-        if (ch == '#') {
+        if (ch === '#') {
             stream.eatWhile(/\w/);
             cur = stream.current();
             if (dpcmd.indexOf(cur) !== -1) {
@@ -69,9 +69,9 @@ defineMode('asterisk', function() {
             }
         }
         // application args
-        if (ch == '$') {
+        if (ch === '$') {
             const ch1 = stream.peek();
-            if (ch1 == '{') {
+            if (ch1 === '{') {
                 stream.skipTo('}');
                 stream.eat('}');
                 return 'variable-3';
@@ -99,7 +99,7 @@ defineMode('asterisk', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 extenStart: false,
                 extenSame: false,
@@ -109,10 +109,12 @@ defineMode('asterisk', function() {
                 extenApplication: false
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
 
             let cur = '';
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             // extension started
             if (state.extenStart) {
                 stream.eatWhile(/[^\s]/);
@@ -146,13 +148,17 @@ defineMode('asterisk', function() {
                 state.extenPriority = false;
                 state.extenApplication = true;
                 stream.next(); // get comma
-                if (state.extenSame) return null;
+                if (state.extenSame) {
+                    return null;
+                }
                 stream.eatWhile(/[^,]/);
                 return 'number';
             } else if (state.extenApplication) {
                 stream.eatWhile(/,/);
                 cur = stream.current();
-                if (cur === ',') return null;
+                if (cur === ',') {
+                    return null;
+                }
                 stream.eatWhile(/\w/);
                 cur = stream.current().toLowerCase();
                 state.extenApplication = false;

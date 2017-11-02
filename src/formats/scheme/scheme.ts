@@ -7,7 +7,9 @@ defineMode('scheme', function() {
 
     function makeKeywords(str) {
         const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 
@@ -53,7 +55,7 @@ defineMode('scheme', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 indentStack: null,
                 indentation: 0,
@@ -62,8 +64,8 @@ defineMode('scheme', function() {
             };
         },
 
-        token: function(stream, state) {
-            if (state.indentStack == null && stream.sol()) {
+        token: (stream, state) => {
+            if (state.indentStack === null && stream.sol()) {
                 // update indentation, but only if indentStack is empty
                 state.indentation = stream.indentation();
             }
@@ -77,31 +79,31 @@ defineMode('scheme', function() {
             switch (state.mode) {
                 case 'string': // multi-line string parsing mode
                     let escaped = false;
-                    while ((next = stream.next()) != null) {
-                        if (next == '"' && !escaped) {
+                    while ((next = stream.next()) !== null) {
+                        if (next === '"' && !escaped) {
 
                             state.mode = false;
                             break;
                         }
-                        escaped = !escaped && next == '\\';
+                        escaped = !escaped && next === '\\';
                     }
                     returnType = STRING; // continue on in scheme-string mode
                     break;
                 case 'comment': // comment parsing mode
                     let maybeEnd = false;
-                    while ((next = stream.next()) != null) {
-                        if (next == '#' && maybeEnd) {
+                    while ((next = stream.next()) !== null) {
+                        if (next === '#' && maybeEnd) {
 
                             state.mode = false;
                             break;
                         }
-                        maybeEnd = (next == '|');
+                        maybeEnd = (next === '|');
                     }
                     returnType = COMMENT;
                     break;
                 case 's-expr-comment': // s-expr commenting mode
                     state.mode = false;
-                    if (stream.peek() == '(' || stream.peek() == '[') {
+                    if (stream.peek() === '(' || stream.peek() === '[') {
                         // actually start scheme s-expr commenting mode
                         state.sExprComment = 0;
                     } else {
@@ -113,13 +115,13 @@ defineMode('scheme', function() {
                 default: // default parsing mode
                     const ch = stream.next();
 
-                    if (ch == '"') {
+                    if (ch === '"') {
                         state.mode = 'string';
                         returnType = STRING;
 
-                    } else if (ch == "'") {
+                    } else if (ch === "'") {
                         returnType = ATOM;
-                    } else if (ch == '#') {
+                    } else if (ch === '#') {
                         if (stream.eat('|')) {                    // Multi-line comment
                             state.mode = 'comment'; // toggle to comment mode
                             returnType = COMMENT;
@@ -150,21 +152,22 @@ defineMode('scheme', function() {
                             } else if (!hasExactness) {
                                 stream.eat('#');
                             }
-                            if (numTest != null) {
+                            if (numTest !== null) {
                                 if (hasRadix && !hasExactness) {
                                     // consume optional exactness after radix
                                     stream.match(/^#[ei]/i);
                                 }
-                                if (numTest(stream))
+                                if (numTest(stream)) {
                                     returnType = NUMBER;
+                                }
                             }
                         }
                     } else if (/^[-+0-9.]/.test(ch) && isDecimalNumber(stream, true)) { // match non-prefixed number, must be decimal
                         returnType = NUMBER;
-                    } else if (ch == ';') { // comment
+                    } else if (ch === ';') { // comment
                         stream.skipToEnd(); // rest of the line is a comment
                         returnType = COMMENT;
-                    } else if (ch == '(' || ch == '[') {
+                    } else if (ch === '(' || ch === '[') {
                         let keyWord = '';
                         let indentTemp = stream.column(), letter;
                         /**
@@ -174,7 +177,7 @@ defineMode('scheme', function() {
                          (;something else, bracket, etc.
                          */
 
-                        while ((letter = stream.eat(/[^\s\(\[\;\)\]]/)) != null) {
+                        while ((letter = stream.eat(/[^\s\(\[\;\)\]]/)) !== null) {
                             keyWord += letter;
                         }
 
@@ -184,7 +187,7 @@ defineMode('scheme', function() {
                         } else { // non-indent word
                             // we continue eating the spaces
                             stream.eatSpace();
-                            if (stream.eol() || stream.peek() == ';') {
+                            if (stream.eol() || stream.peek() === ';') {
                                 // nothing significant after
                                 // we restart indentation 1 space after
                                 pushStack(state, indentTemp + 1, ch);
@@ -194,16 +197,18 @@ defineMode('scheme', function() {
                         }
                         stream.backUp(stream.current().length - 1); // undo all the eating
 
-                        if (typeof state.sExprComment == 'number') state.sExprComment++;
+                        if (typeof state.sExprComment === 'number') {
+                            state.sExprComment++;
+                        }
 
                         returnType = BRACKET;
-                    } else if (ch == ')' || ch == ']') {
+                    } else if (ch === ')' || ch === ']') {
                         returnType = BRACKET;
-                        if (state.indentStack != null && state.indentStack.type == (ch == ')' ? '(' : '[')) {
+                        if (state.indentStack !== null && state.indentStack.type === (ch === ')' ? '(' : '[')) {
                             popStack(state);
 
-                            if (typeof state.sExprComment == 'number') {
-                                if (--state.sExprComment == 0) {
+                            if (typeof state.sExprComment === 'number') {
+                                if (--state.sExprComment === 0) {
                                     returnType = COMMENT; // final closing bracket
                                     state.sExprComment = false; // turn off s-expr commenting mode
                                 }
@@ -214,14 +219,18 @@ defineMode('scheme', function() {
 
                         if (keywords && keywords.propertyIsEnumerable(stream.current())) {
                             returnType = BUILTIN;
-                        } else returnType = 'variable';
+                        } else {
+                            returnType = 'variable';
+                        }
                     }
             }
-            return (typeof state.sExprComment == 'number') ? COMMENT : returnType;
+            return (typeof state.sExprComment === 'number') ? COMMENT : returnType;
         },
 
-        indent: function(state) {
-            if (state.indentStack == null) return state.indentation;
+        indent: (state) => {
+            if (state.indentStack === null) {
+                return state.indentation;
+            }
             return state.indentStack.indent;
         },
 

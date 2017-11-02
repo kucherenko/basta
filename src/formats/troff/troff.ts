@@ -5,7 +5,9 @@ defineMode('troff', function() {
     const words = {};
 
     function tokenBase(stream) {
-        if (stream.eatSpace()) return null;
+        if (stream.eatSpace()) {
+            return null;
+        }
 
         const sol = stream.sol();
         const ch = stream.next();
@@ -59,10 +61,10 @@ defineMode('troff', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokens: []};
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             return tokenize(stream, state);
         }
     };

@@ -1,5 +1,6 @@
 import {copyState, defineMIME, defineMode, getMode, startState} from '../index';
 import {Pass} from '../misc';
+
 const indentingTags = ['template', 'literal', 'msg', 'fallbackmsg', 'let', 'if', 'elseif',
     'else', 'switch', 'case', 'default', 'foreach', 'ifempty', 'for',
     'call', 'param', 'deltemplate', 'delcall', 'log'];
@@ -23,9 +24,13 @@ defineMode('soy', function(config) {
         if (stream.sol()) {
             let indent;
             for (indent = 0; indent < state.indent; indent++) {
-                if (!stream.eat(/\s/)) break;
+                if (!stream.eat(/\s/)) {
+                    break;
+                }
             }
-            if (indent) return null;
+            if (indent) {
+                return null;
+            }
         }
         const oldString = stream.string;
         const match = untilRegExp.exec(oldString.substr(stream.pos));
@@ -44,7 +49,9 @@ defineMode('soy', function(config) {
 
     function contains(list, element) {
         while (list) {
-            if (list.element === element) return true;
+            if (list.element === element) {
+                return true;
+            }
             list = list.next;
         }
         return false;
@@ -59,7 +66,7 @@ defineMode('soy', function(config) {
 
     // Reference a variable `name` in `list`.
     // Let `loose` be truthy to ignore missing identifiers.
-    function ref(list, name, loose = undefined) {
+    function ref(list, name, loose?) {
         return contains(list, name) ? 'variable-2' : (loose ? 'variable' : 'variable-2 error');
     }
 
@@ -71,7 +78,7 @@ defineMode('soy', function(config) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 kind: [],
                 kindTag: [],
@@ -88,7 +95,7 @@ defineMode('soy', function(config) {
             };
         },
 
-        copyState: function(state) {
+        copyState: (state) => {
             return {
                 tag: state.tag, // Last seen Soy tag.
                 kind: state.kind.concat([]), // Values of kind="" attributes.
@@ -108,7 +115,7 @@ defineMode('soy', function(config) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             let match;
 
             switch (last(state.soyState)) {
@@ -134,7 +141,7 @@ defineMode('soy', function(config) {
                     if (match = stream.match(/^\.?([\w]+)/)) {
                         state.soyState.pop();
                         // If the first character is '.', try to match against a local template name.
-                        if (match[0][0] == '.') {
+                        if (match[0][0] === '.') {
                             return ref(state.templates, match[1], true);
                         }
                         // Otherwise
@@ -154,7 +161,7 @@ defineMode('soy', function(config) {
                     return null;
 
                 case 'param-type':
-                    if (stream.peek() == '}') {
+                    if (stream.peek() === '}') {
                         state.soyState.pop();
                         return null;
                     }
@@ -175,20 +182,20 @@ defineMode('soy', function(config) {
 
                 case 'tag':
                     if (stream.match(/^\/?}/)) {
-                        if (state.tag == '/template' || state.tag == '/deltemplate') {
+                        if (state.tag === '/template' || state.tag === '/deltemplate') {
                             popscope(state);
                             state.indent = 0;
                         } else {
-                            if (state.tag == '/for' || state.tag == '/foreach') {
+                            if (state.tag === '/for' || state.tag === '/foreach') {
                                 popscope(state);
                             }
                             state.indent -= config.indentUnit *
-                                (stream.current() == '/}' || indentingTags.indexOf(state.tag) == -1 ? 2 : 1);
+                                (stream.current() === '/}' || indentingTags.indexOf(state.tag) === -1 ? 2 : 1);
                         }
                         state.soyState.pop();
                         return 'keyword';
                     } else if (stream.match(/^([\w?]+)(?==)/)) {
-                        if (stream.current() == 'kind' && (match = stream.match(/^="([^"]+)/, false))) {
+                        if (stream.current() === 'kind' && (match = stream.match(/^="([^"]+)/, false))) {
                             const kind = match[1];
                             state.kind.push(kind);
                             state.kindTag.push(state.tag);
@@ -229,7 +236,7 @@ defineMode('soy', function(config) {
                     match = stream.match(/^.*?(["']|\\[\s\S])/);
                     if (!match) {
                         stream.skipToEnd();
-                    } else if (match[1] == state.quoteKind) {
+                    } else if (match[1] === state.quoteKind) {
                         state.quoteKind = null;
                         state.soyState.pop();
                     }
@@ -248,10 +255,11 @@ defineMode('soy', function(config) {
 
                 // A tag-keyword must be followed by whitespace or a closing tag.
             } else if (match = stream.match(/^\{([\/@\\]?\w+\??)(?=[\s\}])/)) {
-                if (match[1] != '/switch')
-                    state.indent += (/^(\/|(else|elseif|ifempty|case|fallbackmsg|default)$)/.test(match[1]) && state.tag != 'switch' ? 1 : 2) * config.indentUnit;
+                if (match[1] !== '/switch') {
+                    state.indent += (/^(\/|(else|elseif|ifempty|case|fallbackmsg|default)$)/.test(match[1]) && state.tag !== 'switch' ? 1 : 2) * config.indentUnit;
+                }
                 state.tag = match[1];
-                if (state.tag == '/' + last(state.kindTag)) {
+                if (state.tag === '/' + last(state.kindTag)) {
                     // We found the tag that opened the current kind="".
                     state.kind.pop();
                     state.kindTag.pop();
@@ -262,16 +270,16 @@ defineMode('soy', function(config) {
                     }
                 }
                 state.soyState.push('tag');
-                if (state.tag == 'template' || state.tag == 'deltemplate') {
+                if (state.tag === 'template' || state.tag === 'deltemplate') {
                     state.soyState.push('templ-def');
                 }
-                if (state.tag == 'call' || state.tag == 'delcall') {
+                if (state.tag === 'call' || state.tag === 'delcall') {
                     state.soyState.push('templ-ref');
                 }
-                if (state.tag == 'let') {
+                if (state.tag === 'let') {
                     state.soyState.push('var-def');
                 }
-                if (state.tag == 'for' || state.tag == 'foreach') {
+                if (state.tag === 'for' || state.tag === 'foreach') {
                     state.scopes = prepend(state.scopes, state.variables);
                     state.soyState.push('var-def');
                 }
@@ -291,17 +299,29 @@ defineMode('soy', function(config) {
             return tokenUntil(stream, state, /\{|\s+\/\/|\/\*/);
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             let indent = state.indent, top = last(state.soyState);
-            if (top == 'comment') return Pass;
+            if (top === 'comment') {
+                return Pass;
+            }
 
-            if (top == 'literal') {
-                if (/^\{\/literal}/.test(textAfter)) indent -= config.indentUnit;
+            if (top === 'literal') {
+                if (/^\{\/literal}/.test(textAfter)) {
+                    indent -= config.indentUnit;
+                }
             } else {
-                if (/^\s*\{\/(template|deltemplate)\b/.test(textAfter)) return 0;
-                if (/^\{(\/|(fallbackmsg|elseif|else|ifempty)\b)/.test(textAfter)) indent -= config.indentUnit;
-                if (state.tag != 'switch' && /^\{(case|default)\b/.test(textAfter)) indent -= config.indentUnit;
-                if (/^\{\/switch\b/.test(textAfter)) indent -= config.indentUnit;
+                if (/^\s*\{\/(template|deltemplate)\b/.test(textAfter)) {
+                    return 0;
+                }
+                if (/^\{(\/|(fallbackmsg|elseif|else|ifempty)\b)/.test(textAfter)) {
+                    indent -= config.indentUnit;
+                }
+                if (state.tag !== 'switch' && /^\{(case|default)\b/.test(textAfter)) {
+                    indent -= config.indentUnit;
+                }
+                if (/^\{\/switch\b/.test(textAfter)) {
+                    indent -= config.indentUnit;
+                }
             }
             const localState = last(state.localStates);
             if (indent && localState.mode.indent) {
@@ -310,9 +330,12 @@ defineMode('soy', function(config) {
             return indent;
         },
 
-        innerMode: function(state) {
-            if (state.soyState.length && last(state.soyState) != 'literal') return null;
-            else return last(state.localStates);
+        innerMode: (state) => {
+            if (state.soyState.length && last(state.soyState) !== 'literal') {
+                return null;
+            } else {
+                return last(state.localStates);
+            }
         },
 
         electricInput: /^\s*\{(\/|\/template|\/deltemplate|\/switch|fallbackmsg|elseif|else|case|default|ifempty|\/literal\})$/,

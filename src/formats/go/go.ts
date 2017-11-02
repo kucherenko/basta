@@ -30,14 +30,14 @@ defineMode('go', function(config) {
 
     function tokenBase(stream, state) {
         const ch = stream.next();
-        if (ch == '"' || ch == "'" || ch == '`') {
+        if (ch === '"' || ch === "'" || ch === '`') {
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         }
         if (/[\d\.]/.test(ch)) {
-            if (ch == '.') {
+            if (ch === '.') {
                 stream.match(/^[0-9]+([eE][\-+]?[0-9]+)?/);
-            } else if (ch == '0') {
+            } else if (ch === '0') {
                 stream.match(/^[xX][0-9a-fA-F]+/) || stream.match(/^0[0-7]+/);
             } else {
                 stream.match(/^[0-9]*\.?[0-9]*([eE][\-+]?[0-9]+)?/);
@@ -48,7 +48,7 @@ defineMode('go', function(config) {
             curPunc = ch;
             return null;
         }
-        if (ch == '/') {
+        if (ch === '/') {
             if (stream.eat('*')) {
                 state.tokenize = tokenComment;
                 return tokenComment(stream, state);
@@ -65,25 +65,30 @@ defineMode('go', function(config) {
         stream.eatWhile(/[\w\$_\xa1-\uffff]/);
         const cur = stream.current();
         if (keywords.propertyIsEnumerable(cur)) {
-            if (cur == 'case' || cur == 'default') curPunc = 'case';
+            if (cur === 'case' || cur === 'default') {
+                curPunc = 'case';
+            }
             return 'keyword';
         }
-        if (atoms.propertyIsEnumerable(cur)) return 'atom';
+        if (atoms.propertyIsEnumerable(cur)) {
+            return 'atom';
+        }
         return 'variable';
     }
 
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     end = true;
                     break;
                 }
-                escaped = !escaped && quote != '`' && next == '\\';
+                escaped = !escaped && quote !== '`' && next === '\\';
             }
-            if (end || !(escaped || quote == '`'))
+            if (end || !(escaped || quote === '`')) {
                 state.tokenize = tokenBase;
+            }
             return 'string';
         };
     }
@@ -91,16 +96,16 @@ defineMode('go', function(config) {
     function tokenComment(stream, state) {
         let maybeEnd = false, ch;
         while (ch = stream.next()) {
-            if (ch == '/' && maybeEnd) {
+            if (ch === '/' && maybeEnd) {
                 state.tokenize = tokenBase;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
 
-    function Context(indented, column, type, align, prev = undefined) {
+    function Context(indented, column, type, align, prev?) {
         this.indented = indented;
         this.column = column;
         this.type = type;
@@ -113,10 +118,13 @@ defineMode('go', function(config) {
     }
 
     function popContext(state) {
-        if (!state.context.prev) return;
+        if (!state.context.prev) {
+            return;
+        }
         const t = state.context.type;
-        if (t == ')' || t == ']' || t == '}')
+        if (t === ')' || t === ']' || t === '}') {
             state.indented = state.context.indented;
+        }
         return state.context = state.context.prev;
     }
 
@@ -132,40 +140,62 @@ defineMode('go', function(config) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             const ctx = state.context;
             if (stream.sol()) {
-                if (ctx.align == null) ctx.align = false;
+                if (ctx.align === null) {
+                    ctx.align = false;
+                }
                 state.indented = stream.indentation();
                 state.startOfLine = true;
-                if (ctx.type == 'case') ctx.type = '}';
+                if (ctx.type === 'case') {
+                    ctx.type = '}';
+                }
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             curPunc = null;
             const style = (state.tokenize || tokenBase)(stream, state);
-            if (style == 'comment') return style;
-            if (ctx.align == null) ctx.align = true;
+            if (style === 'comment') {
+                return style;
+            }
+            if (ctx.align === null) {
+                ctx.align = true;
+            }
 
-            if (curPunc == '{') pushContext(state, stream.column(), '}');
-            else if (curPunc == '[') pushContext(state, stream.column(), ']');
-            else if (curPunc == '(') pushContext(state, stream.column(), ')');
-            else if (curPunc == 'case') ctx.type = 'case';
-            else if (curPunc == '}' && ctx.type == '}') popContext(state);
-            else if (curPunc == ctx.type) popContext(state);
+            if (curPunc === '{') {
+                pushContext(state, stream.column(), '}');
+            } else if (curPunc === '[') {
+                pushContext(state, stream.column(), ']');
+            } else if (curPunc === '(') {
+                pushContext(state, stream.column(), ')');
+            } else if (curPunc === 'case') {
+                ctx.type = 'case';
+            } else if (curPunc === '}' && ctx.type === '}') {
+                popContext(state);
+            } else if (curPunc === ctx.type) {
+                popContext(state);
+            }
             state.startOfLine = false;
             return style;
         },
 
-        indent: function(state, textAfter) {
-            if (state.tokenize != tokenBase && state.tokenize != null) return Pass;
+        indent: (state, textAfter) => {
+            if (state.tokenize !== tokenBase && state.tokenize !== null) {
+                return Pass;
+            }
             const ctx = state.context, firstChar = textAfter && textAfter.charAt(0);
-            if (ctx.type == 'case' && /^(?:case|default)\b/.test(textAfter)) {
+            if (ctx.type === 'case' && /^(?:case|default)\b/.test(textAfter)) {
                 state.context.type = '}';
                 return ctx.indented;
             }
-            const closing = firstChar == ctx.type;
-            if (ctx.align) return ctx.column + (closing ? 0 : 1);
-            else return ctx.indented + (closing ? 0 : indentUnit);
+            const closing = firstChar === ctx.type;
+            if (ctx.align) {
+                return ctx.column + (closing ? 0 : 1);
+            } else {
+                return ctx.indented + (closing ? 0 : indentUnit);
+            }
         },
 
         electricChars: '{}):',

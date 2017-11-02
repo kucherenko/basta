@@ -1,6 +1,6 @@
 import {defineMIME, defineMode} from '../index';
 
-defineMode('mathematica', function(_config, _parserConfig) {
+defineMode('mathematica', (_config, _parserConfig) => {
 
     // used pattern building blocks
     const Identifier = '[a-zA-Z\\$][a-zA-Z0-9\\$]*';
@@ -116,8 +116,10 @@ defineMode('mathematica', function(_config, _parserConfig) {
     }
 
     function tokenString(stream, state) {
-        let next, end = false, escaped = false;
-        while ((next = stream.next()) != null) {
+        let next;
+        let end = false;
+        let escaped = false;
+        while ((next = stream.next()) !== null) {
             if (next === '"' && !escaped) {
                 end = true;
                 break;
@@ -131,10 +133,15 @@ defineMode('mathematica', function(_config, _parserConfig) {
     }
 
     function tokenComment(stream, state) {
-        let prev, next;
-        while (state.commentLevel > 0 && (next = stream.next()) != null) {
-            if (prev === '(' && next === '*') state.commentLevel++;
-            if (prev === '*' && next === ')') state.commentLevel--;
+        let prev;
+        let next;
+        while (state.commentLevel > 0 && (next = stream.next()) !== null) {
+            if (prev === '(' && next === '*') {
+                state.commentLevel++;
+            }
+            if (prev === '*' && next === ')') {
+                state.commentLevel--;
+            }
             prev = next;
         }
         if (state.commentLevel <= 0) {
@@ -144,11 +151,13 @@ defineMode('mathematica', function(_config, _parserConfig) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokenize: tokenBase, commentLevel: 0};
         },
-        token: function(stream, state) {
-            if (stream.eatSpace()) return null;
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
+                return null;
+            }
             return state.tokenize(stream, state);
         },
         blockCommentStart: '(*',

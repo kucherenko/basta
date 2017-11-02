@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 const rfc2822 = [
     'From', 'Sender', 'Reply-To', 'To', 'Cc', 'Bcc', 'Message-ID',
     'In-Reply-To', 'References', 'Resent-From', 'Resent-Sender', 'Resent-To',
@@ -22,7 +23,9 @@ const bracketedEmail = /^<.*?>/;
 const untilBracketedEmail = /^.*?(?=<.*>)/;
 
 function styleForHeader(header) {
-    if (header === 'Subject') return 'header';
+    if (header === 'Subject') {
+        return 'header';
+    }
     return 'string';
 }
 
@@ -70,8 +73,12 @@ function readToken(stream, state) {
     }
 
     if (state.inSeparator) {
-        if (stream.match(email)) return 'link';
-        if (stream.match(untilEmail)) return 'atom';
+        if (stream.match(email)) {
+            return 'link';
+        }
+        if (stream.match(untilEmail)) {
+            return 'atom';
+        }
         stream.skipToEnd();
         return 'atom';
     }
@@ -80,8 +87,12 @@ function readToken(stream, state) {
         const style = styleForHeader(state.header);
 
         if (state.emailPermitted) {
-            if (stream.match(bracketedEmail)) return style + ' link';
-            if (stream.match(untilBracketedEmail)) return style;
+            if (stream.match(bracketedEmail)) {
+                return style + ' link';
+            }
+            if (stream.match(untilBracketedEmail)) {
+                return style;
+            }
         }
         stream.skipToEnd();
         return style;
@@ -93,7 +104,7 @@ function readToken(stream, state) {
 
 defineMode('mbox', function() {
     return {
-        startState: function() {
+        startState: () => {
             return {
                 // Is in a mbox separator
                 inSeparator: false,

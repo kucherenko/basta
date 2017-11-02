@@ -11,7 +11,9 @@ const builtins = 'void bool num int double dynamic let String'.split(' ');
 
 function set(words) {
     const obj = {};
-    for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+    for (let i = 0; i < words.length; ++i) {
+        obj[words[i]] = true;
+    }
     return obj;
 }
 
@@ -48,7 +50,7 @@ defineMIME('application/dart', {
         },
         'r': function(stream, state) {
             const peek = stream.peek();
-            if (peek == "'" || peek == '"') {
+            if (peek === "'" || peek === '"') {
                 return tokenString(stream.next(), stream, state, true);
             }
             return false;
@@ -64,7 +66,9 @@ defineMIME('application/dart', {
         },
 
         '/': function(stream, state) {
-            if (!stream.eat('*')) return false;
+            if (!stream.eat('*')) {
+                return false;
+            }
             state.tokenize = tokenNestedComment(1);
             return state.tokenize(stream, state);
         }
@@ -74,23 +78,26 @@ defineMIME('application/dart', {
 function tokenString(quote, stream, state, raw) {
     let tripleQuoted = false;
     if (stream.eat(quote)) {
-        if (stream.eat(quote)) tripleQuoted = true;
-        else return 'string'; //empty string
+        if (stream.eat(quote)) {
+            tripleQuoted = true;
+        } else {
+            return 'string';
+        } //empty string
     }
     function tokenStringHelper(stream, state) {
         let escaped = false;
         while (!stream.eol()) {
-            if (!raw && !escaped && stream.peek() == '$') {
+            if (!raw && !escaped && stream.peek() === '$') {
                 pushInterpolationStack(state);
                 state.tokenize = tokenInterpolation;
                 return 'string';
             }
             const next = stream.next();
-            if (next == quote && !escaped && (!tripleQuoted || stream.match(quote + quote))) {
+            if (next === quote && !escaped && (!tripleQuoted || stream.match(quote + quote))) {
                 state.tokenize = null;
                 break;
             }
-            escaped = !raw && !escaped && next == '\\';
+            escaped = !raw && !escaped && next === '\\';
         }
         return 'string';
     }
@@ -121,15 +128,15 @@ function tokenNestedComment(depth) {
     return function(stream, state) {
         let ch;
         while (ch = stream.next()) {
-            if (ch == '*' && stream.eat('/')) {
-                if (depth == 1) {
+            if (ch === '*' && stream.eat('/')) {
+                if (depth === 1) {
                     state.tokenize = null;
                     break;
                 } else {
                     state.tokenize = tokenNestedComment(depth - 1);
                     return state.tokenize(stream, state);
                 }
-            } else if (ch == '/' && stream.eat('*')) {
+            } else if (ch === '/' && stream.eat('*')) {
                 state.tokenize = tokenNestedComment(depth + 1);
                 return state.tokenize(stream, state);
             }

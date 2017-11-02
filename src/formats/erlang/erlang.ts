@@ -107,45 +107,45 @@ defineMode('erlang', function(cmCfg) {
         const ch = stream.next();
 
         // comment
-        if (ch == '%') {
+        if (ch === '%') {
             stream.skipToEnd();
             return rval(state, stream, 'comment');
         }
 
         // colon
-        if (ch == ':') {
+        if (ch === ':') {
             return rval(state, stream, 'colon');
         }
 
         // macro
-        if (ch == '?') {
+        if (ch === '?') {
             stream.eatSpace();
             stream.eatWhile(anumRE);
             return rval(state, stream, 'macro');
         }
 
         // record
-        if (ch == '#') {
+        if (ch === '#') {
             stream.eatSpace();
             stream.eatWhile(anumRE);
             return rval(state, stream, 'record');
         }
 
         // dollar escape
-        if (ch == '$') {
-            if (stream.next() == '\\' && !stream.match(escapesRE)) {
+        if (ch === '$') {
+            if (stream.next() === '\\' && !stream.match(escapesRE)) {
                 return rval(state, stream, 'error');
             }
             return rval(state, stream, 'number');
         }
 
         // dot
-        if (ch == '.') {
+        if (ch === '.') {
             return rval(state, stream, 'dot');
         }
 
         // quoted atom
-        if (ch == '\'') {
+        if (ch === '\'') {
             if (!(state.in_atom = (!singleQuote(stream)))) {
                 if (stream.match(/\s*\/\s*[0-9]/, false)) {
                     stream.match(/\s*\/\s*[0-9]/, true);
@@ -159,7 +159,7 @@ defineMode('erlang', function(cmCfg) {
         }
 
         // string
-        if (ch == '"') {
+        if (ch === '"') {
             state.in_string = (!doubleQuote(stream));
             return rval(state, stream, 'string');
         }
@@ -188,16 +188,16 @@ defineMode('erlang', function(cmCfg) {
             } else if (stream.match(/\s*\(/, false)) {
                 // 'put' and 'erlang:put' are bifs, 'foo:put' is not
                 if (is_member(w, bifWords) &&
-                    ((peekToken(state).token != ':') ||
-                    (peekToken(state, 2).token == 'erlang'))) {
+                    ((peekToken(state).token !== ':') ||
+                        (peekToken(state, 2).token === 'erlang'))) {
                     return rval(state, stream, 'builtin');
                 } else if (is_member(w, guardWords)) {
                     return rval(state, stream, 'guard');
                 } else {
                     return rval(state, stream, 'function');
                 }
-            } else if (lookahead(stream) == ':') {
-                if (w == 'erlang') {
+            } else if (lookahead(stream) === ':') {
+                if (w === 'erlang') {
                     return rval(state, stream, 'builtin');
                 } else {
                     return rval(state, stream, 'function');
@@ -264,7 +264,7 @@ defineMode('erlang', function(cmCfg) {
 /////////////////////////////////////////////////////////////////////////////
 // utilities
     function nongreedy(stream, re, words) {
-        if (stream.current().length == 1 && re.test(stream.current())) {
+        if (stream.current().length === 1 && re.test(stream.current())) {
             stream.backUp(1);
             while (re.test(stream.peek())) {
                 stream.next();
@@ -278,7 +278,7 @@ defineMode('erlang', function(cmCfg) {
     }
 
     function greedy(stream, re, words) {
-        if (stream.current().length == 1 && re.test(stream.current())) {
+        if (stream.current().length === 1 && re.test(stream.current())) {
             while (re.test(stream.peek())) {
                 stream.next();
             }
@@ -305,9 +305,9 @@ defineMode('erlang', function(cmCfg) {
     function quote(stream, quoteChar, escapeChar) {
         while (!stream.eol()) {
             const ch = stream.next();
-            if (ch == quoteChar) {
+            if (ch === quoteChar) {
                 return true;
-            } else if (ch == escapeChar) {
+            } else if (ch === escapeChar) {
                 stream.next();
             }
         }
@@ -400,7 +400,7 @@ defineMode('erlang', function(cmCfg) {
         return aToken(type, 0, 0, type);
     }
 
-    function peekToken(state, depth = undefined) {
+    function peekToken(state, depth?) {
         const len = state.tokenStack.length;
         const dep = (depth ? depth : 1);
 
@@ -413,7 +413,7 @@ defineMode('erlang', function(cmCfg) {
 
     function pushToken(state, token) {
 
-        if (!(token.type == 'comment' || token.type == 'whitespace')) {
+        if (!(token.type === 'comment' || token.type === 'whitespace')) {
             state.tokenStack = maybe_drop_pre(state.tokenStack, token);
             state.tokenStack = maybe_drop_post(state.tokenStack);
         }
@@ -434,7 +434,9 @@ defineMode('erlang', function(cmCfg) {
     }
 
     function maybe_drop_post(s) {
-        if (!s.length) return s;
+        if (!s.length) {
+            return s;
+        }
         const last = s.length - 1;
 
         if (s[last].type === 'dot') {
@@ -518,7 +520,7 @@ defineMode('erlang', function(cmCfg) {
                 }
             }
         }
-        return (type == 'E' ? [] : stack);
+        return (type === 'E' ? [] : stack);
     }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -535,7 +537,7 @@ defineMode('erlang', function(cmCfg) {
             return Pass;
         } else if (!prevT) {
             return 0;
-        } else if (currT.token == 'when') {
+        } else if (currT.token === 'when') {
             return currT.column + unit;
         } else if (wordAfter === 'when' && prevT.type === 'function') {
             return prevT.indent + unit;
@@ -553,7 +555,7 @@ defineMode('erlang', function(cmCfg) {
             is_member(wordAfter, [',', '|', '||'])) {
             t = postcommaToken(state);
             return t ? t.column + t.token.length : unit;
-        } else if (currT.token == '->') {
+        } else if (currT.token === '->') {
             if (is_member(prevT.token, ['receive', 'case', 'if', 'try'])) {
                 return prevT.column + unit + unit;
             } else {
@@ -612,14 +614,14 @@ defineMode('erlang', function(cmCfg) {
     }
 
     function truthy(x) {
-        return (x !== false) && (x != null);
+        return (x !== false) && (x !== null);
     }
 
 /////////////////////////////////////////////////////////////////////////////
 // this object defines the mode
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenStack: [],
                 in_string: false,
@@ -627,11 +629,11 @@ defineMode('erlang', function(cmCfg) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             return tokenizer(stream, state);
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             return indenter(state, textAfter);
         },
 

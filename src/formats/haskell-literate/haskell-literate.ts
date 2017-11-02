@@ -1,19 +1,22 @@
 import '../haskell/haskell';
 import {defineMIME, defineMode, getMode, startState} from '../index';
-defineMode('haskell-literate', function(config, parserConfig) {
+// noinspection TsLint
+defineMode('haskell-literate', (config, parserConfig) => {
     const baseMode = getMode(config, (parserConfig && parserConfig.base) || 'haskell');
 
+    // noinspection TsLint
+    // noinspection TsLint
+    // noinspection TsLint
     return {
-        startState: function() {
-            return {
-                inCode: false,
-                baseState: startState(baseMode)
-            };
-        },
-        token: function(stream, state) {
+        startState: () => ({
+            inCode: false,
+            baseState: startState(baseMode)
+        }),
+        token: (stream, state) => {
             if (stream.sol()) {
-                if (state.inCode = stream.eat('>'))
+                if (state.inCode = stream.eat('>')) {
                     return 'meta';
+                }
             }
             if (state.inCode) {
                 return baseMode.token(stream, state.baseState);
@@ -22,9 +25,7 @@ defineMode('haskell-literate', function(config, parserConfig) {
                 return 'comment';
             }
         },
-        innerMode: function(state) {
-            return state.inCode ? {state: state.baseState, mode: baseMode} : null;
-        }
+        innerMode: state => state.inCode ? {state: state.baseState, mode: baseMode} : null
     };
 }, 'haskell');
 

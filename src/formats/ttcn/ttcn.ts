@@ -26,7 +26,7 @@ defineMode('ttcn', function(config, parserConfig) {
     function tokenBase(stream, state) {
         const ch = stream.next();
 
-        if (ch == '"' || ch == "'") {
+        if (ch === '"' || ch === "'") {
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         }
@@ -34,11 +34,11 @@ defineMode('ttcn', function(config, parserConfig) {
             curPunc = ch;
             return 'punctuation';
         }
-        if (ch == '#') {
+        if (ch === '#') {
             stream.skipToEnd();
             return 'atom preprocessor';
         }
-        if (ch == '%') {
+        if (ch === '%') {
             stream.eatWhile(/\b/);
             return 'atom ttcn3Macros';
         }
@@ -46,7 +46,7 @@ defineMode('ttcn', function(config, parserConfig) {
             stream.eatWhile(/[\w\.]/);
             return 'number';
         }
-        if (ch == '/') {
+        if (ch === '/') {
             if (stream.eat('*')) {
                 state.tokenize = tokenComment;
                 return tokenComment(stream, state);
@@ -57,7 +57,7 @@ defineMode('ttcn', function(config, parserConfig) {
             }
         }
         if (isOperatorChar.test(ch)) {
-            if (ch == '@') {
+            if (ch === '@') {
                 if (stream.match('try') || stream.match('catch')
                     || stream.match('lazy')) {
                     return 'keyword';
@@ -69,24 +69,51 @@ defineMode('ttcn', function(config, parserConfig) {
         stream.eatWhile(/[\w\$_\xa1-\uffff]/);
         const cur = stream.current();
 
-        if (keywords.propertyIsEnumerable(cur)) return 'keyword';
-        if (builtin.propertyIsEnumerable(cur)) return 'builtin';
+        if (keywords.propertyIsEnumerable(cur)) {
+            return 'keyword';
+        }
+        if (builtin.propertyIsEnumerable(cur)) {
+            return 'builtin';
+        }
 
-        if (timerOps.propertyIsEnumerable(cur)) return 'def timerOps';
-        if (configOps.propertyIsEnumerable(cur)) return 'def configOps';
-        if (verdictOps.propertyIsEnumerable(cur)) return 'def verdictOps';
-        if (portOps.propertyIsEnumerable(cur)) return 'def portOps';
-        if (sutOps.propertyIsEnumerable(cur)) return 'def sutOps';
-        if (functionOps.propertyIsEnumerable(cur)) return 'def functionOps';
+        if (timerOps.propertyIsEnumerable(cur)) {
+            return 'def timerOps';
+        }
+        if (configOps.propertyIsEnumerable(cur)) {
+            return 'def configOps';
+        }
+        if (verdictOps.propertyIsEnumerable(cur)) {
+            return 'def verdictOps';
+        }
+        if (portOps.propertyIsEnumerable(cur)) {
+            return 'def portOps';
+        }
+        if (sutOps.propertyIsEnumerable(cur)) {
+            return 'def sutOps';
+        }
+        if (functionOps.propertyIsEnumerable(cur)) {
+            return 'def functionOps';
+        }
 
-        if (verdictConsts.propertyIsEnumerable(cur)) return 'string verdictConsts';
-        if (booleanConsts.propertyIsEnumerable(cur)) return 'string booleanConsts';
-        if (otherConsts.propertyIsEnumerable(cur)) return 'string otherConsts';
+        if (verdictConsts.propertyIsEnumerable(cur)) {
+            return 'string verdictConsts';
+        }
+        if (booleanConsts.propertyIsEnumerable(cur)) {
+            return 'string booleanConsts';
+        }
+        if (otherConsts.propertyIsEnumerable(cur)) {
+            return 'string otherConsts';
+        }
 
-        if (types.propertyIsEnumerable(cur)) return 'builtin types';
-        if (visibilityModifiers.propertyIsEnumerable(cur))
+        if (types.propertyIsEnumerable(cur)) {
+            return 'builtin types';
+        }
+        if (visibilityModifiers.propertyIsEnumerable(cur)) {
             return 'builtin visibilityModifiers';
-        if (templateMatch.propertyIsEnumerable(cur)) return 'atom templateMatch';
+        }
+        if (templateMatch.propertyIsEnumerable(cur)) {
+            return 'atom templateMatch';
+        }
 
         return 'variable';
     }
@@ -94,22 +121,24 @@ defineMode('ttcn', function(config, parserConfig) {
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     let afterQuote = stream.peek();
                     //look if the character after the quote is like the B in '10100010'B
                     if (afterQuote) {
                         afterQuote = afterQuote.toLowerCase();
-                        if (afterQuote == 'b' || afterQuote == 'h' || afterQuote == 'o')
+                        if (afterQuote === 'b' || afterQuote === 'h' || afterQuote === 'o') {
                             stream.next();
+                        }
                     }
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '\\';
+                escaped = !escaped && next === '\\';
             }
-            if (end || !(escaped || multiLineStrings))
+            if (end || !(escaped || multiLineStrings)) {
                 state.tokenize = null;
+            }
             return 'string';
         };
     }
@@ -117,16 +146,16 @@ defineMode('ttcn', function(config, parserConfig) {
     function tokenComment(stream, state) {
         let maybeEnd = false, ch;
         while (ch = stream.next()) {
-            if (ch == '/' && maybeEnd) {
+            if (ch === '/' && maybeEnd) {
                 state.tokenize = null;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
 
-    function Context(indented, column, type, align, prev = undefined) {
+    function Context(indented, column, type, align, prev?) {
         this.indented = indented;
         this.column = column;
         this.type = type;
@@ -136,15 +165,17 @@ defineMode('ttcn', function(config, parserConfig) {
 
     function pushContext(state, col, type) {
         let indent = state.indented;
-        if (state.context && state.context.type == 'statement')
+        if (state.context && state.context.type === 'statement') {
             indent = state.context.indented;
+        }
         return state.context = new Context(indent, col, type, null, state.context);
     }
 
     function popContext(state) {
         const t = state.context.type;
-        if (t == ')' || t == ']' || t == '}')
+        if (t === ')' || t === ']' || t === '}') {
             state.indented = state.context.indented;
+        }
         return state.context = state.context.prev;
     }
 
@@ -159,36 +190,53 @@ defineMode('ttcn', function(config, parserConfig) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             let ctx = state.context;
             if (stream.sol()) {
-                if (ctx.align == null) ctx.align = false;
+                if (ctx.align === null) {
+                    ctx.align = false;
+                }
                 state.indented = stream.indentation();
                 state.startOfLine = true;
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             curPunc = null;
             const style = (state.tokenize || tokenBase)(stream, state);
-            if (style == 'comment') return style;
-            if (ctx.align == null) ctx.align = true;
+            if (style === 'comment') {
+                return style;
+            }
+            if (ctx.align === null) {
+                ctx.align = true;
+            }
 
-            if ((curPunc == ';' || curPunc == ':' || curPunc == ',')
-                && ctx.type == 'statement') {
+            if ((curPunc === ';' || curPunc === ':' || curPunc === ',')
+                && ctx.type === 'statement') {
                 popContext(state);
-            }
-            else if (curPunc == '{') pushContext(state, stream.column(), '}');
-            else if (curPunc == '[') pushContext(state, stream.column(), ']');
-            else if (curPunc == '(') pushContext(state, stream.column(), ')');
-            else if (curPunc == '}') {
-                while (ctx.type == 'statement') ctx = popContext(state);
-                if (ctx.type == '}') ctx = popContext(state);
-                while (ctx.type == 'statement') ctx = popContext(state);
-            }
-            else if (curPunc == ctx.type) popContext(state);
-            else if (indentStatements &&
-                (((ctx.type == '}' || ctx.type == 'top') && curPunc != ';') ||
-                (ctx.type == 'statement' && curPunc == 'newstatement')))
+            } else if (curPunc === '{') {
+                pushContext(state, stream.column(), '}');
+            } else if (curPunc === '[') {
+                pushContext(state, stream.column(), ']');
+            } else if (curPunc === '(') {
+                pushContext(state, stream.column(), ')');
+            } else if (curPunc === '}') {
+                while (ctx.type === 'statement') {
+                    ctx = popContext(state);
+                }
+                if (ctx.type === '}') {
+                    ctx = popContext(state);
+                }
+                while (ctx.type === 'statement') {
+                    ctx = popContext(state);
+                }
+            } else if (curPunc === ctx.type) {
+                popContext(state);
+            } else if (indentStatements &&
+                (((ctx.type === '}' || ctx.type === 'top') && curPunc !== ';') ||
+                    (ctx.type === 'statement' && curPunc === 'newstatement'))) {
                 pushContext(state, stream.column(), 'statement');
+            }
 
             state.startOfLine = false;
 
@@ -205,17 +253,62 @@ defineMode('ttcn', function(config, parserConfig) {
 
 function words(str) {
     const obj = {}, words = str.split(' ');
-    for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+    for (let i = 0; i < words.length; ++i) {
+        obj[words[i]] = true;
+    }
     return obj;
 }
 
 function def(mimes, mode) {
-    if (typeof mimes == 'string') mimes = [mimes];
+    if (typeof mimes === 'string') {
+        mimes = [mimes];
+    }
     const words = [];
 
     function add(obj) {
-        if (obj) for (const prop in obj) if (obj.hasOwnProperty(prop))
+        if (obj) for (const prop in obj) if (obj.hasOwnProperty(prop)) {
+            {
+                {
+                    {
+                        {
+                            {
+                                {
+                                    {
+                                        {
+                                            {
+                                                {
+                                                    {
+                                                        {
+                                                            {
+                                                                {
+                                                                    {
+                                                                        {
+                                                                            {
+                                                                                {
+                                                                                    {
+                                                                                        {
             words.push(prop);
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     add(mode.keywords);

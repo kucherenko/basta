@@ -1,5 +1,6 @@
 import {defineMIME, defineMode} from '../index';
-defineMode('powershell', function() {
+
+defineMode('powershell', () => {
     function buildRegexp(patterns, options) {
         options = options || {};
         const prefix = options.prefix !== undefined ? options.prefix : '^';
@@ -8,8 +9,7 @@ defineMode('powershell', function() {
         for (let i = 0; i < patterns.length; i++) {
             if (patterns[i] instanceof RegExp) {
                 patterns[i] = patterns[i].source;
-            }
-            else {
+            } else {
                 patterns[i] = patterns[i].replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
             }
         }
@@ -223,7 +223,7 @@ defineMode('powershell', function() {
 
     function tokenSingleQuoteString(stream, state) {
         let ch;
-        while ((ch = stream.peek()) != null) {
+        while ((ch = stream.peek()) !== null) {
             stream.next();
 
             if (ch === "'" && !stream.eat("'")) {
@@ -237,7 +237,7 @@ defineMode('powershell', function() {
 
     function tokenDoubleQuoteString(stream, state) {
         let ch;
-        while ((ch = stream.peek()) != null) {
+        while ((ch = stream.peek()) !== null) {
             if (ch === '$') {
                 state.tokenize = tokenStringInterpolation;
                 return 'string';
@@ -277,9 +277,7 @@ defineMode('powershell', function() {
             const savedBracketNesting = state.bracketNesting;
             state.returnStack.push({
                 /*jshint loopfunc:true */
-                shouldReturnFrom: function(state) {
-                    return state.bracketNesting === savedBracketNesting;
-                },
+                shouldReturnFrom: state => state.bracketNesting === savedBracketNesting,
                 tokenize: parentTokenize
             });
             state.tokenize = tokenBase;
@@ -288,9 +286,7 @@ defineMode('powershell', function() {
         } else {
             stream.next();
             state.returnStack.push({
-                shouldReturnFrom: function() {
-                    return true;
-                },
+                shouldReturnFrom: () => true,
                 tokenize: parentTokenize
             });
             state.tokenize = tokenVariable;
@@ -299,9 +295,10 @@ defineMode('powershell', function() {
     }
 
     function tokenComment(stream, state) {
-        let maybeEnd = false, ch;
-        while ((ch = stream.next()) != null) {
-            if (maybeEnd && ch == '>') {
+        let maybeEnd = false;
+        let ch;
+        while ((ch = stream.next()) !== null) {
+            if (maybeEnd && ch === '>') {
                 state.tokenize = tokenBase;
                 break;
             }
@@ -315,7 +312,7 @@ defineMode('powershell', function() {
         if (stream.eat('{')) {
             state.tokenize = tokenVariableWithBraces;
             return tokenVariableWithBraces(stream, state);
-        } else if (ch != undefined && ch.match(varNames)) {
+        } else if (ch !== undefined && ch.match(varNames)) {
             stream.eatWhile(varNames);
             state.tokenize = tokenBase;
             return 'variable-2';
@@ -327,7 +324,7 @@ defineMode('powershell', function() {
 
     function tokenVariableWithBraces(stream, state) {
         let ch;
-        while ((ch = stream.next()) != null) {
+        while ((ch = stream.next()) !== null) {
             if (ch === '}') {
                 state.tokenize = tokenBase;
                 break;
@@ -340,8 +337,7 @@ defineMode('powershell', function() {
         const quote = state.startQuote;
         if (stream.sol() && stream.match(new RegExp(quote + '@'))) {
             state.tokenize = tokenBase;
-        }
-        else if (quote === '"') {
+        } else if (quote === '"') {
             while (!stream.eol()) {
                 const ch = stream.peek();
                 if (ch === '$') {
@@ -354,8 +350,7 @@ defineMode('powershell', function() {
                     stream.next();
                 }
             }
-        }
-        else {
+        } else {
             stream.skipToEnd();
         }
 
@@ -363,7 +358,7 @@ defineMode('powershell', function() {
     }
 
     const external = {
-        startState: function() {
+        startState: () => {
             return {
                 returnStack: [],
                 bracketNesting: 0,
@@ -371,7 +366,7 @@ defineMode('powershell', function() {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             return state.tokenize(stream, state);
         },
 

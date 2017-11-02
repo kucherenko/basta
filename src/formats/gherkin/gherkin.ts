@@ -2,7 +2,7 @@ import {defineMIME, defineMode} from '../index';
 
 defineMode('gherkin', function() {
     return {
-        startState: function() {
+        startState: () => {
             return {
                 lineNumber: 0,
                 tableHeaderLine: false,
@@ -17,7 +17,7 @@ defineMode('gherkin', function() {
                 inKeywordLine: false
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
                 state.lineNumber++;
                 state.inKeywordLine = false;

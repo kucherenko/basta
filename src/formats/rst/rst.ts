@@ -1,6 +1,6 @@
 import {copyState, defineMIME, defineMode, getMode, overlayMode, startState} from '../index';
 
-defineMode('rst', function(config, options) {
+defineMode('rst', (config, options) => {
 
     const rx_strong = /^\*\*[^\*\s](?:[^\*]*[^\*\s])?\*\*/;
     const rx_emphasis = /^\*[^\*\s](?:[^\*]*[^\*\s])?\*/;
@@ -16,31 +16,52 @@ defineMode('rst', function(config, options) {
     const rx_uri = new RegExp('^' + rx_uri_protocol + rx_uri_domain + rx_uri_path);
 
     const overlay = {
-        token: function(stream) {
+        token: stream => {
 
-            if (stream.match(rx_strong) && stream.match(/\W+|$/, false))
+            if (stream.match(rx_strong) && stream.match(/\W+|$/, false)) {
                 return 'strong';
-            if (stream.match(rx_emphasis) && stream.match(/\W+|$/, false))
+            }
+            if (stream.match(rx_emphasis) && stream.match(/\W+|$/, false)) {
                 return 'em';
-            if (stream.match(rx_literal) && stream.match(/\W+|$/, false))
+            }
+            if (stream.match(rx_literal) && stream.match(/\W+|$/, false)) {
                 return 'string-2';
-            if (stream.match(rx_number))
+            }
+            if (stream.match(rx_number)) {
                 return 'number';
-            if (stream.match(rx_positive))
+            }
+            if (stream.match(rx_positive)) {
                 return 'positive';
-            if (stream.match(rx_negative))
+            }
+            if (stream.match(rx_negative)) {
                 return 'negative';
-            if (stream.match(rx_uri))
+            }
+            if (stream.match(rx_uri)) {
                 return 'link';
+            }
 
-            while (stream.next() != null) {
-                if (stream.match(rx_strong, false)) break;
-                if (stream.match(rx_emphasis, false)) break;
-                if (stream.match(rx_literal, false)) break;
-                if (stream.match(rx_number, false)) break;
-                if (stream.match(rx_positive, false)) break;
-                if (stream.match(rx_negative, false)) break;
-                if (stream.match(rx_uri, false)) break;
+            while (stream.next() !== null) {
+                if (stream.match(rx_strong, false)) {
+                    break;
+                }
+                if (stream.match(rx_emphasis, false)) {
+                    break;
+                }
+                if (stream.match(rx_literal, false)) {
+                    break;
+                }
+                if (stream.match(rx_number, false)) {
+                    break;
+                }
+                if (stream.match(rx_positive, false)) {
+                    break;
+                }
+                if (stream.match(rx_negative, false)) {
+                    break;
+                }
+                if (stream.match(rx_uri, false)) {
+                    break;
+                }
             }
 
             return null;
@@ -64,7 +85,7 @@ defineMode('rst-base', function(config) {
 
     function format(string, ...args) {
         return string.replace(/{(\d+)}/g, function(match, n) {
-            return typeof args[n] != 'undefined' ? args[n] : match;
+            return typeof args[n] !== 'undefined' ? args[n] : match;
         });
     }
 
@@ -78,19 +99,19 @@ defineMode('rst-base', function(config) {
     ///////////////////////////////////////////////////////////////////////////
 
     const SEPA = '\\s+';
-    const TAIL = '(?:\\s*|\\W|$)',
-        rx_TAIL = new RegExp(format('^{0}', TAIL));
+    const TAIL = '(?:\\s*|\\W|$)';
+    const rx_TAIL = new RegExp(format('^{0}', TAIL));
 
     const NAME =
-            "(?:[^\\W\\d_](?:[\\w!\"#$%&'()\\*\\+,\\-\\.\/:;<=>\\?]*[^\\W_])?)",
-        rx_NAME = new RegExp(format('^{0}', NAME));
+        "(?:[^\\W\\d_](?:[\\w!\"#$%&'()\\*\\+,\\-\\.\/:;<=>\\?]*[^\\W_])?)";
+    const rx_NAME = new RegExp(format('^{0}', NAME));
     const NAME_WWS =
         "(?:[^\\W\\d_](?:[\\w\\s!\"#$%&'()\\*\\+,\\-\\.\/:;<=>\\?]*[^\\W_])?)";
     const REF_NAME = format('(?:{0}|`{1}`)', NAME, NAME_WWS);
 
     const TEXT1 = '(?:[^\\s\\|](?:[^\\|]*[^\\s\\|])?)';
-    const TEXT2 = '(?:[^\\`]+)',
-        rx_TEXT2 = new RegExp(format('^{0}', TEXT2));
+    const TEXT2 = '(?:[^\\`]+)';
+    const rx_TEXT2 = new RegExp(format('^{0}', TEXT2));
 
     const rx_section = new RegExp(
         "^([!'#$%&\"()*+,-./:;<=>?@\\[\\\\\\]^_`{|}~])\\1{3,}\\s*$");
@@ -154,7 +175,7 @@ defineMode('rst-base', function(config) {
         } else if (stream.sol() && stream.match(rx_section)) {
             change(state, to_normal);
             token = 'header';
-        } else if (phase(state) == rx_role_pre ||
+        } else if (phase(state) === rx_role_pre ||
             stream.match(rx_role_pre, false)) {
 
             switch (stage(state)) {
@@ -186,7 +207,7 @@ defineMode('rst-base', function(config) {
                     }
 
                     if (state.tmp) {
-                        if (stream.peek() == '`') {
+                        if (stream.peek() === '`') {
                             change(state, to_normal, context(rx_role_pre, 4));
                             state.tmp = undefined;
                             break;
@@ -212,7 +233,7 @@ defineMode('rst-base', function(config) {
                 default:
                     change(state, to_normal);
             }
-        } else if (phase(state) == rx_role_suf ||
+        } else if (phase(state) === rx_role_suf ||
             stream.match(rx_role_suf, false)) {
 
             switch (stage(state)) {
@@ -248,7 +269,7 @@ defineMode('rst-base', function(config) {
                 default:
                     change(state, to_normal);
             }
-        } else if (phase(state) == rx_role || stream.match(rx_role, false)) {
+        } else if (phase(state) === rx_role || stream.match(rx_role, false)) {
 
             switch (stage(state)) {
                 case 0:
@@ -273,7 +294,7 @@ defineMode('rst-base', function(config) {
                 default:
                     change(state, to_normal);
             }
-        } else if (phase(state) == rx_substitution_ref ||
+        } else if (phase(state) === rx_substitution_ref ||
             stream.match(rx_substitution_ref, false)) {
 
             switch (stage(state)) {
@@ -284,7 +305,9 @@ defineMode('rst-base', function(config) {
                     break;
                 case 1:
                     change(state, to_normal, context(rx_substitution_ref, 2));
-                    if (stream.match(/^_?_?/)) token = 'link';
+                    if (stream.match(/^_?_?/)) {
+                        token = 'link';
+                    }
                     break;
                 default:
                     change(state, to_normal);
@@ -300,7 +323,7 @@ defineMode('rst-base', function(config) {
             if (!stream.peek() || stream.peek().match(/^\W$/)) {
                 token = 'link';
             }
-        } else if (phase(state) == rx_link_ref2 ||
+        } else if (phase(state) === rx_link_ref2 ||
             stream.match(rx_link_ref2, false)) {
 
             switch (stage(state)) {
@@ -330,10 +353,10 @@ defineMode('rst-base', function(config) {
             }
         } else if (stream.match(rx_verbatim)) {
             change(state, to_verbatim);
-        }
-
-        else {
-            if (stream.next()) change(state, to_normal);
+        } else {
+            if (stream.next()) {
+                change(state, to_normal);
+            }
         }
 
         return token;
@@ -345,7 +368,7 @@ defineMode('rst-base', function(config) {
     function to_explicit(stream, state) {
         let token = null;
 
-        if (phase(state) == rx_substitution ||
+        if (phase(state) === rx_substitution ||
             stream.match(rx_substitution, false)) {
 
             switch (stage(state)) {
@@ -371,7 +394,7 @@ defineMode('rst-base', function(config) {
                 default:
                     change(state, to_normal);
             }
-        } else if (phase(state) == rx_directive ||
+        } else if (phase(state) === rx_directive ||
             stream.match(rx_directive, false)) {
 
             switch (stage(state)) {
@@ -380,10 +403,11 @@ defineMode('rst-base', function(config) {
                     stream.match(rx_directive_name);
                     token = 'keyword';
 
-                    if (stream.current().match(/^(?:math|latex)/))
+                    if (stream.current().match(/^(?:math|latex)/)) {
                         state.tmp_stex = true;
-                    else if (stream.current().match(/^python/))
+                    } else if (stream.current().match(/^python/)) {
                         state.tmp_py = true;
+                    }
                     break;
                 case 1:
                     change(state, to_explicit, context(rx_directive, 2));
@@ -409,7 +433,7 @@ defineMode('rst-base', function(config) {
                 default:
                     change(state, to_normal);
             }
-        } else if (phase(state) == rx_link || stream.match(rx_link, false)) {
+        } else if (phase(state) === rx_link || stream.match(rx_link, false)) {
 
             switch (stage(state)) {
                 case 0:
@@ -432,9 +456,7 @@ defineMode('rst-base', function(config) {
         } else if (stream.match(rx_citation)) {
             change(state, to_normal);
             token = 'quote';
-        }
-
-        else {
+        } else {
             stream.eatSpace();
             if (stream.eol()) {
                 change(state, to_normal);
@@ -477,7 +499,9 @@ defineMode('rst-base', function(config) {
         if (state.ctx.mode && state.ctx.local) {
 
             if (stream.sol()) {
-                if (!stream.eatSpace()) change(state, to_normal);
+                if (!stream.eatSpace()) {
+                    change(state, to_normal);
+                }
                 return null;
             }
 
@@ -491,11 +515,11 @@ defineMode('rst-base', function(config) {
     ///////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    function context(phase, stage, mode = undefined, local = undefined) {
+    function context(phase, stage, mode?, local?) {
         return {phase: phase, stage: stage, mode: mode, local: local};
     }
 
-    function change(state, tok, ctx = undefined) {
+    function change(state, tok, ctx?) {
         state.tok = tok;
         state.ctx = ctx || {};
     }
@@ -512,26 +536,29 @@ defineMode('rst-base', function(config) {
     ///////////////////////////////////////////////////////////////////////////
 
     return {
-        startState: function() {
+        startState: () => {
             return {tok: to_normal, ctx: context(undefined, 0)};
         },
 
-        copyState: function(state) {
-            let ctx = state.ctx, tmp = state.tmp;
-            if (ctx.local)
+        copyState: (state) => {
+            let ctx = state.ctx;
+            let tmp = state.tmp;
+            if (ctx.local) {
                 ctx = {mode: ctx.mode, local: copyState(ctx.mode, ctx.local)};
-            if (tmp)
+            }
+            if (tmp) {
                 tmp = {mode: tmp.mode, local: copyState(tmp.mode, tmp.local)};
+            }
             return {tok: state.tok, ctx: ctx, tmp: tmp};
         },
 
-        innerMode: function(state) {
+        innerMode: (state) => {
             return state.tmp ? {state: state.tmp.local, mode: state.tmp.mode}
                 : state.ctx.mode ? {state: state.ctx.local, mode: state.ctx.mode}
                     : null;
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             return state.tok(stream, state);
         }
     };

@@ -35,8 +35,8 @@ defineMode('puppet', function () {
     // is encapsulated in a double-quoted string.
     function tokenString(stream, state) {
         let current, prev, found_var = false;
-        while (!stream.eol() && (current = stream.next()) != state.pending) {
-            if (current === '$' && prev != '\\' && state.pending == '"') {
+        while (!stream.eol() && (current = stream.next()) !== state.pending) {
+            if (current === '$' && prev !== '\\' && state.pending === '"') {
                 found_var = true;
                 break;
             }
@@ -45,7 +45,7 @@ defineMode('puppet', function () {
         if (found_var) {
             stream.backUp(1);
         }
-        if (current == state.pending) {
+        if (current === state.pending) {
             state.continueString = false;
         } else {
             state.continueString = true;
@@ -122,7 +122,7 @@ defineMode('puppet', function () {
             if (stream.match(/\s+\S+\s+{/, false)) {
                 state.inDefinition = true;
             }
-            if (word == 'include') {
+            if (word === 'include') {
                 state.inInclude = true;
             }
             // Returns their value as state in the prior define methods
@@ -147,24 +147,24 @@ defineMode('puppet', function () {
             return 'special';
         }
         // Match all the comments. All of them.
-        if (ch == '#') {
+        if (ch === '#') {
             stream.skipToEnd();
             return 'comment';
         }
         // Have we found a string?
-        if (ch == "'" || ch == '"') {
+        if (ch === "'" || ch === '"') {
             // Store the type (single or double)
             state.pending = ch;
             // Perform the looping function to find the end
             return tokenString(stream, state);
         }
         // Match all the brackets
-        if (ch == '{' || ch == '}') {
+        if (ch === '{' || ch === '}') {
             return 'bracket';
         }
         // Match characters that we are going to assume
         // are trying to be regex
-        if (ch == '/') {
+        if (ch === '/') {
             stream.match(/.*?\//);
             return 'variable-3';
         }
@@ -174,8 +174,8 @@ defineMode('puppet', function () {
             return 'number';
         }
         // Match the '=' and '=>' operators
-        if (ch == '=') {
-            if (stream.peek() == '>') {
+        if (ch === '=') {
+            if (stream.peek() === '>') {
                 stream.next();
             }
             return 'operator';
@@ -188,7 +188,7 @@ defineMode('puppet', function () {
 
     // Start it all
     return {
-        startState: function () {
+        startState: () => {
             const state: any = {};
             state.inDefinition = false;
             state.inInclude = false;
@@ -196,9 +196,11 @@ defineMode('puppet', function () {
             state.pending = false;
             return state;
         },
-        token: function (stream, state) {
+        token: (stream, state) => {
             // Strip the spaces, but regex will account for them eitherway
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             // Go through the main process
             return tokenize(stream, state);
         }

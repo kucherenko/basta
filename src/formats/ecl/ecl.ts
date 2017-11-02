@@ -1,14 +1,19 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('ecl', function(config) {
 
     function words(str) {
         const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 
     function metaHook(stream, state) {
-        if (!state.startOfLine) return false;
+        if (!state.startOfLine) {
+            return false;
+        }
         stream.skipToEnd();
         return 'meta';
     }
@@ -30,9 +35,11 @@ defineMode('ecl', function(config) {
         const ch = stream.next();
         if (hooks[ch]) {
             const result = hooks[ch](stream, state);
-            if (result !== false) return result;
+            if (result !== false) {
+                return result;
+            }
         }
-        if (ch == '"' || ch == "'") {
+        if (ch === '"' || ch === "'") {
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         }
@@ -44,7 +51,7 @@ defineMode('ecl', function(config) {
             stream.eatWhile(/[\w\.]/);
             return 'number';
         }
-        if (ch == '/') {
+        if (ch === '/') {
             if (stream.eat('*')) {
                 state.tokenize = tokenComment;
                 return tokenComment(stream, state);
@@ -61,49 +68,65 @@ defineMode('ecl', function(config) {
         stream.eatWhile(/[\w\$_]/);
         const cur = stream.current().toLowerCase();
         if (keyword.propertyIsEnumerable(cur)) {
-            if (blockKeywords.propertyIsEnumerable(cur)) curPunc = 'newstatement';
+            if (blockKeywords.propertyIsEnumerable(cur)) {
+                curPunc = 'newstatement';
+            }
             return 'keyword';
         } else if (variable.propertyIsEnumerable(cur)) {
-            if (blockKeywords.propertyIsEnumerable(cur)) curPunc = 'newstatement';
+            if (blockKeywords.propertyIsEnumerable(cur)) {
+                curPunc = 'newstatement';
+            }
             return 'variable';
         } else if (variable_2.propertyIsEnumerable(cur)) {
-            if (blockKeywords.propertyIsEnumerable(cur)) curPunc = 'newstatement';
+            if (blockKeywords.propertyIsEnumerable(cur)) {
+                curPunc = 'newstatement';
+            }
             return 'variable-2';
         } else if (variable_3.propertyIsEnumerable(cur)) {
-            if (blockKeywords.propertyIsEnumerable(cur)) curPunc = 'newstatement';
+            if (blockKeywords.propertyIsEnumerable(cur)) {
+                curPunc = 'newstatement';
+            }
             return 'variable-3';
         } else if (builtin.propertyIsEnumerable(cur)) {
-            if (blockKeywords.propertyIsEnumerable(cur)) curPunc = 'newstatement';
+            if (blockKeywords.propertyIsEnumerable(cur)) {
+                curPunc = 'newstatement';
+            }
             return 'builtin';
         } else { //Data types are of from KEYWORD##
             let i = cur.length - 1;
-            while (i >= 0 && (!isNaN(cur[i]) || cur[i] == '_'))
+            while (i >= 0 && (!isNaN(cur[i]) || cur[i] === '_')) {
                 --i;
+            }
 
             if (i > 0) {
                 const cur2 = cur.substr(0, i + 1);
                 if (variable_3.propertyIsEnumerable(cur2)) {
-                    if (blockKeywords.propertyIsEnumerable(cur2)) curPunc = 'newstatement';
+                    if (blockKeywords.propertyIsEnumerable(cur2)) {
+                        curPunc = 'newstatement';
+                    }
                     return 'variable-3';
                 }
             }
         }
-        if (atoms.propertyIsEnumerable(cur)) return 'atom';
+        if (atoms.propertyIsEnumerable(cur)) {
+            return 'atom';
+        }
         return null;
     }
 
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '\\';
+                escaped = !escaped && next === '\\';
             }
-            if (end || !escaped)
+            if (end || !escaped) {
                 state.tokenize = tokenBase;
+            }
             return 'string';
         };
     }
@@ -111,16 +134,16 @@ defineMode('ecl', function(config) {
     function tokenComment(stream, state) {
         let maybeEnd = false, ch;
         while (ch = stream.next()) {
-            if (ch == '/' && maybeEnd) {
+            if (ch === '/' && maybeEnd) {
                 state.tokenize = tokenBase;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
 
-    function Context(indented, column, type, align, prev = undefined) {
+    function Context(indented, column, type, align, prev?) {
         this.indented = indented;
         this.column = column;
         this.type = type;
@@ -134,8 +157,9 @@ defineMode('ecl', function(config) {
 
     function popContext(state) {
         const t = state.context.type;
-        if (t == ')' || t == ']' || t == '}')
+        if (t === ')' || t === ']' || t === '}') {
             state.indented = state.context.indented;
+        }
         return state.context = state.context.prev;
     }
 
@@ -151,43 +175,70 @@ defineMode('ecl', function(config) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             let ctx = state.context;
             if (stream.sol()) {
-                if (ctx.align == null) ctx.align = false;
+                if (ctx.align === null) {
+                    ctx.align = false;
+                }
                 state.indented = stream.indentation();
                 state.startOfLine = true;
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             curPunc = null;
             const style = (state.tokenize || tokenBase)(stream, state);
-            if (style == 'comment' || style == 'meta') return style;
-            if (ctx.align == null) ctx.align = true;
-
-            if ((curPunc == ';' || curPunc == ':') && ctx.type == 'statement') popContext(state);
-            else if (curPunc == '{') pushContext(state, stream.column(), '}');
-            else if (curPunc == '[') pushContext(state, stream.column(), ']');
-            else if (curPunc == '(') pushContext(state, stream.column(), ')');
-            else if (curPunc == '}') {
-                while (ctx.type == 'statement') ctx = popContext(state);
-                if (ctx.type == '}') ctx = popContext(state);
-                while (ctx.type == 'statement') ctx = popContext(state);
+            if (style === 'comment' || style === 'meta') {
+                return style;
             }
-            else if (curPunc == ctx.type) popContext(state);
-            else if (ctx.type == '}' || ctx.type == 'top' || (ctx.type == 'statement' && curPunc == 'newstatement'))
+            if (ctx.align === null) {
+                ctx.align = true;
+            }
+
+            if ((curPunc === ';' || curPunc === ':') && ctx.type === 'statement') {
+                popContext(state);
+            } else if (curPunc === '{') {
+                pushContext(state, stream.column(), '}');
+            } else if (curPunc === '[') {
+                pushContext(state, stream.column(), ']');
+            } else if (curPunc === '(') {
+                pushContext(state, stream.column(), ')');
+            } else if (curPunc === '}') {
+                while (ctx.type === 'statement') {
+                    ctx = popContext(state);
+                }
+                if (ctx.type === '}') {
+                    ctx = popContext(state);
+                }
+                while (ctx.type === 'statement') {
+                    ctx = popContext(state);
+                }
+            } else if (curPunc === ctx.type) {
+                popContext(state);
+            } else if (ctx.type === '}' || ctx.type === 'top' || (ctx.type === 'statement' && curPunc === 'newstatement')) {
                 pushContext(state, stream.column(), 'statement');
+            }
             state.startOfLine = false;
             return style;
         },
 
-        indent: function(state, textAfter) {
-            if (state.tokenize != tokenBase && state.tokenize != null) return 0;
+        indent: (state, textAfter) => {
+            if (state.tokenize !== tokenBase && state.tokenize !== null) {
+                return 0;
+            }
             let ctx = state.context, firstChar = textAfter && textAfter.charAt(0);
-            if (ctx.type == 'statement' && firstChar == '}') ctx = ctx.prev;
-            const closing = firstChar == ctx.type;
-            if (ctx.type == 'statement') return ctx.indented + (firstChar == '{' ? 0 : indentUnit);
-            else if (ctx.align) return ctx.column + (closing ? 0 : 1);
-            else return ctx.indented + (closing ? 0 : indentUnit);
+            if (ctx.type === 'statement' && firstChar === '}') {
+                ctx = ctx.prev;
+            }
+            const closing = firstChar === ctx.type;
+            if (ctx.type === 'statement') {
+                return ctx.indented + (firstChar === '{' ? 0 : indentUnit);
+            } else if (ctx.align) {
+                return ctx.column + (closing ? 0 : 1);
+            } else {
+                return ctx.indented + (closing ? 0 : indentUnit);
+            }
         },
 
         electricChars: '{}'

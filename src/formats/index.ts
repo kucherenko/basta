@@ -67,7 +67,7 @@ export function overlayMode(base, overlay, combine = null) {
         },
 
         token: (stream, state) => {
-            if (stream != state.streamSeen ||
+            if (stream !== state.streamSeen ||
                 Math.min(state.basePos, state.overlayPos) < stream.start) {
                 state.streamSeen = stream;
                 state.basePos = state.overlayPos = stream.start;
@@ -86,11 +86,11 @@ export function overlayMode(base, overlay, combine = null) {
 
             // state.overlay.combineTokens always takes precedence over combine,
             // unless set to null
-            if (state.overlayCur == null) {
+            if (state.overlayCur === null) {
                 return state.baseCur;
-            } else if (state.baseCur != null &&
+            } else if (state.baseCur !== null &&
                 state.overlay.combineTokens ||
-                combine && state.overlay.combineTokens == null) {
+                combine && state.overlay.combineTokens === null) {
                 return state.baseCur + ' ' + state.overlayCur;
             } else {
                 return state.overlayCur;
@@ -114,9 +114,9 @@ export function overlayMode(base, overlay, combine = null) {
                 overlayToken = overlay.blankLine(state.overlay);
             }
 
-            return overlayToken == null ?
+            return overlayToken === null ?
                 baseToken :
-                (combine && baseToken != null ? baseToken + ' ' + overlayToken : overlayToken);
+                (combine && baseToken !== null ? baseToken + ' ' + overlayToken : overlayToken);
         }
     };
 }
@@ -176,9 +176,32 @@ export function getMode(options, spec) {
         }
     }
     modeObj.name = spec.name;
-    if (spec.helperType) modeObj.helperType = spec.helperType;
-    if (spec.modeProps) for (const prop in spec.modeProps)
+    if (spec.helperType) {
+        modeObj.helperType = spec.helperType;
+    }
+    if (spec.modeProps) for (const prop in spec.modeProps) {
+        {
+            {
+                {
+                    {
+                        {
+                            {
+                                {
+                                    {
+                                        {
+                                            {
         modeObj[prop] = spec.modeProps[prop];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     return modeObj;
 }
@@ -216,7 +239,7 @@ export function innerMode(mode, state) {
     let info;
     while (mode.innerMode) {
         info = mode.innerMode(state);
-        if (!info || info.mode == mode) {
+        if (!info || info.mode === mode) {
             break;
         }
         state = info.state;
@@ -225,11 +248,11 @@ export function innerMode(mode, state) {
     return info || {mode: mode, state: state};
 }
 
-export function startState(mode, a1 = undefined, a2 = undefined) {
+export function startState(mode, a1?, a2?) {
     return mode.startState ? mode.startState(a1, a2) : true;
 }
 
-export function StringStream(str: string, tabSize = undefined) {
+export function StringStream(str: string, tabSize?) {
     this.pos = this.start = 0;
     this.string = str;
     this.tabSize = tabSize || 8;
@@ -243,20 +266,24 @@ StringStream.prototype = {
         return this.pos >= this.string.length;
     },
     sol: function () {
-        return this.pos == this.lineStart;
+        return this.pos === this.lineStart;
     },
     peek: function () {
         return this.string.charAt(this.pos) || undefined;
     },
     next: function () {
-        if (this.pos < this.string.length)
+        if (this.pos < this.string.length) {
             return this.string.charAt(this.pos++);
+        }
     },
     eat: function (match) {
         const ch = this.string.charAt(this.pos);
         let ok;
-        if (typeof match == 'string') ok = ch == match;
-        else ok = ch && (match.test ? match.test(ch) : match(ch));
+        if (typeof match === 'string') {
+            ok = ch === match;
+        } else {
+            ok = ch && (match.test ? match.test(ch) : match(ch));
+        }
         if (ok) {
             ++this.pos;
             return ch;
@@ -270,7 +297,9 @@ StringStream.prototype = {
     },
     eatSpace: function () {
         const start = this.pos;
-        while (/[\s\u00a0]/.test(this.string.charAt(this.pos))) ++this.pos;
+        while (/[\s\u00a0]/.test(this.string.charAt(this.pos))) {
+            ++this.pos;
+        }
         return this.pos > start;
     },
     skipToEnd: function () {
@@ -298,17 +327,23 @@ StringStream.prototype = {
             (this.lineStart ? countColumn(this.string, this.lineStart, this.tabSize) : 0);
     },
     match: function (pattern, consume, caseInsensitive) {
-        if (typeof pattern == 'string') {
+        if (typeof pattern === 'string') {
             const cased = str => caseInsensitive ? str.toLowerCase() : str;
             const substr = this.string.substr(this.pos, pattern.length);
-            if (cased(substr) == cased(pattern)) {
-                if (consume !== false) this.pos += pattern.length;
+            if (cased(substr) === cased(pattern)) {
+                if (consume !== false) {
+                    this.pos += pattern.length;
+                }
                 return true;
             }
         } else {
             const match = this.string.slice(this.pos).match(pattern);
-            if (match && match.index > 0) return null;
-            if (match && consume !== false) this.pos += match[0].length;
+            if (match && match.index > 0) {
+                return null;
+            }
+            if (match && consume !== false) {
+                this.pos += match[0].length;
+            }
             return match;
         }
     },
@@ -319,8 +354,7 @@ StringStream.prototype = {
         this.lineStart += n;
         try {
             return inner();
-        }
-        finally {
+        } finally {
             this.lineStart -= n;
         }
     }
@@ -354,7 +388,7 @@ export function runMode(string: string, modespec, {state = false}) {
 }
 
 function splitLines(buffer) {
-    buffer = buffer.toString()
+    buffer = buffer.toString();
     return (buffer && buffer.length > 0) ? buffer.split(/\r\n?|\n/) : [];
 }
 

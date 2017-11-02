@@ -36,7 +36,9 @@ function maybeBackup(stream, pat, style) {
 const attrRegexpCache = {};
 function getAttrRegexp(attr) {
     const regexp = attrRegexpCache[attr];
-    if (regexp) return regexp;
+    if (regexp) {
+        return regexp;
+    }
     return attrRegexpCache[attr] = new RegExp('\\s+' + attr + "\\s*=\\s*('|\")?([^'\"]+)('|\")?\\s*");
 }
 
@@ -53,8 +55,9 @@ function addTags(from, to) {
     for (const tag in from) {
         const dest = to[tag] || (to[tag] = []);
         const source = from[tag];
-        for (let i = source.length - 1; i >= 0; i--)
+        for (let i = source.length - 1; i >= 0; i--) {
             dest.unshift(source[i]);
+        }
     }
 }
 
@@ -67,7 +70,7 @@ function findMatchingMode(tagInfo, tagText) {
     }
 }
 
-defineMode('htmlmixed', function(config, parserConfig) {
+defineMode('htmlmixed', (config, parserConfig) => {
     const htmlMode = getMode(config, {
         name: 'xml',
         mode: 'xml',
@@ -84,7 +87,9 @@ defineMode('htmlmixed', function(config, parserConfig) {
         tags['script'].unshift(['type', configScript[i].matches, configScript[i].mode]);
 
     function html(stream, state) {
-        let style = htmlMode.token(stream, state.htmlState), tag = /\btag\b/.test(style), tagName;
+        const style = htmlMode.token(stream, state.htmlState);
+        const tag = /\btag\b/.test(style);
+        let tagName;
         if (tag && !/[<>\s\/]/.test(stream.current()) &&
             (tagName = state.htmlState.tagName && state.htmlState.tagName.toLowerCase()) &&
             tags.hasOwnProperty(tagName)) {
@@ -94,8 +99,9 @@ defineMode('htmlmixed', function(config, parserConfig) {
             state.inTag = null;
             const modeSpec = stream.current() == '>' && findMatchingMode(tags[inTag[1]], inTag[2]);
             const mode = getMode(config, {mode: modeSpec});
-            const endTagA = getTagRegexp(inTag[1], true), endTag = getTagRegexp(inTag[1], false);
-            state.token = function(stream, state) {
+            const endTagA = getTagRegexp(inTag[1], true);
+            const endTag = getTagRegexp(inTag[1], false);
+            state.token = (stream, state) => {
                 if (stream.match(endTagA, false)) {
                     state.token = html;
                     state.localState = state.localMode = null;
@@ -107,18 +113,20 @@ defineMode('htmlmixed', function(config, parserConfig) {
             state.localState = startState(mode, htmlMode.indent(state.htmlState, ''));
         } else if (state.inTag) {
             state.inTag += stream.current();
-            if (stream.eol()) state.inTag += ' ';
+            if (stream.eol()) {
+                state.inTag += ' ';
+            }
         }
         return style;
     }
 
     return {
-        startState: function() {
+        startState: () => {
             const state = startState(htmlMode);
             return {token: html, inTag: null, localMode: null, localState: null, htmlState: state};
         },
 
-        copyState: function(state) {
+        copyState: state => {
             let local;
             if (state.localState) {
                 local = copyState(state.localMode, state.localState);
@@ -130,22 +138,19 @@ defineMode('htmlmixed', function(config, parserConfig) {
             };
         },
 
-        token: function(stream, state) {
-            return state.token(stream, state);
-        },
+        token: (stream, state) => state.token(stream, state),
 
-        indent: function(state, textAfter, line) {
-            if (!state.localMode || /^\s*<\//.test(textAfter))
+        indent: (state, textAfter, line) => {
+            if (!state.localMode || /^\s*<\//.test(textAfter)) {
                 return htmlMode.indent(state.htmlState, textAfter);
-            else if (state.localMode.indent)
+            } else if (state.localMode.indent) {
                 return state.localMode.indent(state.localState, textAfter, line);
-            else
+            } else {
                 return Pass;
+            }
         },
 
-        innerMode: function(state) {
-            return {state: state.localState || state.htmlState, mode: state.localMode || htmlMode};
-        }
+        innerMode: state => ({state: state.localState || state.htmlState, mode: state.localMode || htmlMode})
     };
 }, 'xml', 'javascript', 'css');
 

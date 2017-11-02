@@ -1,6 +1,6 @@
 import {defineMIME, defineMode} from '../index';
 
-defineMode('coffeescript', function(conf, parserConf) {
+defineMode('coffeescript', (conf, parserConf) => {
     const ERRORCLASS = 'error';
 
     function wordRegexp(words) {
@@ -35,11 +35,13 @@ defineMode('coffeescript', function(conf, parserConf) {
     function tokenBase(stream, state) {
         // Handle scope changes
         if (stream.sol()) {
-            if (state.scope.align === null) state.scope.align = false;
+            if (state.scope.align === null) {
+                state.scope.align = false;
+            }
             const scopeOffset = state.scope.offset;
             if (stream.eatSpace()) {
                 const lineOffset = stream.indentation();
-                if (lineOffset > scopeOffset && state.scope.type == 'coffee') {
+                if (lineOffset > scopeOffset && state.scope.type === 'coffee') {
                     return 'indent';
                 } else if (lineOffset < scopeOffset) {
                     return 'dedent';
@@ -91,7 +93,7 @@ defineMode('coffeescript', function(conf, parserConf) {
 
             if (floatLiteral) {
                 // prevent from getting extra . on 1..
-                if (stream.peek() == '.') {
+                if (stream.peek() === '.') {
                     stream.backUp(1);
                 }
                 return 'number';
@@ -122,7 +124,7 @@ defineMode('coffeescript', function(conf, parserConf) {
         }
         // Handle regex literals
         if (stream.match(regexPrefixes)) {
-            if (stream.current() != '/' || stream.match(/^.*\//, false)) { // prevent highlight of division
+            if (stream.current() !== '/' || stream.match(/^.*\//, false)) { // prevent highlight of division
                 state.tokenize = tokenFactory(stream.current(), true, 'string-2');
                 return state.tokenize(stream, state);
             } else {
@@ -161,7 +163,7 @@ defineMode('coffeescript', function(conf, parserConf) {
     }
 
     function tokenFactory(delimiter, singleline, outclass) {
-        return function(stream, state) {
+        return (stream, state) => {
             while (!stream.eol()) {
                 stream.eatWhile(/[^'"\/\\]/);
                 if (stream.eat('\\')) {
@@ -201,9 +203,11 @@ defineMode('coffeescript', function(conf, parserConf) {
 
     function indent(stream, state, type) {
         type = type || 'coffee';
-        let offset = 0, align = false, alignOffset = null;
+        let offset = 0;
+        let align = false;
+        let alignOffset = null;
         for (let scope = state.scope; scope; scope = scope.prev) {
-            if (scope.type === 'coffee' || scope.type == '}') {
+            if (scope.type === 'coffee' || scope.type === '}') {
                 offset = scope.offset + conf.indentUnit;
                 break;
             }
@@ -224,7 +228,9 @@ defineMode('coffeescript', function(conf, parserConf) {
     }
 
     function dedent(stream, state) {
-        if (!state.scope.prev) return;
+        if (!state.scope.prev) {
+            return;
+        }
         if (state.scope.type === 'coffee') {
             const _indent = stream.indentation();
             let matched = false;
@@ -259,14 +265,15 @@ defineMode('coffeescript', function(conf, parserConf) {
             || style === 'indent') {
             indent(stream, state, undefined);
         }
-        let delimiter_index = '[({'.indexOf(current);
+        let delimiter_index: number;
+        delimiter_index = '[({'.indexOf(current);
         if (delimiter_index !== -1) {
             indent(stream, state, '])}'.slice(delimiter_index, delimiter_index + 1));
         }
         if (indentKeywords.exec(current)) {
             indent(stream, state, undefined);
         }
-        if (current == 'then') {
+        if (current === 'then') {
             dedent(stream, state);
         }
 
@@ -278,14 +285,17 @@ defineMode('coffeescript', function(conf, parserConf) {
         }
         delimiter_index = '])}'.indexOf(current);
         if (delimiter_index !== -1) {
-            while (state.scope.type == 'coffee' && state.scope.prev)
+            while (state.scope.type === 'coffee' && state.scope.prev) {
                 state.scope = state.scope.prev;
-            if (state.scope.type == current)
+            }
+            if (state.scope.type === current) {
                 state.scope = state.scope.prev;
+            }
         }
         if (state.dedent && stream.eol()) {
-            if (state.scope.type == 'coffee' && state.scope.prev)
+            if (state.scope.type === 'coffee' && state.scope.prev) {
                 state.scope = state.scope.prev;
+            }
             state.dedent = false;
         }
 
@@ -293,38 +303,47 @@ defineMode('coffeescript', function(conf, parserConf) {
     }
 
     const external = {
-        startState: function(basecolumn) {
-            return {
-                tokenize: tokenBase,
-                scope: {offset: basecolumn || 0, type: 'coffee', prev: null, align: false},
-                prop: false,
-                dedent: 0
-            };
-        },
+        startState: basecolumn => ({
+            tokenize: tokenBase,
+            scope: {offset: basecolumn || 0, type: 'coffee', prev: null, align: false},
+            prop: false,
+            dedent: 0
+        }),
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             const fillAlign = state.scope.align === null && state.scope;
-            if (fillAlign && stream.sol()) fillAlign.align = false;
+            if (fillAlign && stream.sol()) {
+                fillAlign.align = false;
+            }
 
             const style = tokenLexer(stream, state);
-            if (style && style != 'comment') {
-                if (fillAlign) fillAlign.align = true;
-                state.prop = style == 'punctuation' && stream.current() == '.';
+            if (style && style !== 'comment') {
+                if (fillAlign) {
+                    fillAlign.align = true;
+                }
+                state.prop = style === 'punctuation' && stream.current() === '.';
             }
 
             return style;
         },
 
-        indent: function(state, text) {
-            if (state.tokenize != tokenBase) return 0;
+        indent: (state, text) => {
+            if (state.tokenize !== tokenBase) {
+                return 0;
+            }
             let scope = state.scope;
             const closer = text && '])}'.indexOf(text.charAt(0)) > -1;
-            if (closer) while (scope.type == 'coffee' && scope.prev) scope = scope.prev;
+            if (closer) {
+                while (scope.type === 'coffee' && scope.prev) {
+                    scope = scope.prev;
+                }
+            }
             const closes = closer && scope.type === text.charAt(0);
-            if (scope.align)
+            if (scope.align) {
                 return scope.alignOffset - (closes ? 1 : 0);
-            else
+            } else {
                 return (closes ? scope.prev : scope).offset;
+            }
         },
 
         lineComment: '#',

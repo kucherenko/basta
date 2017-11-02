@@ -1,9 +1,12 @@
 import {defineMIME, defineMode} from '../index';
 
-defineMode('velocity', function() {
+defineMode('velocity', () => {
     function parseWords(str) {
-        const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        const obj = {};
+        const words = str.split(' ');
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 
@@ -24,81 +27,64 @@ defineMode('velocity', function() {
         state.beforeParams = false;
         const ch = stream.next();
         // start of unparsed string?
-        if ((ch == "'") && !state.inString && state.inParams) {
+        if ((ch === "'") && !state.inString && state.inParams) {
             state.lastTokenWasBuiltin = false;
             return chain(stream, state, tokenString(ch));
-        }
-        // start of parsed string?
-        else if ((ch == '"')) {
+        } else if ((ch === '"')) {
             state.lastTokenWasBuiltin = false;
             if (state.inString) {
                 state.inString = false;
                 return 'string';
-            }
-            else if (state.inParams)
+            } else if (state.inParams) {
                 return chain(stream, state, tokenString(ch));
-        }
-        // is it one of the special signs []{}().,;? Seperator?
-        else if (/[\[\]{}\(\),;\.]/.test(ch)) {
-            if (ch == '(' && beforeParams)
+            }
+        } else if (/[\[\]{}\(\),;\.]/.test(ch)) {
+            if (ch === '(' && beforeParams) {
                 state.inParams = true;
-            else if (ch == ')') {
+            } else if (ch === ')') {
                 state.inParams = false;
                 state.lastTokenWasBuiltin = true;
             }
             return null;
-        }
-        // start of a number value?
-        else if (/\d/.test(ch)) {
+        } else if (/\d/.test(ch)) {
             state.lastTokenWasBuiltin = false;
             stream.eatWhile(/[\w\.]/);
             return 'number';
-        }
-        // multi line comment?
-        else if (ch == '#' && stream.eat('*')) {
+        } else if (ch === '#' && stream.eat('*')) {
             state.lastTokenWasBuiltin = false;
             return chain(stream, state, tokenComment);
-        }
-        // unparsed content?
-        else if (ch == '#' && stream.match(/ *\[ *\[/)) {
+        } else if (ch === '#' && stream.match(/ *\[ *\[/)) {
             state.lastTokenWasBuiltin = false;
             return chain(stream, state, tokenUnparsed);
-        }
-        // single line comment?
-        else if (ch == '#' && stream.eat('#')) {
+        } else if (ch === '#' && stream.eat('#')) {
             state.lastTokenWasBuiltin = false;
             stream.skipToEnd();
             return 'comment';
-        }
-        // variable?
-        else if (ch == '$') {
+        } else if (ch === '$') {
             stream.eatWhile(/[\w\d\$_\.{}]/);
             // is it one of the specials?
             if (specials && specials.propertyIsEnumerable(stream.current())) {
                 return 'keyword';
-            }
-            else {
+            } else {
                 state.lastTokenWasBuiltin = true;
                 state.beforeParams = true;
                 return 'builtin';
             }
-        }
-        // is it a operator?
-        else if (isOperatorChar.test(ch)) {
+        } else if (isOperatorChar.test(ch)) {
             state.lastTokenWasBuiltin = false;
             stream.eatWhile(isOperatorChar);
             return 'operator';
-        }
-        else {
+        } else {
             // get the whole word
             stream.eatWhile(/[\w\$_{}@]/);
             const word = stream.current();
             // is it one of the listed keywords?
-            if (keywords && keywords.propertyIsEnumerable(word))
+            if (keywords && keywords.propertyIsEnumerable(word)) {
                 return 'keyword';
+            }
             // is it one of the listed functions?
             if (functions && functions.propertyIsEnumerable(word) ||
-                (stream.current().match(/^#@?[a-z0-9_]+ *$/i) && stream.peek() == '(') &&
+                (stream.current().match(/^#@?[a-z0-9_]+ *$/i) && stream.peek() === '(') &&
                 !(functions && functions.propertyIsEnumerable(word.toLowerCase()))) {
                 state.beforeParams = true;
                 state.lastTokenWasBuiltin = false;
@@ -108,8 +94,9 @@ defineMode('velocity', function() {
                 state.lastTokenWasBuiltin = false;
                 return 'string';
             }
-            if (stream.pos > word.length && stream.string.charAt(stream.pos - word.length - 1) == '.' && state.lastTokenWasBuiltin)
+            if (stream.pos > word.length && stream.string.charAt(stream.pos - word.length - 1) === '.' && state.lastTokenWasBuiltin) {
                 return 'builtin';
+            }
             // default: just a "word"
             state.lastTokenWasBuiltin = false;
             return null;
@@ -117,48 +104,55 @@ defineMode('velocity', function() {
     }
 
     function tokenString(quote) {
-        return function(stream, state) {
-            let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if ((next == quote) && !escaped) {
+        return (stream, state) => {
+            let escaped = false;
+            let next;
+            let end = false;
+            while ((next = stream.next()) !== null) {
+                if ((next === quote) && !escaped) {
                     end = true;
                     break;
                 }
-                if (quote == '"' && stream.peek() == '$' && !escaped) {
+                if (quote === '"' && stream.peek() === '$' && !escaped) {
                     state.inString = true;
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '\\';
+                escaped = !escaped && next === '\\';
             }
-            if (end) state.tokenize = tokenBase;
+            if (end) {
+                state.tokenize = tokenBase;
+            }
             return 'string';
         };
     }
 
     function tokenComment(stream, state) {
-        let maybeEnd = false, ch;
+        let maybeEnd = false;
+        let ch;
         while (ch = stream.next()) {
-            if (ch == '#' && maybeEnd) {
+            if (ch === '#' && maybeEnd) {
                 state.tokenize = tokenBase;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
 
     function tokenUnparsed(stream, state) {
-        let maybeEnd = 0, ch;
+        let maybeEnd = 0;
+        let ch;
         while (ch = stream.next()) {
-            if (ch == '#' && maybeEnd == 2) {
+            if (ch === '#' && maybeEnd === 2) {
                 state.tokenize = tokenBase;
                 break;
             }
-            if (ch == ']')
+            if (ch === ']') {
                 maybeEnd++;
-            else if (ch != ' ')
+            } else if (ch !== ' ') {
                 maybeEnd = 0;
+            }
         }
         return 'meta';
     }
@@ -166,7 +160,7 @@ defineMode('velocity', function() {
     // Interface
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 beforeParams: false,
@@ -176,8 +170,10 @@ defineMode('velocity', function() {
             };
         },
 
-        token: function(stream, state) {
-            if (stream.eatSpace()) return null;
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
+                return null;
+            }
             return state.tokenize(stream, state);
         },
         blockCommentStart: '#*',

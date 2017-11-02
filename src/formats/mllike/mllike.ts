@@ -82,7 +82,7 @@ defineMode('mllike', function(_config, parserConfig) {
 
     function tokenString(stream, state) {
         let next, end = false, escaped = false;
-        while ((next = stream.next()) != null) {
+        while ((next = stream.next()) !== null) {
             if (next === '"' && !escaped) {
                 end = true;
                 break;
@@ -97,9 +97,13 @@ defineMode('mllike', function(_config, parserConfig) {
 
     function tokenComment(stream, state) {
         let prev, next;
-        while (state.commentLevel > 0 && (next = stream.next()) != null) {
-            if (prev === '(' && next === '*') state.commentLevel++;
-            if (prev === '*' && next === ')') state.commentLevel--;
+        while (state.commentLevel > 0 && (next = stream.next()) !== null) {
+            if (prev === '(' && next === '*') {
+                state.commentLevel++;
+            }
+            if (prev === '*' && next === ')') {
+                state.commentLevel--;
+            }
             prev = next;
         }
         if (state.commentLevel <= 0) {
@@ -109,11 +113,13 @@ defineMode('mllike', function(_config, parserConfig) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokenize: tokenBase, commentLevel: 0};
         },
-        token: function(stream, state) {
-            if (stream.eatSpace()) return null;
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
+                return null;
+            }
             return state.tokenize(stream, state);
         },
 

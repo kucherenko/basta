@@ -1,4 +1,13 @@
 import {defineMIME, defineMode, getMode, overlayMode} from '../index';
+
+import '../htmlmixed/htmlmixed';
+import '../coffeescript/coffeescript';
+import '../stylus/stylus';
+import '../css/css';
+import '../sass/sass';
+import '../pug/pug';
+import '../handlebars/handlebars';
+
 const tagLanguages = {
     script: [
         ['lang', /coffee(script)?/, 'coffeescript'],
@@ -20,10 +29,12 @@ const tagLanguages = {
     ]
 };
 
-defineMode('vue-template', function(config, parserConfig) {
+defineMode('vue-template', (config, parserConfig) => {
     const mustacheOverlay = {
-        token: function(stream) {
-            if (stream.match(/^\{\{.*?\}\}/)) return 'meta mustache';
+        token: stream => {
+            if (stream.match(/^\{\{.*?\}\}/)) {
+                return 'meta mustache';
+            }
             while (stream.next() && !stream.match('{{', false)) {
             }
             return null;
@@ -32,9 +43,10 @@ defineMode('vue-template', function(config, parserConfig) {
     return overlayMode(getMode(config, parserConfig.backdrop || 'text/html'), mustacheOverlay);
 });
 
-defineMode('vue', function(config) {
-    return getMode(config, {name: 'htmlmixed', tags: tagLanguages});
-}, 'htmlmixed', 'xml', 'javascript', 'coffeescript', 'css', 'sass', 'stylus', 'pug', 'handlebars');
+defineMode('vue', config => getMode(config,
+    {name: 'htmlmixed', tags: tagLanguages}),
+    'htmlmixed', 'xml', 'javascript', 'coffeescript', 'css', 'sass', 'stylus', 'pug', 'handlebars'
+);
 
 defineMIME('script/x-vue', 'vue');
 defineMIME('text/x-vue', 'vue');

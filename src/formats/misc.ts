@@ -6,24 +6,31 @@ export function bind(f) {
 }
 
 export function copyObj(obj, target, overwrite) {
-    if (!target) target = {};
-    for (const prop in obj)
-        if (obj.hasOwnProperty(prop) && (overwrite !== false || !target.hasOwnProperty(prop)))
+    if (!target) {
+        target = {};
+    }
+    for (const prop in obj) {
+        if (obj.hasOwnProperty(prop) && (overwrite !== false || !target.hasOwnProperty(prop))) {
             target[prop] = obj[prop];
+        }
+    }
     return target;
 }
 
 // Counts the column offset in a string, taking tabs into account.
 // Used mostly to find indentation.
-export function countColumn(string, end, tabSize, startIndex = undefined, startValue = undefined) {
-    if (end == null) {
+export function countColumn(string, end, tabSize, startIndex?, startValue?) {
+    if (end === null) {
         end = string.search(/[^\s\u00a0]/);
-        if (end == -1) end = string.length;
+        if (end === -1) {
+            end = string.length;
+        }
     }
     for (let i = startIndex || 0, n = startValue || 0; ;) {
         const nextTab = string.indexOf('\t', i);
-        if (nextTab < 0 || nextTab >= end)
+        if (nextTab < 0 || nextTab >= end) {
             return n + (end - i);
+        }
         n += nextTab - i;
         n += tabSize - (n % tabSize);
         i = nextTab + 1;
@@ -31,8 +38,11 @@ export function countColumn(string, end, tabSize, startIndex = undefined, startV
 }
 
 export function indexOf(array, elt) {
-    for (let i = 0; i < array.length; ++i)
-        if (array[i] == elt) return i;
+    for (let i = 0; i < array.length; ++i) {
+        if (array[i] === elt) {
+            return i;
+        }
+    }
     return -1;
 }
 
@@ -46,7 +56,9 @@ export let Pass = {
 
 export function map(array, f) {
     const out = [];
-    for (let i = 0; i < array.length; i++) out[i] = f(array[i], i);
+    for (let i = 0; i < array.length; i++) {
+        out[i] = f(array[i], i);
+    }
     return out;
 }
 
@@ -61,23 +73,33 @@ export function createObj(base, props) {
         nothing.prototype = base;
         inst = new nothing();
     }
-    if (props) copyObj(props, inst, false);
+    if (props) {
+        copyObj(props, inst, false);
+    }
     return inst;
 }
 
 const nonASCIISingleCaseWordChar = /[\u00df\u0587\u0590-\u05f4\u0600-\u06ff\u3040-\u309f\u30a0-\u30ff\u3400-\u4db5\u4e00-\u9fcc\uac00-\ud7af]/;
 export function isWordCharBasic(ch) {
     return /\w/.test(ch) || ch > '\x80' &&
-        (ch.toUpperCase() != ch.toLowerCase() || nonASCIISingleCaseWordChar.test(ch));
+        (ch.toUpperCase() !== ch.toLowerCase() || nonASCIISingleCaseWordChar.test(ch));
 }
 export function isWordChar(ch, helper) {
-    if (!helper) return isWordCharBasic(ch);
-    if (helper.source.indexOf('\\w') > -1 && isWordCharBasic(ch)) return true;
+    if (!helper) {
+        return isWordCharBasic(ch);
+    }
+    if (helper.source.indexOf('\\w') > -1 && isWordCharBasic(ch)) {
+        return true;
+    }
     return helper.test(ch);
 }
 
 export function isEmpty(obj) {
-    for (const n in obj) if (obj.hasOwnProperty(n) && obj[n]) return false;
+    for (const n in obj) {
+        if (obj.hasOwnProperty(n) && obj[n]) {
+            return false;
+        }
+    }
     return true;
 }
 

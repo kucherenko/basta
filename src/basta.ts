@@ -55,6 +55,7 @@ export function basta(options: IOptions) {
 
     stream.on('data', ({path}) => {
         if (lstatSync(path).isFile()) {
+
             const statistic: IStatistic = getStatisticStorage({});
             const mode = findModeByFileName(path);
             if (!mode) {
@@ -62,8 +63,10 @@ export function basta(options: IOptions) {
             }
             statistic.addFiles(mode.name, 1);
             if (!options.debug) {
+                console.log(`Detecting clones in file ${path}`.grey);
                 const content = readFileSync(path);
                 detect({id: relative(options.path, path)}, mode, content, options);
+                console.log(`...done`.grey);
             } else {
                 console.log(` - ${relative(options.path, path).green}`);
             }

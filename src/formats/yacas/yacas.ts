@@ -5,7 +5,9 @@ defineMode('yacas', function(_config, _parserConfig) {
 
     function words(str) {
         const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 
@@ -55,23 +57,27 @@ defineMode('yacas', function(_config, _parserConfig) {
 
         // update scope info
         const m = stream.match(/^(\w+)\s*\(/, false);
-        if (m !== null && bodiedOps.hasOwnProperty(m[1]))
+        if (m !== null && bodiedOps.hasOwnProperty(m[1])) {
             state.scopes.push('bodied');
+        }
 
         let scope = currentScope(state);
 
-        if (scope === 'bodied' && ch === '[')
+        if (scope === 'bodied' && ch === '[') {
             state.scopes.pop();
+        }
 
-        if (ch === '[' || ch === '{' || ch === '(')
+        if (ch === '[' || ch === '{' || ch === '(') {
             state.scopes.push(ch);
+        }
 
         scope = currentScope(state);
 
         if (scope === '[' && ch === ']' ||
             scope === '{' && ch === '}' ||
-            scope === '(' && ch === ')')
+            scope === '(' && ch === ')') {
             state.scopes.pop();
+        }
 
         if (ch === ';') {
             while (scope === 'bodied') {
@@ -122,7 +128,7 @@ defineMode('yacas', function(_config, _parserConfig) {
 
     function tokenString(stream, state) {
         let next, end = false, escaped = false;
-        while ((next = stream.next()) != null) {
+        while ((next = stream.next()) !== null) {
             if (next === '"' && !escaped) {
                 end = true;
                 break;
@@ -137,7 +143,7 @@ defineMode('yacas', function(_config, _parserConfig) {
 
     function tokenComment(stream, state) {
         let prev, next;
-        while ((next = stream.next()) != null) {
+        while ((next = stream.next()) !== null) {
             if (prev === '*' && next === '/') {
                 state.tokenize = tokenBase;
                 break;
@@ -149,31 +155,36 @@ defineMode('yacas', function(_config, _parserConfig) {
 
     function currentScope(state) {
         let scope = null;
-        if (state.scopes.length > 0)
+        if (state.scopes.length > 0) {
             scope = state.scopes[state.scopes.length - 1];
+        }
         return scope;
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 scopes: []
             };
         },
-        token: function(stream, state) {
-            if (stream.eatSpace()) return null;
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
+                return null;
+            }
             return state.tokenize(stream, state);
         },
-        indent: function(state, textAfter) {
-            if (state.tokenize !== tokenBase && state.tokenize !== null)
+        indent: (state, textAfter) => {
+            if (state.tokenize !== tokenBase && state.tokenize !== null) {
                 return Pass;
+            }
 
             let delta = 0;
             if (textAfter === ']' || textAfter === '];' ||
                 textAfter === '}' || textAfter === '};' ||
-                textAfter === ');')
+                textAfter === ');') {
                 delta = -1;
+            }
 
             return (state.scopes.length + delta) * _config.indentUnit;
         },

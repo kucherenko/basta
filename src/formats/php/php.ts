@@ -73,7 +73,7 @@ function phpString_(stream, state, closing, escapes) {
             state.tokStack.pop();
             break;
         }
-        escaped = stream.next() == '\\' && !escaped;
+        escaped = stream.next() === '\\' && !escaped;
     }
     return 'string';
 }
@@ -116,7 +116,7 @@ const phpConfig = {
                 }
                 if (delim) {
                     (state.tokStack || (state.tokStack = [])).push(delim, 0);
-                    state.tokenize = phpString(delim, quoted != "'");
+                    state.tokenize = phpString(delim, quoted !== "'");
                     return 'string';
                 }
             }
@@ -163,8 +163,8 @@ defineMode('php', (config, parserConfig) => {
     const phpMode = getMode(config, phpConfig);
 
     function dispatch(stream, state) {
-        const isPHP = state.curMode == phpMode;
-        if (stream.sol() && state.pending && state.pending != '"' && state.pending != "'") {
+        const isPHP = state.curMode === phpMode;
+        if (stream.sol() && state.pending && state.pending !== '"' && state.pending !== "'") {
             state.pending = null;
         }
         if (!isPHP) {
@@ -202,7 +202,7 @@ defineMode('php', (config, parserConfig) => {
                 stream.backUp(cur.length - openPHP);
             }
             return style;
-        } else if (isPHP && state.php.tokenize == null && stream.match('?>')) {
+        } else if (isPHP && state.php.tokenize === null && stream.match('?>')) {
             state.curMode = htmlMode;
             state.curState = state.html;
             if (!state.php.context.prev) {

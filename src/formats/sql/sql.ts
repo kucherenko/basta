@@ -19,18 +19,20 @@ defineMode('sql', function(config, parserConfig) {
         // call hooks from the mime type
         if (hooks[ch]) {
             const result = hooks[ch](stream, state);
-            if (result !== false) return result;
+            if (result !== false) {
+                return result;
+            }
         }
 
         if (support.hexNumber &&
-            ((ch == '0' && stream.match(/^[xX][0-9a-fA-F]+/))
-            || (ch == 'x' || ch == 'X') && stream.match(/^'[0-9a-fA-F]+'/))) {
+            ((ch === '0' && stream.match(/^[xX][0-9a-fA-F]+/))
+                || (ch === 'x' || ch === 'X') && stream.match(/^'[0-9a-fA-F]+'/))) {
             // hex
             // ref: http://dev.mysql.com/doc/refman/5.5/en/hexadecimal-literals.html
             return 'number';
         } else if (support.binaryNumber &&
-            (((ch == 'b' || ch == 'B') && stream.match(/^'[01]+'/))
-            || (ch == '0' && stream.match(/^b[01]+/)))) {
+            (((ch === 'b' || ch === 'B') && stream.match(/^'[01]+'/))
+                || (ch === '0' && stream.match(/^b[01]+/)))) {
             // bitstring
             // ref: http://dev.mysql.com/doc/refman/5.5/en/bit-field-literals.html
             return 'number';
@@ -40,39 +42,39 @@ defineMode('sql', function(config, parserConfig) {
             stream.match(/^[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?/);
             support.decimallessFloat && stream.eat('.');
             return 'number';
-        } else if (ch == '?' && (stream.eatSpace() || stream.eol() || stream.eat(';'))) {
+        } else if (ch === '?' && (stream.eatSpace() || stream.eol() || stream.eat(';'))) {
             // placeholders
             return 'variable-3';
-        } else if (ch == "'" || (ch == '"' && support.doubleQuote)) {
+        } else if (ch === "'" || (ch === '"' && support.doubleQuote)) {
             // strings
             // ref: http://dev.mysql.com/doc/refman/5.5/en/string-literals.html
             state.tokenize = tokenLiteral(ch);
             return state.tokenize(stream, state);
-        } else if ((((support.nCharCast && (ch == 'n' || ch == 'N'))
-            || (support.charsetCast && ch == '_' && stream.match(/[a-z][a-z0-9]*/i)))
-            && (stream.peek() == "'" || stream.peek() == '"'))) {
+        } else if ((((support.nCharCast && (ch === 'n' || ch === 'N'))
+                || (support.charsetCast && ch === '_' && stream.match(/[a-z][a-z0-9]*/i)))
+                && (stream.peek() === "'" || stream.peek() === '"'))) {
             // charset casting: _utf8'str', N'str', n'str'
             // ref: http://dev.mysql.com/doc/refman/5.5/en/string-literals.html
             return 'keyword';
         } else if (/^[\(\),\;\[\]]/.test(ch)) {
             // no highlighting
             return null;
-        } else if (support.commentSlashSlash && ch == '/' && stream.eat('/')) {
+        } else if (support.commentSlashSlash && ch === '/' && stream.eat('/')) {
             // 1-line comment
             stream.skipToEnd();
             return 'comment';
-        } else if ((support.commentHash && ch == '#')
-            || (ch == '-' && stream.eat('-') && (!support.commentSpaceRequired || stream.eat(' ')))) {
+        } else if ((support.commentHash && ch === '#')
+            || (ch === '-' && stream.eat('-') && (!support.commentSpaceRequired || stream.eat(' ')))) {
             // 1-line comments
             // ref: https://kb.askmonty.org/en/comment-syntax/
             stream.skipToEnd();
             return 'comment';
-        } else if (ch == '/' && stream.eat('*')) {
+        } else if (ch === '/' && stream.eat('*')) {
             // multi-line comments
             // ref: https://kb.askmonty.org/en/comment-syntax/
             state.tokenize = tokenComment(1);
             return state.tokenize(stream, state);
-        } else if (ch == '.') {
+        } else if (ch === '.') {
             // .1 for 0.1
             if (support.zerolessFloat && stream.match(/^(?:\d+(?:e[+-]?\d+)?)/i)) {
                 return 'number';
@@ -86,7 +88,7 @@ defineMode('sql', function(config, parserConfig) {
             // operators
             stream.eatWhile(operatorChars);
             return null;
-        } else if (ch == '{' &&
+        } else if (ch === '{' &&
             (stream.match(/^( )*(d|D|t|T|ts|TS)( )*'[^']*'( )*}/) || stream.match(/^( )*(d|D|t|T|ts|TS)( )*"[^"]*"( )*}/))) {
             // dates (weird ODBC syntax)
             // ref: http://dev.mysql.com/doc/refman/5.5/en/date-and-time-literals.html
@@ -96,12 +98,21 @@ defineMode('sql', function(config, parserConfig) {
             const word = stream.current().toLowerCase();
             // dates (standard SQL syntax)
             // ref: http://dev.mysql.com/doc/refman/5.5/en/date-and-time-literals.html
-            if (dateSQL.hasOwnProperty(word) && (stream.match(/^( )+'[^']*'/) || stream.match(/^( )+"[^"]*"/)))
+            if (dateSQL.hasOwnProperty(word) && (stream.match(/^( )+'[^']*'/) || stream.match(/^( )+"[^"]*"/))) {
                 return 'number';
-            if (atoms.hasOwnProperty(word)) return 'atom';
-            if (builtin.hasOwnProperty(word)) return 'builtin';
-            if (keywords.hasOwnProperty(word)) return 'keyword';
-            if (client.hasOwnProperty(word)) return 'string-2';
+            }
+            if (atoms.hasOwnProperty(word)) {
+                return 'atom';
+            }
+            if (builtin.hasOwnProperty(word)) {
+                return 'builtin';
+            }
+            if (keywords.hasOwnProperty(word)) {
+                return 'keyword';
+            }
+            if (client.hasOwnProperty(word)) {
+                return 'string-2';
+            }
             return null;
         }
     }
@@ -110,12 +121,12 @@ defineMode('sql', function(config, parserConfig) {
     function tokenLiteral(quote) {
         return function(stream, state) {
             let escaped = false, ch;
-            while ((ch = stream.next()) != null) {
-                if (ch == quote && !escaped) {
+            while ((ch = stream.next()) !== null) {
+                if (ch === quote && !escaped) {
                     state.tokenize = tokenBase;
                     break;
                 }
-                escaped = !escaped && ch == '\\';
+                escaped = !escaped && ch === '\\';
             }
             return 'string';
         };
@@ -124,10 +135,15 @@ defineMode('sql', function(config, parserConfig) {
     function tokenComment(depth) {
         return function(stream, state) {
             const m = stream.match(/^.*?(\/\*|\*\/)/);
-            if (!m) stream.skipToEnd();
-            else if (m[1] == '/*') state.tokenize = tokenComment(depth + 1);
-            else if (depth > 1) state.tokenize = tokenComment(depth - 1);
-            else state.tokenize = tokenBase;
+            if (!m) {
+                stream.skipToEnd();
+            } else if (m[1] === '/*') {
+                state.tokenize = tokenComment(depth + 1);
+            } else if (depth > 1) {
+                state.tokenize = tokenComment(depth - 1);
+            } else {
+                state.tokenize = tokenBase;
+            }
             return 'comment';
         };
     }
@@ -147,39 +163,51 @@ defineMode('sql', function(config, parserConfig) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokenize: tokenBase, context: null};
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
-                if (state.context && state.context.align == null)
+                if (state.context && state.context.align === null) {
                     state.context.align = false;
+                }
             }
-            if (state.tokenize == tokenBase && stream.eatSpace()) return null;
+            if (state.tokenize === tokenBase && stream.eatSpace()) {
+                return null;
+            }
 
             const style = state.tokenize(stream, state);
-            if (style == 'comment') return style;
+            if (style === 'comment') {
+                return style;
+            }
 
-            if (state.context && state.context.align == null)
+            if (state.context && state.context.align === null) {
                 state.context.align = true;
+            }
 
             const tok = stream.current();
-            if (tok == '(')
+            if (tok === '(') {
                 pushContext(stream, state, ')');
-            else if (tok == '[')
+            } else if (tok === '[') {
                 pushContext(stream, state, ']');
-            else if (state.context && state.context.type == tok)
+            } else if (state.context && state.context.type === tok) {
                 popContext(state);
+            }
             return style;
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             const cx = state.context;
-            if (!cx) return Pass;
-            const closing = textAfter.charAt(0) == cx.type;
-            if (cx.align) return cx.col + (closing ? 0 : 1);
-            else return cx.indent + (closing ? 0 : config.indentUnit);
+            if (!cx) {
+                return Pass;
+            }
+            const closing = textAfter.charAt(0) === cx.type;
+            if (cx.align) {
+                return cx.col + (closing ? 0 : 1);
+            } else {
+                return cx.indent + (closing ? 0 : config.indentUnit);
+            }
         },
 
         blockCommentStart: '/*',
@@ -196,8 +224,10 @@ defineMode('sql', function(config, parserConfig) {
         // MySQL/MariaDB identifiers
         // ref: http://dev.mysql.com/doc/refman/5.6/en/identifier-qualifiers.html
         let ch;
-        while ((ch = stream.next()) != null) {
-            if (ch == '`' && !stream.eat('`')) return 'variable-2';
+        while ((ch = stream.next()) !== null) {
+            if (ch === '`' && !stream.eat('`')) {
+                return 'variable-2';
+            }
         }
         stream.backUp(stream.current().length - 1);
         return stream.eatWhile(/\w/) ? 'variable-2' : null;
@@ -209,8 +239,10 @@ defineMode('sql', function(config, parserConfig) {
         // ref: http://web.archive.org/web/20160813185132/http://savage.net.au/SQL/sql-99.bnf.html#delimited%20identifier
         // ref: http://sqlite.org/lang_keywords.html
         let ch;
-        while ((ch = stream.next()) != null) {
-            if (ch == '"' && !stream.eat('"')) return 'variable-2';
+        while ((ch = stream.next()) !== null) {
+            if (ch === '"' && !stream.eat('"')) {
+                return 'variable-2';
+            }
         }
         stream.backUp(stream.current().length - 1);
         return stream.eatWhile(/\w/) ? 'variable-2' : null;
@@ -261,7 +293,9 @@ defineMode('sql', function(config, parserConfig) {
     // turn a space-separated list into an array
     function set(str) {
         const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 

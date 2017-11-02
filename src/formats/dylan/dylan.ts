@@ -1,9 +1,16 @@
 import {defineMIME, defineMode} from '../index';
+
 function forEach(arr, f) {
-    for (let i = 0; i < arr.length; i++) f(arr[i], i);
+    for (let i = 0; i < arr.length; i++) {
+        f(arr[i], i);
+    }
 }
 function some(arr, f) {
-    for (let i = 0; i < arr.length; i++) if (f(arr[i], i)) return true;
+    for (let i = 0; i < arr.length; i++) {
+        if (f(arr[i], i)) {
+            return true;
+        }
+    }
     return false;
 }
 
@@ -114,9 +121,11 @@ defineMode('dylan', function(_config) {
     };
 
     // Compile all patterns to regular expressions
-    for (const patternName in patterns)
-        if (patterns.hasOwnProperty(patternName))
+    for (const patternName in patterns) {
+        if (patterns.hasOwnProperty(patternName)) {
             patterns[patternName] = new RegExp('^' + patterns[patternName]);
+        }
+    }
 
     // Names beginning "with-" and "without-" are commonly
     // used as statement macro
@@ -153,12 +162,10 @@ defineMode('dylan', function(_config) {
     function tokenBase(stream, state) {
         // String
         let ch = stream.peek();
-        if (ch == "'" || ch == '"') {
+        if (ch === "'" || ch === '"') {
             stream.next();
             return chain(stream, state, tokenString(ch, 'string'));
-        }
-        // Comment
-        else if (ch == '/') {
+        } else if (ch === '/') {
             stream.next();
             if (stream.eat('*')) {
                 return chain(stream, state, tokenComment);
@@ -167,49 +174,35 @@ defineMode('dylan', function(_config) {
                 return 'comment';
             }
             stream.backUp(1);
-        }
-        // Decimal
-        else if (/[+\-\d\.]/.test(ch)) {
+        } else if (/[+\-\d\.]/.test(ch)) {
             if (stream.match(/^[+-]?[0-9]*\.[0-9]*([esdx][+-]?[0-9]+)?/i) ||
                 stream.match(/^[+-]?[0-9]+([esdx][+-]?[0-9]+)/i) ||
                 stream.match(/^[+-]?\d+/)) {
                 return 'number';
             }
-        }
-        // Hash
-        else if (ch == '#') {
+        } else if (ch === '#') {
             stream.next();
             // Symbol with string syntax
             ch = stream.peek();
-            if (ch == '"') {
+            if (ch === '"') {
                 stream.next();
                 return chain(stream, state, tokenString('"', 'string'));
-            }
-            // Binary number
-            else if (ch == 'b') {
+            } else if (ch === 'b') {
                 stream.next();
                 stream.eatWhile(/[01]/);
                 return 'number';
-            }
-            // Hex number
-            else if (ch == 'x') {
+            } else if (ch === 'x') {
                 stream.next();
                 stream.eatWhile(/[\da-f]/i);
                 return 'number';
-            }
-            // Octal number
-            else if (ch == 'o') {
+            } else if (ch === 'o') {
                 stream.next();
                 stream.eatWhile(/[0-7]/);
                 return 'number';
-            }
-            // Token concatenation in macros
-            else if (ch == '#') {
+            } else if (ch === '#') {
                 stream.next();
                 return 'punctuation';
-            }
-            // Sequence literals
-            else if ((ch == '[') || (ch == '(')) {
+            } else if ((ch === '[') || (ch === '(')) {
                 stream.next();
                 return 'bracket';
                 // Hash symbol
@@ -219,33 +212,33 @@ defineMode('dylan', function(_config) {
                 stream.eatWhile(/[-a-zA-Z]/);
                 return 'error';
             }
-        } else if (ch == '~') {
+        } else if (ch === '~') {
             stream.next();
             ch = stream.peek();
-            if (ch == '=') {
+            if (ch === '=') {
                 stream.next();
                 ch = stream.peek();
-                if (ch == '=') {
+                if (ch === '=') {
                     stream.next();
                     return 'operator';
                 }
                 return 'operator';
             }
             return 'operator';
-        } else if (ch == ':') {
+        } else if (ch === ':') {
             stream.next();
             ch = stream.peek();
-            if (ch == '=') {
+            if (ch === '=') {
                 stream.next();
                 return 'operator';
-            } else if (ch == ':') {
+            } else if (ch === ':') {
                 stream.next();
                 return 'punctuation';
             }
-        } else if ('[](){}'.indexOf(ch) != -1) {
+        } else if ('[](){}'.indexOf(ch) !== -1) {
             stream.next();
             return 'bracket';
-        } else if ('.,'.indexOf(ch) != -1) {
+        } else if ('.,'.indexOf(ch) !== -1) {
             stream.next();
             return 'punctuation';
         } else if (stream.match('end')) {
@@ -256,8 +249,9 @@ defineMode('dylan', function(_config) {
                 const pattern = patterns[name];
                 if ((pattern instanceof Array && some(pattern, function(p) {
                         return stream.match(p);
-                    })) || stream.match(pattern))
+                    })) || stream.match(pattern)) {
                     return patternStyles[name];
+                }
             }
         }
         if (/[+\-*\/^=<>&|]/.test(ch)) {
@@ -283,18 +277,18 @@ defineMode('dylan', function(_config) {
     function tokenComment(stream, state) {
         let maybeEnd = false, maybeNested = false, nestedCount = 0, ch;
         while ((ch = stream.next())) {
-            if (ch == '/' && maybeEnd) {
+            if (ch === '/' && maybeEnd) {
                 if (nestedCount > 0) {
                     nestedCount--;
                 } else {
                     state.tokenize = tokenBase;
                     break;
                 }
-            } else if (ch == '*' && maybeNested) {
+            } else if (ch === '*' && maybeNested) {
                 nestedCount++;
             }
-            maybeEnd = (ch == '*');
-            maybeNested = (ch == '/');
+            maybeEnd = (ch === '*');
+            maybeNested = (ch === '/');
         }
         return 'comment';
     }
@@ -302,12 +296,12 @@ defineMode('dylan', function(_config) {
     function tokenString(quote, style) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '\\';
+                escaped = !escaped && next === '\\';
             }
             if (end || !escaped) {
                 state.tokenize = tokenBase;
@@ -318,15 +312,16 @@ defineMode('dylan', function(_config) {
 
     // Interface
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 currentIndent: 0
             };
         },
-        token: function(stream, state) {
-            if (stream.eatSpace())
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
                 return null;
+            }
             const style = state.tokenize(stream, state);
             return style;
         },

@@ -83,7 +83,9 @@ const multilineCommentsEnd = /^.*?\*\//;
 
 function readToken(stream, state) {
     // whitespace
-    if (stream.eatSpace()) return null;
+    if (stream.eatSpace()) {
+        return null;
+    }
 
     // comment
     if (state.inComment) {
@@ -98,7 +100,9 @@ function readToken(stream, state) {
         stream.skipToEnd();
         return 'comment';
     }
-    if (stream.match(multilineComments)) return 'comment';
+    if (stream.match(multilineComments)) {
+        return 'comment';
+    }
     if (stream.match(multilineCommentsStart)) {
         state.inComment = true;
         return 'comment';
@@ -106,21 +110,29 @@ function readToken(stream, state) {
 
     // integer and float
     if (stream.match(/^-?[0-9\.]/, false)) {
-        if (stream.match(integers) || stream.match(floats)) return 'number';
+        if (stream.match(integers) || stream.match(floats)) {
+            return 'number';
+        }
     }
 
     // string
-    if (stream.match(strings)) return 'string';
+    if (stream.match(strings)) {
+        return 'string';
+    }
 
     // identifier
-    if (state.startDef && stream.match(identifiers)) return 'def';
+    if (state.startDef && stream.match(identifiers)) {
+        return 'def';
+    }
 
     if (state.endDef && stream.match(identifiersEnd)) {
         state.endDef = false;
         return 'def';
     }
 
-    if (stream.match(keywords)) return 'keyword';
+    if (stream.match(keywords)) {
+        return 'keyword';
+    }
 
     if (stream.match(types)) {
         const lastToken = state.lastToken;
@@ -136,12 +148,20 @@ function readToken(stream, state) {
         }
     }
 
-    if (stream.match(builtins)) return 'builtin';
-    if (stream.match(atoms)) return 'atom';
-    if (stream.match(identifiers)) return 'variable';
+    if (stream.match(builtins)) {
+        return 'builtin';
+    }
+    if (stream.match(atoms)) {
+        return 'atom';
+    }
+    if (stream.match(identifiers)) {
+        return 'variable';
+    }
 
     // other
-    if (stream.match(singleOperators)) return 'operator';
+    if (stream.match(singleOperators)) {
+        return 'operator';
+    }
 
     // unrecognized
     stream.next();
@@ -150,7 +170,7 @@ function readToken(stream, state) {
 
 defineMode('webidl', function() {
     return {
-        startState: function() {
+        startState: () => {
             return {
                 // Is in multiline comment
                 inComment: false,
@@ -162,7 +182,7 @@ defineMode('webidl', function() {
                 endDef: false
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             const style = readToken(stream, state);
 
             if (style) {

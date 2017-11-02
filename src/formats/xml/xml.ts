@@ -1,5 +1,6 @@
 import {defineMIME, defineMode, mimeModes} from '../index';
 import {Pass} from '../misc';
+
 const htmlConfig = {
     autoSelfClosers: {
         'area': true, 'base': true, 'br': true, 'col': true, 'command': true,
@@ -50,15 +51,13 @@ const xmlConfig = {
     caseFold: false
 };
 
-defineMode('xml', function(editorConf, config_) {
+defineMode('xml', (editorConf, cfg) => {
     const indentUnit = editorConf.indentUnit;
-    const config: any = {};
-    const defaults = config_.htmlMode ? htmlConfig : xmlConfig;
-    for (const prop in defaults) config[prop] = defaults[prop];
-    for (const prop in config_) config[prop] = config_[prop];
-
+    const defaults = cfg.htmlMode ? htmlConfig : xmlConfig;
+    const config: any = {...defaults as any, ...cfg as any};
     // Return variables for tokenizers
-    let type, setStyle;
+    let type;
+    let setStyle;
 
     function inText(stream, state) {
         function chain(parser) {
@@ -67,11 +66,14 @@ defineMode('xml', function(editorConf, config_) {
         }
 
         const ch = stream.next();
-        if (ch == '<') {
+        if (ch === '<') {
             if (stream.eat('!')) {
                 if (stream.eat('[')) {
-                    if (stream.match('CDATA[')) return chain(inBlock('atom', ']]>'));
-                    else return null;
+                    if (stream.match('CDATA[')) {
+                        return chain(inBlock('atom', ']]>'));
+                    } else {
+                        return null;
+                    }
                 } else if (stream.match('--')) {
                     return chain(inBlock('comment', '-->'));
                 } else if (stream.match('DOCTYPE', true, true)) {
@@ -89,7 +91,7 @@ defineMode('xml', function(editorConf, config_) {
                 state.tokenize = inTag;
                 return 'tag bracket';
             }
-        } else if (ch == '&') {
+        } else if (ch === '&') {
             let ok;
             if (stream.eat('#')) {
                 if (stream.eat('x')) {
@@ -111,14 +113,14 @@ defineMode('xml', function(editorConf, config_) {
 
     function inTag(stream, state) {
         const ch = stream.next();
-        if (ch == '>' || (ch == '/' && stream.eat('>'))) {
+        if (ch === '>' || (ch === '/' && stream.eat('>'))) {
             state.tokenize = inText;
-            type = ch == '>' ? 'endTag' : 'selfcloseTag';
+            type = ch === '>' ? 'endTag' : 'selfcloseTag';
             return 'tag bracket';
-        } else if (ch == '=') {
+        } else if (ch === '=') {
             type = 'equals';
             return null;
-        } else if (ch == '<') {
+        } else if (ch === '<') {
             state.tokenize = inText;
             state.state = baseState;
             state.tagName = state.tagStart = null;
@@ -135,9 +137,9 @@ defineMode('xml', function(editorConf, config_) {
     }
 
     function inAttribute(quote) {
-        const closure: any = function(stream, state) {
+        const closure: any = (stream, state) => {
             while (!stream.eol()) {
-                if (stream.next() == quote) {
+                if (stream.next() === quote) {
                     state.tokenize = inTag;
                     break;
                 }
@@ -149,7 +151,7 @@ defineMode('xml', function(editorConf, config_) {
     }
 
     function inBlock(style, terminator) {
-        return function(stream, state) {
+        return (stream, state) => {
             while (!stream.eol()) {
                 if (stream.match(terminator)) {
                     state.tokenize = inText;
@@ -162,14 +164,14 @@ defineMode('xml', function(editorConf, config_) {
     }
 
     function doctype(depth) {
-        return function(stream, state) {
+        return (stream, state) => {
             let ch;
-            while ((ch = stream.next()) != null) {
-                if (ch == '<') {
+            while ((ch = stream.next()) !== null) {
+                if (ch === '<') {
                     state.tokenize = doctype(depth + 1);
                     return state.tokenize(stream, state);
-                } else if (ch == '>') {
-                    if (depth == 1) {
+                } else if (ch === '>') {
+                    if (depth === 1) {
                         state.tokenize = inText;
                         break;
                     } else {
@@ -187,12 +189,15 @@ defineMode('xml', function(editorConf, config_) {
         this.tagName = tagName;
         this.indent = state.indented;
         this.startOfLine = startOfLine;
-        if (config.doNotIndent.hasOwnProperty(tagName) || (state.context && state.context.noIndent))
+        if (config.doNotIndent.hasOwnProperty(tagName) || (state.context && state.context.noIndent)) {
             this.noIndent = true;
+        }
     }
 
     function popContext(state) {
-        if (state.context) state.context = state.context.prev;
+        if (state.context) {
+            state.context = state.context.prev;
+        }
     }
 
     function maybePopContext(state, nextTagName) {
@@ -211,10 +216,10 @@ defineMode('xml', function(editorConf, config_) {
     }
 
     function baseState(type, stream, state) {
-        if (type == 'openTag') {
+        if (type === 'openTag') {
             state.tagStart = stream.column();
             return tagNameState;
-        } else if (type == 'closeTag') {
+        } else if (type === 'closeTag') {
             return closeTagNameState;
         } else {
             return baseState;
@@ -222,7 +227,7 @@ defineMode('xml', function(editorConf, config_) {
     }
 
     function tagNameState(type, stream, state) {
-        if (type == 'word') {
+        if (type === 'word') {
             state.tagName = stream.current();
             setStyle = 'tag';
             return attrState;
@@ -233,12 +238,13 @@ defineMode('xml', function(editorConf, config_) {
     }
 
     function closeTagNameState(type, stream, state) {
-        if (type == 'word') {
+        if (type === 'word') {
             const tagName = stream.current();
-            if (state.context && state.context.tagName != tagName &&
-                config.implicitlyClosed.hasOwnProperty(state.context.tagName))
+            if (state.context && state.context.tagName !== tagName &&
+                config.implicitlyClosed.hasOwnProperty(state.context.tagName)) {
                 popContext(state);
-            if ((state.context && state.context.tagName == tagName) || config.matchClosing === false) {
+            }
+            if ((state.context && state.context.tagName === tagName) || config.matchClosing === false) {
                 setStyle = 'tag';
                 return closeState;
             } else {
@@ -252,7 +258,7 @@ defineMode('xml', function(editorConf, config_) {
     }
 
     function closeState(type, _stream, state) {
-        if (type != 'endTag') {
+        if (type !== 'endTag') {
             setStyle = 'error';
             return closeState;
         }
@@ -266,18 +272,19 @@ defineMode('xml', function(editorConf, config_) {
     }
 
     function attrState(type, _stream, state) {
-        if (type == 'word') {
+        if (type === 'word') {
             setStyle = 'attribute';
             return attrEqState;
-        } else if (type == 'endTag' || type == 'selfcloseTag') {
-            const tagName = state.tagName, tagStart = state.tagStart;
+        } else if (type === 'endTag' || type === 'selfcloseTag') {
+            const tagName = state.tagName;
+            const tagStart = state.tagStart;
             state.tagName = state.tagStart = null;
-            if (type == 'selfcloseTag' ||
+            if (type === 'selfcloseTag' ||
                 config.autoSelfClosers.hasOwnProperty(tagName)) {
                 maybePopContext(state, tagName);
             } else {
                 maybePopContext(state, tagName);
-                state.context = new Context(state, tagName, tagStart == state.indented);
+                state.context = new Context(state, tagName, tagStart === state.indented);
             }
             return baseState;
         }
@@ -286,14 +293,20 @@ defineMode('xml', function(editorConf, config_) {
     }
 
     function attrEqState(type, stream, state) {
-        if (type == 'equals') return attrValueState;
-        if (!config.allowMissing) setStyle = 'error';
+        if (type === 'equals') {
+            return attrValueState;
+        }
+        if (!config.allowMissing) {
+            setStyle = 'error';
+        }
         return attrState(type, stream, state);
     }
 
     function attrValueState(type, stream, state) {
-        if (type == 'string') return attrContinuedState;
-        if (type == 'word' && config.allowUnquoted) {
+        if (type === 'string') {
+            return attrContinuedState;
+        }
+        if (type === 'word' && config.allowUnquoted) {
             setStyle = 'string';
             return attrState;
         }
@@ -302,12 +315,14 @@ defineMode('xml', function(editorConf, config_) {
     }
 
     function attrContinuedState(type, stream, state) {
-        if (type == 'string') return attrContinuedState;
+        if (type === 'string') {
+            return attrContinuedState;
+        }
         return attrState(type, stream, state);
     }
 
     return {
-        startState: function(baseIndent) {
+        startState: baseIndent => {
             const state: any = {
                 tokenize: inText,
                 state: baseState,
@@ -315,52 +330,63 @@ defineMode('xml', function(editorConf, config_) {
                 tagName: null, tagStart: null,
                 context: null
             };
-            if (baseIndent != null) {
+            if (baseIndent !== null) {
                 state.baseIndent = baseIndent;
             }
             return state;
         },
 
-        token: function(stream, state) {
-            if (!state.tagName && stream.sol())
+        token: (stream, state) => {
+            if (!state.tagName && stream.sol()) {
                 state.indented = stream.indentation();
+            }
 
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             type = null;
             let style = state.tokenize(stream, state);
-            if ((style || type) && style != 'comment') {
+            if ((style || type) && style !== 'comment') {
                 setStyle = null;
                 state.state = state.state(type || style, stream, state);
-                if (setStyle)
-                    style = setStyle == 'error' ? style + ' error' : setStyle;
+                if (setStyle) {
+                    style = setStyle === 'error' ? style + ' error' : setStyle;
+                }
             }
             return style;
         },
 
-        indent: function(state, textAfter, fullLine) {
+        indent: (state, textAfter, fullLine) => {
             let context = state.context;
             // Indent multi-line strings (e.g. css).
             if (state.tokenize.isInAttribute) {
-                if (state.tagStart == state.indented)
+                if (state.tagStart === state.indented) {
                     return state.stringStartCol + 1;
-                else
+                } else {
                     return state.indented + indentUnit;
+                }
             }
-            if (context && context.noIndent) return Pass;
-            if (state.tokenize != inTag && state.tokenize != inText)
+            if (context && context.noIndent) {
+                return Pass;
+            }
+            if (state.tokenize !== inTag && state.tokenize !== inText) {
                 return fullLine ? fullLine.match(/^(\s*)/)[0].length : 0;
+            }
             // Indent the starts of attribute names.
             if (state.tagName) {
-                if (config.multilineTagIndentPastTag !== false)
+                if (config.multilineTagIndentPastTag !== false) {
                     return state.tagStart + state.tagName.length + 2;
-                else
+                } else {
                     return state.tagStart + indentUnit * (config.multilineTagIndentFactor || 1);
+                }
             }
-            if (config.alignCDATA && /<!\[CDATA\[/.test(textAfter)) return 0;
+            if (config.alignCDATA && /<!\[CDATA\[/.test(textAfter)) {
+                return 0;
+            }
             const tagAfter = textAfter && /^<(\/)?([\w_:\.-]*)/.exec(textAfter);
             if (tagAfter && tagAfter[1]) { // Closing tag spotted
                 while (context) {
-                    if (context.tagName == tagAfter[2]) {
+                    if (context.tagName === tagAfter[2]) {
                         context = context.prev;
                         break;
                     } else if (config.implicitlyClosed.hasOwnProperty(context.tagName)) {
@@ -372,16 +398,21 @@ defineMode('xml', function(editorConf, config_) {
             } else if (tagAfter) { // Opening tag spotted
                 while (context) {
                     const grabbers = config.contextGrabbers[context.tagName];
-                    if (grabbers && grabbers.hasOwnProperty(tagAfter[2]))
+                    if (grabbers && grabbers.hasOwnProperty(tagAfter[2])) {
                         context = context.prev;
-                    else
+                    } else {
                         break;
+                    }
                 }
             }
-            while (context && context.prev && !context.startOfLine)
+            while (context && context.prev && !context.startOfLine) {
                 context = context.prev;
-            if (context) return context.indent + indentUnit;
-            else return state.baseIndent || 0;
+            }
+            if (context) {
+                return context.indent + indentUnit;
+            } else {
+                return state.baseIndent || 0;
+            }
         },
 
         electricInput: /<\/[\s\w:]+>$/,
@@ -391,9 +422,10 @@ defineMode('xml', function(editorConf, config_) {
         configuration: config.htmlMode ? 'html' : 'xml',
         helperType: config.htmlMode ? 'html' : 'xml',
 
-        skipAttribute: function(state) {
-            if (state.state == attrValueState)
+        skipAttribute: state => {
+            if (state.state === attrValueState) {
                 state.state = attrState;
+            }
         }
     };
 });

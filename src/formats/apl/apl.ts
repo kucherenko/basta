@@ -82,7 +82,7 @@ defineMode('apl', function() {
         };
     };
     return {
-        startState: function() {
+        startState: () => {
             return {
                 prev: false,
                 func: false,
@@ -91,8 +91,9 @@ defineMode('apl', function() {
                 escape: false
             };
         },
-        token: function(stream, state) {
-            let ch, funcName;
+        token: (stream, state) => {
+            let ch;
+            let funcName;
             if (stream.eatSpace()) {
                 return null;
             }
@@ -133,7 +134,7 @@ defineMode('apl', function() {
             }
             if (isFunction.test(ch)) {
                 funcName = 'apl-';
-                if (builtInFuncs[ch] != null) {
+                if (builtInFuncs[ch] !== null) {
                     if (state.prev) {
                         funcName += builtInFuncs[ch][1];
                     } else {

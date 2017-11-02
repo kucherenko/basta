@@ -13,43 +13,52 @@ defineMode('q', function(config) {
     function tokenBase(stream, state) {
         let sol = stream.sol(), c = stream.next();
         curPunc = null;
-        if (sol)
-            if (c == '/')
+        if (sol) {
+            if (c === '/') {
                 return (state.tokenize = tokenLineComment)(stream, state);
-            else if (c == '\\') {
-                if (stream.eol() || /\s/.test(stream.peek()))
+            } else if (c === '\\') {
+                if (stream.eol() || /\s/.test(stream.peek())) {
                     return stream.skipToEnd(), /^\\\s*$/.test(stream.current()) ? (state.tokenize = tokenCommentToEOF)(stream) : state.tokenize = tokenBase, 'comment';
-                else
+                } else {
                     return state.tokenize = tokenBase, 'builtin';
+                }
             }
-        if (/\s/.test(c))
-            return stream.peek() == '/' ? (stream.skipToEnd(), 'comment') : 'whitespace';
-        if (c == '"')
+        }
+        if (/\s/.test(c)) {
+            return stream.peek() === '/' ? (stream.skipToEnd(), 'comment') : 'whitespace';
+        }
+        if (c === '"') {
             return (state.tokenize = tokenString)(stream, state);
-        if (c == '`')
+        }
+        if (c === '`') {
             return stream.eatWhile(/[A-Za-z\d_:\/.]/), 'symbol';
-        if (('.' == c && /\d/.test(stream.peek())) || /\d/.test(c)) {
+        }
+        if (('.' === c && /\d/.test(stream.peek())) || /\d/.test(c)) {
             let t = null;
             stream.backUp(1);
             if (stream.match(/^\d{4}\.\d{2}(m|\.\d{2}([DT](\d{2}(:\d{2}(:\d{2}(\.\d{1,9})?)?)?)?)?)/)
                 || stream.match(/^\d+D(\d{2}(:\d{2}(:\d{2}(\.\d{1,9})?)?)?)/)
                 || stream.match(/^\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?/)
-                || stream.match(/^\d+[ptuv]{1}/))
+                || stream.match(/^\d+[ptuv]{1}/)) {
                 t = 'temporal';
-            else if (stream.match(/^0[NwW]{1}/)
+            } else if (stream.match(/^0[NwW]{1}/)
                 || stream.match(/^0x[\da-fA-F]*/)
                 || stream.match(/^[01]+[b]{1}/)
                 || stream.match(/^\d+[chijn]{1}/)
-                || stream.match(/-?\d*(\.\d*)?(e[+\-]?\d+)?(e|f)?/))
+                || stream.match(/-?\d*(\.\d*)?(e[+\-]?\d+)?(e|f)?/)) {
                 t = 'number';
+            }
             return (t && (!(c = stream.peek()) || E.test(c))) ? t : (stream.next(), 'error');
         }
-        if (/[A-Za-z]|\./.test(c))
+        if (/[A-Za-z]|\./.test(c)) {
             return stream.eatWhile(/[A-Za-z._\d]/), keywords.test(stream.current()) ? 'keyword' : 'variable';
-        if (/[|/&^!+:\\\-*%$=~#;@><\.,?_\']/.test(c))
+        }
+        if (/[|/&^!+:\\\-*%$=~#;@><\.,?_\']/.test(c)) {
             return null;
-        if (/[{}\(\[\]\)]/.test(c))
+        }
+        if (/[{}\(\[\]\)]/.test(c)) {
             return null;
+        }
         return 'error';
     }
 
@@ -58,10 +67,11 @@ defineMode('q', function(config) {
     }
 
     function tokenBlockComment(stream, state) {
-        const f = stream.sol() && stream.peek() == '\\';
+        const f = stream.sol() && stream.peek() === '\\';
         stream.skipToEnd();
-        if (f && /^\\\s*$/.test(stream.current()))
+        if (f && /^\\\s*$/.test(stream.current())) {
             state.tokenize = tokenBase;
+        }
         return 'comment';
     }
 
@@ -72,13 +82,15 @@ defineMode('q', function(config) {
     function tokenString(stream, state) {
         let escaped = false, next, end = false;
         while ((next = stream.next())) {
-            if (next == '"' && !escaped) {
+            if (next === '"' && !escaped) {
                 end = true;
                 break;
             }
-            escaped = !escaped && next == '\\';
+            escaped = !escaped && next === '\\';
         }
-        if (end) state.tokenize = tokenBase;
+        if (end) {
+            state.tokenize = tokenBase;
+        }
         return 'string';
     }
 
@@ -92,7 +104,7 @@ defineMode('q', function(config) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 context: null,
@@ -100,49 +112,61 @@ defineMode('q', function(config) {
                 col: 0
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
-                if (state.context && state.context.align == null)
+                if (state.context && state.context.align === null) {
                     state.context.align = false;
+                }
                 state.indent = stream.indentation();
             }
             //if (stream.eatSpace()) return null;
             const style = state.tokenize(stream, state);
-            if (style != 'comment' && state.context && state.context.align == null && state.context.type != 'pattern') {
+            if (style !== 'comment' && state.context && state.context.align === null && state.context.type !== 'pattern') {
                 state.context.align = true;
             }
-            if (curPunc == '(') pushContext(state, ')', stream.column());
-            else if (curPunc == '[') pushContext(state, ']', stream.column());
-            else if (curPunc == '{') pushContext(state, '}', stream.column());
-            else if (/[\]\}\)]/.test(curPunc)) {
-                while (state.context && state.context.type == 'pattern')popContext(state);
-                if (state.context && curPunc == state.context.type) popContext(state);
-            }
-            else if (curPunc == '.' && state.context && state.context.type == 'pattern') popContext(state);
-            else if (/atom|string|variable/.test(style) && state.context) {
-                if (/[\}\]]/.test(state.context.type))
+            if (curPunc === '(') {
+                pushContext(state, ')', stream.column());
+            } else if (curPunc === '[') {
+                pushContext(state, ']', stream.column());
+            } else if (curPunc === '{') {
+                pushContext(state, '}', stream.column());
+            } else if (/[\]\}\)]/.test(curPunc)) {
+                while (state.context && state.context.type === 'pattern') {
+                    popContext(state);
+                }
+                if (state.context && curPunc === state.context.type) {
+                    popContext(state);
+                }
+            } else if (curPunc === '.' && state.context && state.context.type === 'pattern') {
+                popContext(state);
+            } else if (/atom|string|variable/.test(style) && state.context) {
+                if (/[\}\]]/.test(state.context.type)) {
                     pushContext(state, 'pattern', stream.column());
-                else if (state.context.type == 'pattern' && !state.context.align) {
+                } else if (state.context.type === 'pattern' && !state.context.align) {
                     state.context.align = true;
                     state.context.col = stream.column();
                 }
             }
             return style;
         },
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             const firstChar = textAfter && textAfter.charAt(0);
             let context = state.context;
-            if (/[\]\}]/.test(firstChar))
-                while (context && context.type == 'pattern')context = context.prev;
-            const closing = context && firstChar == context.type;
-            if (!context)
+            if (/[\]\}]/.test(firstChar)) {
+                while (context && context.type === 'pattern') {
+                    context = context.prev;
+                }
+            }
+            const closing = context && firstChar === context.type;
+            if (!context) {
                 return 0;
-            else if (context.type == 'pattern')
+            } else if (context.type === 'pattern') {
                 return context.col;
-            else if (context.align)
+            } else if (context.align) {
                 return context.col + (closing ? 0 : 1);
-            else
+            } else {
                 return context.indent + (closing ? 0 : indentUnit);
+            }
         }
     };
 });

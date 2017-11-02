@@ -6,18 +6,19 @@ defineMode('yaml', function() {
     const keywordRegex = new RegExp('\\b((' + cons.join(')|(') + '))$', 'i');
 
     return {
-        token: function(stream, state) {
+        token: (stream, state) => {
             const ch = stream.peek();
             const esc = state.escaped;
             state.escaped = false;
             /* comments */
-            if (ch == '#' && (stream.pos == 0 || /\s/.test(stream.string.charAt(stream.pos - 1)))) {
+            if (ch === '#' && (stream.pos === 0 || /\s/.test(stream.string.charAt(stream.pos - 1)))) {
                 stream.skipToEnd();
                 return 'comment';
             }
 
-            if (stream.match(/^('([^']|\\.)*'?|"([^"]|\\.)*"?)/))
+            if (stream.match(/^('([^']|\\.)*'?|"([^"]|\\.)*"?)/)) {
                 return 'string';
+            }
 
             if (state.literal && stream.indentation() > state.keyCol) {
                 stream.skipToEnd();
@@ -44,24 +45,25 @@ defineMode('yaml', function() {
             }
             /* inline pairs/lists */
             if (stream.match(/^(\{|\}|\[|\])/)) {
-                if (ch == '{')
+                if (ch === '{') {
                     state.inlinePairs++;
-                else if (ch == '}')
+                } else if (ch === '}') {
                     state.inlinePairs--;
-                else if (ch == '[')
+                } else if (ch === '[') {
                     state.inlineList++;
-                else
+                } else {
                     state.inlineList--;
+                }
                 return 'meta';
             }
 
             /* list seperator */
-            if (state.inlineList > 0 && !esc && ch == ',') {
+            if (state.inlineList > 0 && !esc && ch === ',') {
                 stream.next();
                 return 'meta';
             }
             /* pairs seperator */
-            if (state.inlinePairs > 0 && !esc && ch == ',') {
+            if (state.inlinePairs > 0 && !esc && ch === ',') {
                 state.keyCol = 0;
                 state.pair = false;
                 state.pairStart = false;
@@ -82,7 +84,7 @@ defineMode('yaml', function() {
                     return 'variable-2';
                 }
                 /* numbers */
-                if (state.inlinePairs == 0 && stream.match(/^\s*-?[0-9\.\,]+\s?$/)) {
+                if (state.inlinePairs === 0 && stream.match(/^\s*-?[0-9\.\,]+\s?$/)) {
                     return 'number';
                 }
                 if (state.inlinePairs > 0 && stream.match(/^\s*-?[0-9\.\,]+\s?(?=(,|}))/)) {
@@ -107,11 +109,11 @@ defineMode('yaml', function() {
 
             /* nothing found, continue */
             state.pairStart = false;
-            state.escaped = (ch == '\\');
+            state.escaped = (ch === '\\');
             stream.next();
             return null;
         },
-        startState: function() {
+        startState: () => {
             return {
                 pair: false,
                 pairStart: false,

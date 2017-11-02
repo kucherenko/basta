@@ -2,7 +2,7 @@ import {defineMIME, defineMode} from '../index';
 
 defineMode('toml', function() {
     return {
-        startState: function() {
+        startState: () => {
             return {
                 inString: false,
                 stringType: '',
@@ -10,9 +10,9 @@ defineMode('toml', function() {
                 inArray: 0
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             //check for state changes
-            if (!state.inString && ((stream.peek() == '"') || (stream.peek() == "'"))) {
+            if (!state.inString && ((stream.peek() === '"') || (stream.peek() === "'"))) {
                 state.stringType = stream.peek();
                 stream.next(); // Skip quote
                 state.inString = true; // Update state
@@ -41,7 +41,9 @@ defineMode('toml', function() {
             } else if (state.lhs && stream.peek() === '[' && stream.skipTo(']')) {
                 stream.next();//skip closing ]
                 // array of objects has an extra open & close []
-                if (stream.peek() === ']') stream.next();
+                if (stream.peek() === ']') {
+                    stream.next();
+                }
                 return 'atom';
             } else if (stream.peek() === '#') {
                 stream.skipToEnd();
@@ -49,7 +51,7 @@ defineMode('toml', function() {
             } else if (stream.eatSpace()) {
                 return null;
             } else if (state.lhs && stream.eatWhile(function(c) {
-                    return c != '=' && c != ' ';
+                    return c !== '=' && c !== ' ';
                 })) {
                 return 'property';
             } else if (state.lhs && stream.peek() === '=') {

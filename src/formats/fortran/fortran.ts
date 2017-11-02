@@ -110,11 +110,11 @@ defineMode('fortran', function() {
         }
 
         const ch = stream.next();
-        if (ch == '!') {
+        if (ch === '!') {
             stream.skipToEnd();
             return 'comment';
         }
-        if (ch == '"' || ch == "'") {
+        if (ch === '"' || ch === "'") {
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         }
@@ -144,14 +144,16 @@ defineMode('fortran', function() {
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '\\';
+                escaped = !escaped && next === '\\';
             }
-            if (end || !escaped) state.tokenize = null;
+            if (end || !escaped) {
+                state.tokenize = null;
+            }
             return 'string';
         };
     }
@@ -159,14 +161,18 @@ defineMode('fortran', function() {
     // Interface
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokenize: null};
         },
 
-        token: function(stream, state) {
-            if (stream.eatSpace()) return null;
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
+                return null;
+            }
             const style = (state.tokenize || tokenBase)(stream, state);
-            if (style == 'comment' || style == 'meta') return style;
+            if (style === 'comment' || style === 'meta') {
+                return style;
+            }
             return style;
         }
     };

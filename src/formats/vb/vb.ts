@@ -70,11 +70,9 @@ defineMode('vb', function(conf, parserConf) {
             // Floats
             if (stream.match(/^\d*\.\d+F?/i)) {
                 floatLiteral = true;
-            }
-            else if (stream.match(/^\d+\.\d*F?/)) {
+            } else if (stream.match(/^\d+\.\d*F?/)) {
                 floatLiteral = true;
-            }
-            else if (stream.match(/^\.\d+F?/)) {
+            } else if (stream.match(/^\.\d+F?/)) {
                 floatLiteral = true;
             }
 
@@ -88,20 +86,14 @@ defineMode('vb', function(conf, parserConf) {
             // Hex
             if (stream.match(/^&H[0-9a-f]+/i)) {
                 intLiteral = true;
-            }
-            // Octal
-            else if (stream.match(/^&O[0-7]+/i)) {
+            } else if (stream.match(/^&O[0-7]+/i)) {
                 intLiteral = true;
-            }
-            // Decimal
-            else if (stream.match(/^[1-9]\d*F?/)) {
+            } else if (stream.match(/^[1-9]\d*F?/)) {
                 // Decimal literals may be "imaginary"
                 stream.eat(/J/i);
                 // TODO - Can you have imaginary longs?
                 intLiteral = true;
-            }
-            // Zero by itself with no other piece of number.
-            else if (stream.match(/^0(?![\dx])/i)) {
+            } else if (stream.match(/^0(?![\dx])/i)) {
                 intLiteral = true;
             }
             if (intLiteral) {
@@ -135,10 +127,11 @@ defineMode('vb', function(conf, parserConf) {
             return 'keyword';
         }
         if (stream.match(opening)) {
-            if (!state.doInCurrentLine)
+            if (!state.doInCurrentLine) {
                 indent(stream, state);
-            else
+            } else {
                 state.doInCurrentLine = false;
+            }
             return 'keyword';
         }
         if (stream.match(middle)) {
@@ -173,7 +166,7 @@ defineMode('vb', function(conf, parserConf) {
     }
 
     function tokenStringFactory(delimiter) {
-        const singleline = delimiter.length == 1;
+        const singleline = delimiter.length === 1;
         const OUTCLASS = 'string';
 
         return function(stream, state) {
@@ -234,7 +227,7 @@ defineMode('vb', function(conf, parserConf) {
 
     const external = {
         electricChars: 'dDpPtTfFeE ',
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 lastToken: null,
@@ -246,7 +239,7 @@ defineMode('vb', function(conf, parserConf) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
                 state.currentIndent += state.nextLineIndent;
                 state.nextLineIndent = 0;
@@ -260,10 +253,14 @@ defineMode('vb', function(conf, parserConf) {
             return style;
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             const trueText = textAfter.replace(/^\s+|\s+$/g, '');
-            if (trueText.match(closing) || trueText.match(doubleClosing) || trueText.match(middle)) return conf.indentUnit * (state.currentIndent - 1);
-            if (state.currentIndent < 0) return 0;
+            if (trueText.match(closing) || trueText.match(doubleClosing) || trueText.match(middle)) {
+                return conf.indentUnit * (state.currentIndent - 1);
+            }
+            if (state.currentIndent < 0) {
+                return 0;
+            }
             return state.currentIndent * conf.indentUnit;
         },
 

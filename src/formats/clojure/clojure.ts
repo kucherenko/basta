@@ -8,7 +8,9 @@ defineMode('clojure', function(options) {
 
     function makeKeywords(str) {
         const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 
@@ -26,7 +28,7 @@ defineMode('clojure', function(options) {
         '*compile-path* *compiler-options* *data-readers* *e *err* *file* *flush-on-newline* *fn-loader* *in* ' +
         '*math-context* *ns* *out* *print-dup* *print-length* *print-level* *print-meta* *print-readably* *read-eval* ' +
         "*source-path* *unchecked-math* *use-context-classloader* *verbose-defrecords* *warn-on-reflection* + +' - -' -> " +
-        '->> ->ArrayChunk ->Vec ->VecNode ->VecSeq -cache-protocol-fn -reset-methods .. / < <= = == > >= EMPTY-NODE accessor ' +
+        '->> ->ArrayChunk ->Vec ->VecNode ->VecSeq -cache-protocol-fn -reset-methods .. / < <= = === > >= EMPTY-NODE accessor ' +
         'aclone add-classpath add-watch agent agent-error agent-errors aget alength alias all-ns alter alter-meta! ' +
         'alter-var-root amap ancestors and apply areduce array-map aset aset-boolean aset-byte aset-char aset-double ' +
         'aset-float aset-int aset-long aset-short assert assoc assoc! assoc-in associative? atom await await-for await1 ' +
@@ -125,7 +127,7 @@ defineMode('clojure', function(options) {
         }
 
         // leading sign
-        if ((ch == '+' || ch == '-') && (tests.digit.test(stream.peek()))) {
+        if ((ch === '+' || ch === '-') && (tests.digit.test(stream.peek()))) {
             stream.eat(tests.sign);
             ch = stream.next();
         }
@@ -134,10 +136,10 @@ defineMode('clojure', function(options) {
             stream.eat(ch);
             stream.eatWhile(tests.digit);
 
-            if ('.' == stream.peek()) {
+            if ('.' === stream.peek()) {
                 stream.eat('.');
                 stream.eatWhile(tests.digit);
-            } else if ('/' == stream.peek()) {
+            } else if ('/' === stream.peek()) {
                 stream.eat('/');
                 stream.eatWhile(tests.digit);
             }
@@ -168,7 +170,7 @@ defineMode('clojure', function(options) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 indentStack: null,
                 indentation: 0,
@@ -176,14 +178,14 @@ defineMode('clojure', function(options) {
             };
         },
 
-        token: function(stream, state) {
-            if (state.indentStack == null && stream.sol()) {
+        token: (stream, state) => {
+            if (state.indentStack === null && stream.sol()) {
                 // update indentation, but only if indentStack is empty
                 state.indentation = stream.indentation();
             }
 
             // skip spaces
-            if (state.mode != 'string' && stream.eatSpace()) {
+            if (state.mode !== 'string' && stream.eatSpace()) {
                 return null;
             }
             let returnType = null;
@@ -191,33 +193,33 @@ defineMode('clojure', function(options) {
             switch (state.mode) {
                 case 'string': // multi-line string parsing mode
                     let next, escaped = false;
-                    while ((next = stream.next()) != null) {
-                        if (next == '"' && !escaped) {
+                    while ((next = stream.next()) !== null) {
+                        if (next === '"' && !escaped) {
 
                             state.mode = false;
                             break;
                         }
-                        escaped = !escaped && next == '\\';
+                        escaped = !escaped && next === '\\';
                     }
                     returnType = STRING; // continue on in string mode
                     break;
                 default: // default parsing mode
                     const ch = stream.next();
 
-                    if (ch == '"') {
+                    if (ch === '"') {
                         state.mode = 'string';
                         returnType = STRING;
-                    } else if (ch == '\\') {
+                    } else if (ch === '\\') {
                         eatCharacter(stream);
                         returnType = CHARACTER;
-                    } else if (ch == "'" && !(tests.digit_or_colon.test(stream.peek()))) {
+                    } else if (ch === "'" && !(tests.digit_or_colon.test(stream.peek()))) {
                         returnType = ATOM;
-                    } else if (ch == ';') { // comment
+                    } else if (ch === ';') { // comment
                         stream.skipToEnd(); // rest of the line is a comment
                         returnType = COMMENT;
                     } else if (isNumber(ch, stream)) {
                         returnType = NUMBER;
-                    } else if (ch == '(' || ch == '[' || ch == '{') {
+                    } else if (ch === '(' || ch === '[' || ch === '{') {
                         let keyWord = '', indentTemp = stream.column(), letter;
                         /**
                          Either
@@ -226,8 +228,28 @@ defineMode('clojure', function(options) {
                          (;something else, bracket, etc.
                          */
 
-                        if (ch == '(') while ((letter = stream.eat(tests.keyword_char)) != null) {
+                        if (ch === '(') while ((letter = stream.eat(tests.keyword_char)) !== null) {
+                            {
+                                {
+                                    {
+                                        {
+                                            {
+                                                {
+                                                    {
+                                                        {
+                                                            {
+                                                                {
                             keyWord += letter;
+                        }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         if (keyWord.length > 0 && (indentKeys.propertyIsEnumerable(keyWord) ||
@@ -236,7 +258,7 @@ defineMode('clojure', function(options) {
                         } else { // non-indent word
                             // we continue eating the spaces
                             stream.eatSpace();
-                            if (stream.eol() || stream.peek() == ';') {
+                            if (stream.eol() || stream.peek() === ';') {
                                 // nothing significant after
                                 // we restart indentation the user defined spaces after
                                 pushStack(state, indentTemp + NORMAL_INDENT_UNIT, ch);
@@ -247,12 +269,12 @@ defineMode('clojure', function(options) {
                         stream.backUp(stream.current().length - 1); // undo all the eating
 
                         returnType = BRACKET;
-                    } else if (ch == ')' || ch == ']' || ch == '}') {
+                    } else if (ch === ')' || ch === ']' || ch === '}') {
                         returnType = BRACKET;
-                        if (state.indentStack != null && state.indentStack.type == (ch == ')' ? '(' : (ch == ']' ? '[' : '{'))) {
+                        if (state.indentStack !== null && state.indentStack.type === (ch === ')' ? '(' : (ch === ']' ? '[' : '{'))) {
                             popStack(state);
                         }
-                    } else if (ch == ':') {
+                    } else if (ch === ':') {
                         stream.eatWhile(tests.symbol);
                         return ATOM;
                     } else {
@@ -273,8 +295,10 @@ defineMode('clojure', function(options) {
             return returnType;
         },
 
-        indent: function(state) {
-            if (state.indentStack == null) return state.indentation;
+        indent: (state) => {
+            if (state.indentStack === null) {
+                return state.indentation;
+            }
             return state.indentStack.indent;
         },
 

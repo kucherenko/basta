@@ -25,7 +25,7 @@ defineMode('haskell', function(_config, modeConfig) {
 
         const ch = source.next();
         if (specialRE.test(ch)) {
-            if (ch == '{' && source.eat('-')) {
+            if (ch === '{' && source.eat('-')) {
                 let t = 'comment';
                 if (source.eat('#')) {
                     t = 'meta';
@@ -35,11 +35,10 @@ defineMode('haskell', function(_config, modeConfig) {
             return null;
         }
 
-        if (ch == '\'') {
+        if (ch === '\'') {
             if (source.eat('\\')) {
                 source.next();  // should handle other escapes here
-            }
-            else {
+            } else {
                 source.next();
             }
             if (source.eat('\'')) {
@@ -48,7 +47,7 @@ defineMode('haskell', function(_config, modeConfig) {
             return 'string error';
         }
 
-        if (ch == '"') {
+        if (ch === '"') {
             return switchState(source, setState, stringLiteral);
         }
 
@@ -66,7 +65,7 @@ defineMode('haskell', function(_config, modeConfig) {
         }
 
         if (digitRE.test(ch)) {
-            if (ch == '0') {
+            if (ch === '0') {
                 if (source.eat(/[xX]/)) {
                     source.eatWhile(hexitRE); // should require at least 1
                     return 'integer';
@@ -89,11 +88,12 @@ defineMode('haskell', function(_config, modeConfig) {
             return t;
         }
 
-        if (ch == '.' && source.eat('.'))
+        if (ch === '.' && source.eat('.')) {
             return 'keyword';
+        }
 
         if (symbolRE.test(ch)) {
-            if (ch == '-' && source.eat(/-/)) {
+            if (ch === '-' && source.eat(/-/)) {
                 source.eatWhile(/-/);
                 if (!source.eat(symbolRE)) {
                     source.skipToEnd();
@@ -101,7 +101,7 @@ defineMode('haskell', function(_config, modeConfig) {
                 }
             }
             let t = 'variable';
-            if (ch == ':') {
+            if (ch === ':') {
                 t = 'variable-2';
             }
             source.eatWhile(symbolRE);
@@ -112,19 +112,18 @@ defineMode('haskell', function(_config, modeConfig) {
     }
 
     function ncomment(type, nest) {
-        if (nest == 0) {
+        if (nest === 0) {
             return normal;
         }
         return function(source, setState) {
             let currNest = nest;
             while (!source.eol()) {
                 const ch = source.next();
-                if (ch == '{' && source.eat('-')) {
+                if (ch === '{' && source.eat('-')) {
                     ++currNest;
-                }
-                else if (ch == '-' && source.eat('}')) {
+                } else if (ch === '-' && source.eat('}')) {
                     --currNest;
-                    if (currNest == 0) {
+                    if (currNest === 0) {
                         setState(normal);
                         return type;
                     }
@@ -138,18 +137,17 @@ defineMode('haskell', function(_config, modeConfig) {
     function stringLiteral(source, setState) {
         while (!source.eol()) {
             const ch = source.next();
-            if (ch == '"') {
+            if (ch === '"') {
                 setState(normal);
                 return 'string';
             }
-            if (ch == '\\') {
+            if (ch === '\\') {
                 if (source.eol() || source.eat(whiteCharRE)) {
                     setState(stringGap);
                     return 'string';
                 }
                 if (source.eat('&')) {
-                }
-                else {
+                } else {
                     source.next(); // should handle other escapes here
                 }
             }
@@ -173,8 +171,9 @@ defineMode('haskell', function(_config, modeConfig) {
 
         function setType(t) {
             return function(...args) {
-                for (let i = 0; i < args.length; i++)
+                for (let i = 0; i < args.length; i++) {
                     wkw[args[i]] = t;
+                }
             };
         }
 
@@ -227,22 +226,63 @@ defineMode('haskell', function(_config, modeConfig) {
             'zip3', 'zipWith', 'zipWith3');
 
         const override = modeConfig.overrideKeywords;
-        if (override) for (const word in override) if (override.hasOwnProperty(word))
+        if (override) for (const word in override) if (override.hasOwnProperty(word)) {
+            {
+                {
+                    {
+                        {
+                            {
+                                {
+                                    {
+                                        {
+                                            {
+                                                {
+                                                    {
+                                                        {
+                                                            {
+                                                                {
+                                                                    {
+                                                                        {
+                                                                            {
+                                                                                {
+                                                                                    {
+                                                                                        {
             wkw[word] = override[word];
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         return wkw;
     })();
 
 
     return {
-        startState: function() {
+        startState: () => {
             return {f: normal};
         },
         copyState: function(s) {
             return {f: s.f};
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             const t = state.f(stream, function(s) {
                 state.f = s;
             });

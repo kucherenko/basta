@@ -1,5 +1,6 @@
 import {defineMIME, defineMode} from '../index';
 import {Pass} from '../misc';
+
 defineMode('verilog', function(config, parserConfig) {
 
     const indentUnit = config.indentUnit,
@@ -11,7 +12,9 @@ defineMode('verilog', function(config, parserConfig) {
 
     function words(str) {
         const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 
@@ -42,14 +45,14 @@ defineMode('verilog', function(config, parserConfig) {
      unary_operator ::=
      + | - | ! | ~ | & | ~& | | | ~| | ^ | ~^ | ^~
      binary_operator ::=
-     + | - | * | / | % | == | != | === | !== | ==? | !=? | && | || | **
+     + | - | * | / | % | === | !== | === | !== | ==? | !=? | && | || | **
      | < | <= | > | >= | & | | | ^ | ^~ | ~^ | >> | << | >>> | <<<
      | -> | <->
      inc_or_dec_operator ::= ++ | --
      unary_module_path_operator ::=
      ! | ~ | & | ~& | | | ~| | ^ | ~^ | ^~
      binary_module_path_operator ::=
-     == | != | && | || | & | | | ^ | ^~ | ~^
+     === | !== | && | || | & | | | ^ | ^~ | ~^
      */
     const isOperatorChar = /[\+\-\*\/!~&|^%=?:]/;
     const isBracketChar = /[\[\]{}()]/;
@@ -98,9 +101,12 @@ defineMode('verilog', function(config, parserConfig) {
 
     function tokenBase(stream, state) {
         let ch = stream.peek(), style;
-        if (hooks[ch] && (style = hooks[ch](stream, state)) != false) return style;
-        if (hooks.tokenBase && (style = hooks.tokenBase(stream, state)) != false)
+        if (hooks[ch] && (style = hooks[ch](stream, state)) !== false) {
             return style;
+        }
+        if (hooks.tokenBase && (style = hooks.tokenBase(stream, state)) !== false) {
+            return style;
+        }
 
         if (/[,;:\.]/.test(ch)) {
             curPunc = stream.next();
@@ -111,7 +117,7 @@ defineMode('verilog', function(config, parserConfig) {
             return 'bracket';
         }
         // Macros (tick-defines)
-        if (ch == '`') {
+        if (ch === '`') {
             stream.next();
             if (stream.eatWhile(/[\w\$_]/)) {
                 return 'def';
@@ -120,7 +126,7 @@ defineMode('verilog', function(config, parserConfig) {
             }
         }
         // System calls
-        if (ch == '$') {
+        if (ch === '$') {
             stream.next();
             if (stream.eatWhile(/[\w\$_]/)) {
                 return 'meta';
@@ -129,19 +135,19 @@ defineMode('verilog', function(config, parserConfig) {
             }
         }
         // Time literals
-        if (ch == '#') {
+        if (ch === '#') {
             stream.next();
             stream.eatWhile(/[\d_.]/);
             return 'def';
         }
         // Strings
-        if (ch == '"') {
+        if (ch === '"') {
             stream.next();
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         }
         // Comments
-        if (ch == '/') {
+        if (ch === '/') {
             stream.next();
             if (stream.eat('*')) {
                 state.tokenize = tokenComment;
@@ -193,15 +199,16 @@ defineMode('verilog', function(config, parserConfig) {
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '\\';
+                escaped = !escaped && next === '\\';
             }
-            if (end || !(escaped || multiLineStrings))
+            if (end || !(escaped || multiLineStrings)) {
                 state.tokenize = tokenBase;
+            }
             return 'string';
         };
     }
@@ -209,16 +216,16 @@ defineMode('verilog', function(config, parserConfig) {
     function tokenComment(stream, state) {
         let maybeEnd = false, ch;
         while (ch = stream.next()) {
-            if (ch == '/' && maybeEnd) {
+            if (ch === '/' && maybeEnd) {
                 state.tokenize = tokenBase;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
 
-    function Context(indented, column, type, align, prev = undefined) {
+    function Context(indented, column, type, align, prev?) {
         this.indented = indented;
         this.column = column;
         this.type = type;
@@ -234,20 +241,20 @@ defineMode('verilog', function(config, parserConfig) {
 
     function popContext(state) {
         const t = state.context.type;
-        if (t == ')' || t == ']' || t == '}') {
+        if (t === ')' || t === ']' || t === '}') {
             state.indented = state.context.indented;
         }
         return state.context = state.context.prev;
     }
 
     function isClosing(text, contextClosing) {
-        if (text == contextClosing) {
+        if (text === contextClosing) {
             return true;
         } else {
             // contextClosing may be multiple keywords separated by ;
             const closingKeywords = contextClosing.split(';');
             for (const i in closingKeywords) {
-                if (text == closingKeywords[i]) {
+                if (text === closingKeywords[i]) {
                     return true;
                 }
             }
@@ -285,14 +292,18 @@ defineMode('verilog', function(config, parserConfig) {
                 indented: 0,
                 startOfLine: true
             };
-            if (hooks.startState) hooks.startState(state);
+            if (hooks.startState) {
+                hooks.startState(state);
+            }
             return state;
         },
 
         token: function(stream, state: any) {
             let ctx = state.context;
             if (stream.sol()) {
-                if (ctx.align == null) ctx.align = false;
+                if (ctx.align === null) {
+                    ctx.align = false;
+                }
                 state.indented = stream.indentation();
                 state.startOfLine = true;
             }
@@ -303,35 +314,43 @@ defineMode('verilog', function(config, parserConfig) {
                     return style;
                 }
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             curPunc = null;
             curKeyword = null;
             const style = (state.tokenize || tokenBase)(stream, state);
-            if (style == 'comment' || style == 'meta' || style == 'variable') return style;
-            if (ctx.align == null) ctx.align = true;
+            if (style === 'comment' || style === 'meta' || style === 'variable') {
+                return style;
+            }
+            if (ctx.align === null) {
+                ctx.align = true;
+            }
 
-            if (curPunc == ctx.type) {
+            if (curPunc === ctx.type) {
                 popContext(state);
-            } else if ((curPunc == ';' && ctx.type == 'statement') ||
+            } else if ((curPunc === ';' && ctx.type === 'statement') ||
                 (ctx.type && isClosing(curKeyword, ctx.type))) {
                 ctx = popContext(state);
-                while (ctx && ctx.type == 'statement') ctx = popContext(state);
-            } else if (curPunc == '{') {
+                while (ctx && ctx.type === 'statement') {
+                    ctx = popContext(state);
+                }
+            } else if (curPunc === '{') {
                 pushContext(state, stream.column(), '}');
-            } else if (curPunc == '[') {
+            } else if (curPunc === '[') {
                 pushContext(state, stream.column(), ']');
-            } else if (curPunc == '(') {
+            } else if (curPunc === '(') {
                 pushContext(state, stream.column(), ')');
-            } else if (ctx && ctx.type == 'endcase' && curPunc == ':') {
+            } else if (ctx && ctx.type === 'endcase' && curPunc === ':') {
                 pushContext(state, stream.column(), 'statement');
-            } else if (curPunc == 'newstatement') {
+            } else if (curPunc === 'newstatement') {
                 pushContext(state, stream.column(), 'statement');
-            } else if (curPunc == 'newblock') {
-                if (curKeyword == 'function' && ctx && (ctx.type == 'statement' || ctx.type == 'endgroup')) {
+            } else if (curPunc === 'newblock') {
+                if (curKeyword === 'function' && ctx && (ctx.type === 'statement' || ctx.type === 'endgroup')) {
                     // The 'function' keyword can appear in some other contexts where it actually does not
                     // indicate a function (import/export DPI and covergroup definitions).
                     // Do nothing in this case
-                } else if (curKeyword == 'task' && ctx && ctx.type == 'statement') {
+                } else if (curKeyword === 'task' && ctx && ctx.type === 'statement') {
                     // Same thing for task
                 } else {
                     const close = openClose[curKeyword];
@@ -343,22 +362,34 @@ defineMode('verilog', function(config, parserConfig) {
             return style;
         },
 
-        indent: function(state, textAfter) {
-            if (state.tokenize != tokenBase && state.tokenize != null) return Pass;
+        indent: (state, textAfter) => {
+            if (state.tokenize !== tokenBase && state.tokenize !== null) {
+                return Pass;
+            }
             if (hooks.indent) {
                 const fromHook = hooks.indent(state);
-                if (fromHook >= 0) return fromHook;
+                if (fromHook >= 0) {
+                    return fromHook;
+                }
             }
             let ctx = state.context, firstChar = textAfter && textAfter.charAt(0);
-            if (ctx.type == 'statement' && firstChar == '}') ctx = ctx.prev;
+            if (ctx.type === 'statement' && firstChar === '}') {
+                ctx = ctx.prev;
+            }
             let closing = false;
             const possibleClosing = textAfter.match(closingBracketOrWord);
-            if (possibleClosing)
+            if (possibleClosing) {
                 closing = isClosing(possibleClosing[0], ctx.type);
-            if (ctx.type == 'statement') return ctx.indented + (firstChar == '{' ? 0 : statementIndentUnit);
-            else if (closingBracket.test(ctx.type) && ctx.align && !dontAlignCalls) return ctx.column + (closing ? 0 : 1);
-            else if (ctx.type == ')' && !closing) return ctx.indented + statementIndentUnit;
-            else return ctx.indented + (closing ? 0 : indentUnit);
+            }
+            if (ctx.type === 'statement') {
+                return ctx.indented + (firstChar === '{' ? 0 : statementIndentUnit);
+            } else if (closingBracket.test(ctx.type) && ctx.align && !dontAlignCalls) {
+                return ctx.column + (closing ? 0 : 1);
+            } else if (ctx.type === ')' && !closing) {
+                return ctx.indented + statementIndentUnit;
+            } else {
+                return ctx.indented + (closing ? 0 : indentUnit);
+            }
         },
 
         blockCommentStart: '/*',
@@ -471,7 +502,7 @@ defineMIME('text/x-tlv', {
             // Set highlighting mode based on code region (TLV or SV).
             if (stream.sol() && !state.tlvInBlockComment) {
                 // Process region.
-                if (stream.peek() == '\\') {
+                if (stream.peek() === '\\') {
                     style = 'def';
                     stream.skipToEnd();
                     if (stream.string.match(/\\SV/)) {
@@ -481,8 +512,8 @@ defineMIME('text/x-tlv', {
                     }
                 }
                 // Correct indentation in the face of a line prefix char.
-                if (state.tlvCodeActive && stream.pos == 0 &&
-                    (state.indented == 0) && (match = stream.match(tlvLineIndentationMatch, false))) {
+                if (state.tlvCodeActive && stream.pos === 0 &&
+                    (state.indented === 0) && (match = stream.match(tlvLineIndentationMatch, false))) {
                     state.indented = match[0].length;
                 }
 
@@ -494,7 +525,7 @@ defineMIME('text/x-tlv', {
                 if (depth <= state.tlvIndentationStyle.length) {
                     // not deeper than current scope
 
-                    const blankline = stream.string.length == indented;
+                    const blankline = stream.string.length === indented;
                     const chPos = depth * tlvIndentUnit;
                     if (chPos < stream.string.length) {
                         const bodyString = stream.string.slice(chPos);
@@ -506,7 +537,7 @@ defineMIME('text/x-tlv', {
                             indented += tlvIndentUnit;
                             // Style the next level of indentation (except non-region keyword identifiers,
                             //   which are statements themselves)
-                            if (!(ch == '\\' && chPos > 0)) {
+                            if (!(ch === '\\' && chPos > 0)) {
                                 state.tlvIndentationStyle[depth] = tlvScopePrefixChars[ch];
                                 if (tlvTrackStatements) {
                                     state.statementComment = false;
@@ -534,11 +565,11 @@ defineMIME('text/x-tlv', {
                     // This starts a statement if the position is at the scope level
                     // and we're not within a statement leading comment.
                     beginStatement =
-                        (stream.peek() != ' ') &&   // not a space
+                        (stream.peek() !== ' ') &&   // not a space
                         (style === undefined) &&    // not a region identifier
                         !state.tlvInBlockComment && // not in block comment
                         //!stream.match(tlvCommentMatch, false) && // not comment start
-                        (stream.column() == state.tlvIndentationStyle.length * tlvIndentUnit);  // at scope level
+                        (stream.column() === state.tlvIndentationStyle.length * tlvIndentUnit);  // at scope level
                     if (beginStatement) {
                         if (state.statementComment) {
                             // statement already started by comment
@@ -560,11 +591,11 @@ defineMIME('text/x-tlv', {
                     // Indentation
                     style = // make this style distinct from the previous one to prevent
                         // codemirror from combining spans
-                        'tlv-indent-' + (((stream.pos % 2) == 0) ? 'even' : 'odd') +
+                        'tlv-indent-' + (((stream.pos % 2) === 0) ? 'even' : 'odd') +
                         // and style it
                         ' ' + tlvScopeStyle(state, stream.pos - tlvIndentUnit, 'indent');
                     // Style the line prefix character.
-                    if (match[0].charAt(0) == '!') {
+                    if (match[0].charAt(0) === '!') {
                         style += ' tlv-alert-line-prefix';
                     }
                     // Place a class before a scope identifier.
@@ -586,7 +617,7 @@ defineMIME('text/x-tlv', {
                     style = 'comment';
                 } else if ((match = stream.match(tlvCommentMatch)) && !state.tlvInBlockComment) {
                     // Start comment.
-                    if (match[0] == '//') {
+                    if (match[0] === '//') {
                         // Line comment.
                         stream.skipToEnd();
                     } else {
@@ -603,7 +634,7 @@ defineMIME('text/x-tlv', {
                     // has mnemonic or we're at the end of the line (maybe it hasn't been typed yet)
                     (mnemonic.length > 0 || stream.eol())) {
                         style = tlvIdentifierStyle[prefix];
-                        if (stream.column() == state.indented) {
+                        if (stream.column() === state.indented) {
                             // Begin scope.
                             style += ' ' + tlvScopeStyle(state, stream.column(), 'scope-ident');
                         }
@@ -623,7 +654,7 @@ defineMIME('text/x-tlv', {
                     style = 'meta';
                 } else if (match = stream.match(/^[mM]4([\+_])?[\w\d_]*/)) {
                     // m4 pre proc
-                    style = (match[1] == '+') ? 'tlv-m4-plus' : 'tlv-m4';
+                    style = (match[1] === '+') ? 'tlv-m4-plus' : 'tlv-m4';
                 } else if (stream.match(/^ +/)) {
                     // Skip over spaces.
                     if (stream.eol()) {
@@ -653,8 +684,8 @@ defineMIME('text/x-tlv', {
             return style;
         },
 
-        indent: function(state) {
-            return (state.tlvCodeActive == true) ? state.tlvNextIndent : -1;
+        indent: (state) => {
+            return (state.tlvCodeActive === true) ? state.tlvNextIndent : -1;
         },
 
         startState: function(state) {

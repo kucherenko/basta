@@ -66,8 +66,8 @@ defineMode('sass', function(config) {
         };
     }
 
-    function buildStringTokenizer(quote, greedy = undefined) {
-        if (greedy == null) {
+    function buildStringTokenizer(quote, greedy?) {
+        if (greedy === null) {
             greedy = true;
         }
 
@@ -112,7 +112,7 @@ defineMode('sass', function(config) {
     }
 
     function indent(state) {
-        if (state.indentCount == 0) {
+        if (state.indentCount === 0) {
             state.indentCount++;
             const lastScopeOffset = state.scopes[0].offset;
             const currentOffset = lastScopeOffset + config.indentUnit;
@@ -121,7 +121,9 @@ defineMode('sass', function(config) {
     }
 
     function dedent(state) {
-        if (state.scopes.length == 1) return;
+        if (state.scopes.length === 1) {
+            return;
+        }
 
         state.scopes.shift();
     }
@@ -194,15 +196,18 @@ defineMode('sass', function(config) {
             }
 
             // Numbers
-            if (stream.match(/^-?[0-9\.]+/))
+            if (stream.match(/^-?[0-9\.]+/)) {
                 return 'number';
+            }
 
             // Units
-            if (stream.match(/^(px|em|in)\b/))
+            if (stream.match(/^(px|em|in)\b/)) {
                 return 'unit';
+            }
 
-            if (stream.match(keywordsRegexp))
+            if (stream.match(keywordsRegexp)) {
                 return 'keyword';
+            }
 
             if (stream.match(/^url/) && stream.peek() === '(') {
                 state.tokenizer = urlTokens;
@@ -226,8 +231,9 @@ defineMode('sass', function(config) {
 
             if (ch === '@') {
                 if (stream.match(/@extend/)) {
-                    if (!stream.match(/\s*[\w]/))
+                    if (!stream.match(/\s*[\w]/)) {
                         dedent(state);
+                    }
                 }
             }
 
@@ -258,17 +264,14 @@ defineMode('sass', function(config) {
                         return 'property';
                     }
                     return 'tag';
-                }
-                else if (stream.match(/ *:/, false)) {
+                } else if (stream.match(/ *:/, false)) {
                     indent(state);
                     state.cursorHalf = 1;
                     state.prevProp = stream.current().toLowerCase();
                     return 'property';
-                }
-                else if (stream.match(/ *,/, false)) {
+                } else if (stream.match(/ *,/, false)) {
                     return 'tag';
-                }
-                else {
+                } else {
                     indent(state);
                     return 'tag';
                 }
@@ -283,8 +286,7 @@ defineMode('sass', function(config) {
                 return 'operator';
             }
 
-        } // cursorHalf===0 ends here
-        else {
+        } else {
 
             if (ch === '#') {
                 stream.next();
@@ -378,8 +380,9 @@ defineMode('sass', function(config) {
 
         } // else ends here
 
-        if (stream.match(opRegexp))
+        if (stream.match(opRegexp)) {
             return 'operator';
+        }
 
         // If we haven't returned by now, we move 1 character
         // and return an error
@@ -388,7 +391,9 @@ defineMode('sass', function(config) {
     }
 
     function tokenLexer(stream, state) {
-        if (stream.sol()) state.indentCount = 0;
+        if (stream.sol()) {
+            state.indentCount = 0;
+        }
         const style = state.tokenizer(stream, state);
         const current = stream.current();
 
@@ -406,8 +411,9 @@ defineMode('sass', function(config) {
             for (let i = 0; i < state.scopes.length; i++) {
                 const scope = state.scopes[i];
 
-                if (scope.offset <= withCurrentIndent)
+                if (scope.offset <= withCurrentIndent) {
                     newScopes.push(scope);
+                }
             }
 
             state.scopes = newScopes;
@@ -418,7 +424,7 @@ defineMode('sass', function(config) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenizer: tokenBase,
                 scopes: [{offset: 0, type: 'sass'}],
@@ -429,7 +435,7 @@ defineMode('sass', function(config) {
                 definedMixins: []
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             const style = tokenLexer(stream, state);
 
             state.lastToken = {style: style, content: stream.current()};
@@ -437,7 +443,7 @@ defineMode('sass', function(config) {
             return style;
         },
 
-        indent: function(state) {
+        indent: (state) => {
             return state.scopes[0].offset;
         }
     };

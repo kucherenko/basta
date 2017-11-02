@@ -27,7 +27,7 @@ defineMode('stex', function() {
         const context = state.cmdState;
         for (let i = context.length - 1; i >= 0; i--) {
             const plug = context[i];
-            if (plug.name == 'DEFAULT') {
+            if (plug.name === 'DEFAULT') {
                 continue;
             }
             return plug;
@@ -123,10 +123,10 @@ defineMode('stex', function() {
         }
 
         const ch = source.next();
-        if (ch == '%') {
+        if (ch === '%') {
             source.skipToEnd();
             return 'comment';
-        } else if (ch == '}' || ch == ']') {
+        } else if (ch === '}' || ch === ']') {
             plug = peekCommand(state);
             if (plug) {
                 plug.closeBracket(ch);
@@ -135,7 +135,7 @@ defineMode('stex', function() {
                 return 'error';
             }
             return 'bracket';
-        } else if (ch == '{' || ch == '[') {
+        } else if (ch === '{' || ch === '[') {
             plug = plugins['DEFAULT'];
             plug = new plug();
             pushCommand(state, plug);
@@ -146,7 +146,7 @@ defineMode('stex', function() {
         } else {
             source.eatWhile(/[\w\-_]/);
             plug = getMostPowerful(state);
-            if (plug.name == 'begin') {
+            if (plug.name === 'begin') {
                 plug.argument = source.current();
             }
             return plug.styleIdentifier();
@@ -187,11 +187,11 @@ defineMode('stex', function() {
             return 'number';
         }
         const ch = source.next();
-        if (ch == '{' || ch == '}' || ch == '[' || ch == ']' || ch == '(' || ch == ')') {
+        if (ch === '{' || ch === '}' || ch === '[' || ch === ']' || ch === '(' || ch === ')') {
             return 'bracket';
         }
 
-        if (ch == '%') {
+        if (ch === '%') {
             source.skipToEnd();
             return 'comment';
         }
@@ -200,7 +200,7 @@ defineMode('stex', function() {
 
     function beginParams(source, state) {
         let ch = source.peek(), lastPlug;
-        if (ch == '{' || ch == '[') {
+        if (ch === '{' || ch === '[') {
             lastPlug = peekCommand(state);
             lastPlug.openBracket(ch);
             source.eat(ch);
@@ -218,7 +218,7 @@ defineMode('stex', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 cmdState: [],
                 f: normal
@@ -230,7 +230,7 @@ defineMode('stex', function() {
                 f: s.f
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             return state.f(stream, state);
         },
         blankLine: function(state) {

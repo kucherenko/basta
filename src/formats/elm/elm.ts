@@ -26,33 +26,38 @@ defineMode('elm', function() {
 
             const ch = source.next();
             if (specialRE.test(ch)) {
-                if (ch == '{' && source.eat('-')) {
+                if (ch === '{' && source.eat('-')) {
                     let t = 'comment';
-                    if (source.eat('#')) t = 'meta';
+                    if (source.eat('#')) {
+                        t = 'meta';
+                    }
                     return switchState(source, setState, ncomment(t, 1));
                 }
                 return null;
             }
 
-            if (ch == '\'') {
-                if (source.eat('\\'))
-                    source.next();  // should handle other escapes here
-                else
+            if (ch === '\'') {
+                if (source.eat('\\')) {
                     source.next();
+                } else {
+                    source.next();
+                }
 
-                if (source.eat('\''))
+                if (source.eat('\'')) {
                     return 'string';
+                }
                 return 'error';
             }
 
-            if (ch == '"') {
+            if (ch === '"') {
                 return switchState(source, setState, stringLiteral);
             }
 
             if (largeRE.test(ch)) {
                 source.eatWhile(idRE);
-                if (source.eat('.'))
+                if (source.eat('.')) {
                     return 'qualifier';
+                }
                 return 'variable-2';
             }
 
@@ -63,7 +68,7 @@ defineMode('elm', function() {
             }
 
             if (digitRE.test(ch)) {
-                if (ch == '0') {
+                if (ch === '0') {
                     if (source.eat(/[xX]/)) {
                         source.eatWhile(hexitRE); // should require at least 1
                         return 'integer';
@@ -88,7 +93,7 @@ defineMode('elm', function() {
             }
 
             if (symbolRE.test(ch)) {
-                if (ch == '-' && source.eat(/-/)) {
+                if (ch === '-' && source.eat(/-/)) {
                     source.eatWhile(/-/);
                     if (!source.eat(symbolRE)) {
                         source.skipToEnd();
@@ -104,18 +109,18 @@ defineMode('elm', function() {
     }
 
     function ncomment(type, nest) {
-        if (nest == 0) {
+        if (nest === 0) {
             return normal();
         }
         return function(source, setState) {
             let currNest = nest;
             while (!source.eol()) {
                 const ch = source.next();
-                if (ch == '{' && source.eat('-')) {
+                if (ch === '{' && source.eat('-')) {
                     ++currNest;
-                } else if (ch == '-' && source.eat('}')) {
+                } else if (ch === '-' && source.eat('}')) {
                     --currNest;
-                    if (currNest == 0) {
+                    if (currNest === 0) {
                         setState(normal());
                         return type;
                     }
@@ -129,16 +134,18 @@ defineMode('elm', function() {
     function stringLiteral(source, setState) {
         while (!source.eol()) {
             const ch = source.next();
-            if (ch == '"') {
+            if (ch === '"') {
                 setState(normal());
                 return 'string';
             }
-            if (ch == '\\') {
+            if (ch === '\\') {
                 if (source.eol() || source.eat(whiteCharRE)) {
                     setState(stringGap);
                     return 'string';
                 }
-                if (!source.eat('&')) source.next(); // should handle other escapes here
+                if (!source.eat('&')) {
+                    source.next();
+                } // should handle other escapes here
             }
         }
         setState(normal());
@@ -169,22 +176,23 @@ defineMode('elm', function() {
             '_', '..', '|', ':', '=', '\\', '"', '->', '<-'
         ];
 
-        for (let i = keywords.length; i--;)
+        for (let i = keywords.length; i--;) {
             wkw[keywords[i]] = 'keyword';
+        }
 
         return wkw;
     })();
 
 
     return {
-        startState: function() {
+        startState: () => {
             return {f: normal()};
         },
         copyState: function(s) {
             return {f: s.f};
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             const t = state.f(stream, function(s) {
                 state.f = s;
             });

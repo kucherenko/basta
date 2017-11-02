@@ -78,15 +78,16 @@ defineMode('sas', function() {
             } else if (stream.skipTo('*')) { //comment is potentially later in line
                 stream.skipTo('*');
                 stream.next();
-                if (stream.eat('/'))
+                if (stream.eat('/')) {
                     state.continueComment = false;
+                }
             } else {
                 stream.skipToEnd();
             }
             return 'comment';
         }
 
-        if (ch == '*' && stream.column() == stream.indentation()) {
+        if (ch === '*' && stream.column() === stream.indentation()) {
             stream.skipToEnd();
             return 'comment';
         }
@@ -98,7 +99,7 @@ defineMode('sas', function() {
             state.continueString = ch;
             return 'string';
         } else if (state.continueString) {
-            if (state.continueString == ch) {
+            if (state.continueString === ch) {
                 state.continueString = null;
             } else if (stream.skipTo(state.continueString)) {
                 // quote found on this line
@@ -112,29 +113,33 @@ defineMode('sas', function() {
             stream.skipTo(state.continueString) || stream.skipToEnd();
             return 'string';
         } else if (/[\d\.]/.test(ch)) { //find numbers
-            if (ch === '.')
+            if (ch === '.') {
                 stream.match(/^[0-9]+([eE][\-+]?[0-9]+)?/);
-            else if (ch === '0')
+            } else if (ch === '0') {
                 stream.match(/^[xX][0-9a-fA-F]+/) || stream.match(/^0[0-7]+/);
-            else
+            } else {
                 stream.match(/^[0-9]*\.?[0-9]*([eE][\-+]?[0-9]+)?/);
+            }
             return 'number';
         } else if (isDoubleOperatorChar.test(ch + stream.peek())) { // TWO SYMBOL TOKENS
             stream.next();
             return 'operator';
         } else if (isDoubleOperatorSym.hasOwnProperty(doubleOperator)) {
             stream.next();
-            if (stream.peek() === ' ')
+            if (stream.peek() === ' ') {
                 return isDoubleOperatorSym[doubleOperator.toLowerCase()];
+            }
         } else if (isSingleOperatorChar.test(ch)) { // SINGLE SYMBOL TOKENS
             return 'operator';
         }
 
         // Matches one whole word -- even if the word is a character
         let word;
-        if (stream.match(/[%&;\w]+/, false) != null) {
+        if (stream.match(/[%&;\w]+/, false) !== null) {
             word = ch + stream.match(/[%&;\w]+/, true);
-            if (/&/.test(word)) return 'variable';
+            if (/&/.test(word)) {
+                return 'variable';
+            }
         } else {
             word = ch;
         }
@@ -142,7 +147,9 @@ defineMode('sas', function() {
         if (state.nextword) {
             stream.match(/[\w]+/);
             // match memname.libname
-            if (stream.peek() === '.') stream.skipTo(' ');
+            if (stream.peek() === '.') {
+                stream.skipTo(' ');
+            }
             state.nextword = false;
             return 'variable-2';
         }
@@ -157,18 +164,24 @@ defineMode('sas', function() {
             // variable formats
             if ((word) && stream.next() === '.') {
                 //either a format or libname.memname
-                if (/\w/.test(stream.peek())) return 'variable-2';
-                else return 'variable';
+                if (/\w/.test(stream.peek())) {
+                    return 'variable-2';
+                } else {
+                    return 'variable';
+                }
             }
             // do we have a DATA Step keyword
             if (word && words.hasOwnProperty(word) &&
                 (words[word].state.indexOf('inDataStep') !== -1 ||
                 words[word].state.indexOf('ALL') !== -1)) {
                 //backup to the start of the word
-                if (stream.start < stream.pos)
+                if (stream.start < stream.pos) {
                     stream.backUp(stream.pos - stream.start);
+                }
                 //advance the length of the word and return
-                for (let i = 0; i < word.length; ++i) stream.next();
+                for (let i = 0; i < word.length; ++i) {
+                    stream.next();
+                }
                 return words[word].style;
             }
         }
@@ -189,7 +202,9 @@ defineMode('sas', function() {
         // Are we in a Macro statement?
         if (state.inMacro) {
             if (word === '%mend') {
-                if (stream.peek() === ';') stream.next();
+                if (stream.peek() === ';') {
+                    stream.next();
+                }
                 state.inMacro = false;
                 return 'builtin';
             }
@@ -223,7 +238,9 @@ defineMode('sas', function() {
                 state.nextword = true;
                 return 'builtin';
             }
-            if (/title[1-9]/.test(word)) return 'def';
+            if (/title[1-9]/.test(word)) {
+                return 'def';
+            }
 
             if (word === 'footnote') {
                 stream.eat(/[1-9]/);
@@ -231,14 +248,18 @@ defineMode('sas', function() {
             }
 
             // Returns their value as state in the prior define methods
-            if (state.inDataStep === true && words[word].state.indexOf('inDataStep') !== -1)
+            if (state.inDataStep === true && words[word].state.indexOf('inDataStep') !== -1) {
                 return words[word].style;
-            if (state.inProc === true && words[word].state.indexOf('inProc') !== -1)
+            }
+            if (state.inProc === true && words[word].state.indexOf('inProc') !== -1) {
                 return words[word].style;
-            if (state.inMacro === true && words[word].state.indexOf('inMacro') !== -1)
+            }
+            if (state.inMacro === true && words[word].state.indexOf('inMacro') !== -1) {
                 return words[word].style;
-            if (words[word].state.indexOf('ALL') !== -1)
+            }
+            if (words[word].state.indexOf('ALL') !== -1) {
                 return words[word].style;
+            }
             return null;
         }
         // Unrecognized syntax
@@ -246,7 +267,7 @@ defineMode('sas', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 inDataStep: false,
                 inProc: false,
@@ -256,9 +277,11 @@ defineMode('sas', function() {
                 continueComment: false
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             // Strip the spaces, but regex will account for them either way
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             // Go through the main process
             return tokenize(stream, state);
         },

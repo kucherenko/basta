@@ -8,7 +8,7 @@ defineMode('pegjs', function(config) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 inString: false,
                 stringType: null,
@@ -19,15 +19,16 @@ defineMode('pegjs', function(config) {
                 localState: null
             };
         },
-        token: function(stream, state) {
-            if (stream)
+        token: (stream, state) => {
+            if (stream) {
 
             //check for state changes
-                if (!state.inString && !state.inComment && ((stream.peek() == '"') || (stream.peek() == "'"))) {
+                if (!state.inString && !state.inComment && ((stream.peek() === '"') || (stream.peek() === "'"))) {
                     state.stringType = stream.peek();
                     stream.next(); // Skip quote
                     state.inString = true; // Update state
                 }
+            }
             if (!state.inString && !state.inComment && stream.match(/^\/\*/)) {
                 state.inComment = true;
             }
@@ -90,7 +91,7 @@ defineMode('pegjs', function(config) {
                     return 'variable';
                 }
                 return 'variable-2';
-            } else if (['[', ']', '(', ')'].indexOf(stream.peek()) != -1) {
+            } else if (['[', ']', '(', ')'].indexOf(stream.peek()) !== -1) {
                 stream.next();
                 return 'bracket';
             } else if (!stream.eatSpace()) {

@@ -1,8 +1,11 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('ruby', function(config) {
     function wordObj(words) {
         const o = {};
-        for (let i = 0, e = words.length; i < e; ++i) o[words[i]] = true;
+        for (let i = 0, e = words.length; i < e; ++i) {
+            o[words[i]] = true;
+        }
         return o;
     }
 
@@ -30,51 +33,72 @@ defineMode('ruby', function(config) {
             state.tokenize.push(readBlockComment);
             return 'comment';
         }
-        if (stream.eatSpace()) return null;
+        if (stream.eatSpace()) {
+            return null;
+        }
         let ch = stream.next(), m;
-        if (ch == '`' || ch == "'" || ch == '"') {
-            return chain(readQuoted(ch, 'string', ch == '"' || ch == '`'), stream, state);
-        } else if (ch == '/') {
-            if (regexpAhead(stream))
+        if (ch === '`' || ch === "'" || ch === '"') {
+            return chain(readQuoted(ch, 'string', ch === '"' || ch === '`'), stream, state);
+        } else if (ch === '/') {
+            if (regexpAhead(stream)) {
                 return chain(readQuoted(ch, 'string-2', true), stream, state);
-            else
+            } else {
                 return 'operator';
-        } else if (ch == '%') {
+            }
+        } else if (ch === '%') {
             let style = 'string';
             let embed = true;
-            if (stream.eat('s')) style = 'atom';
-            else if (stream.eat(/[WQ]/)) style = 'string';
-            else if (stream.eat(/[r]/)) style = 'string-2';
-            else if (stream.eat(/[wxq]/)) {
+            if (stream.eat('s')) {
+                style = 'atom';
+            } else if (stream.eat(/[WQ]/)) {
+                style = 'string';
+            } else if (stream.eat(/[r]/)) {
+                style = 'string-2';
+            } else if (stream.eat(/[wxq]/)) {
                 style = 'string';
                 embed = false;
             }
             let delim = stream.eat(/[^\w\s=]/);
-            if (!delim) return 'operator';
-            if (matching.propertyIsEnumerable(delim)) delim = matching[delim];
+            if (!delim) {
+                return 'operator';
+            }
+            if (matching.propertyIsEnumerable(delim)) {
+                delim = matching[delim];
+            }
             return chain(readQuoted(delim, style, embed, true), stream, state);
-        } else if (ch == '#') {
+        } else if (ch === '#') {
             stream.skipToEnd();
             return 'comment';
-        } else if (ch == '<' && (m = stream.match(/^<-?[\`\"\']?([a-zA-Z_?]\w*)[\`\"\']?(?:;|$)/))) {
+        } else if (ch === '<' && (m = stream.match(/^<-?[\`\"\']?([a-zA-Z_?]\w*)[\`\"\']?(?:;|$)/))) {
             return chain(readHereDoc(m[1]), stream, state);
-        } else if (ch == '0') {
-            if (stream.eat('x')) stream.eatWhile(/[\da-fA-F]/);
-            else if (stream.eat('b')) stream.eatWhile(/[01]/);
-            else stream.eatWhile(/[0-7]/);
+        } else if (ch === '0') {
+            if (stream.eat('x')) {
+                stream.eatWhile(/[\da-fA-F]/);
+            } else if (stream.eat('b')) {
+                stream.eatWhile(/[01]/);
+            } else {
+                stream.eatWhile(/[0-7]/);
+            }
             return 'number';
         } else if (/\d/.test(ch)) {
             stream.match(/^[\d_]*(?:\.[\d_]+)?(?:[eE][+\-]?[\d_]+)?/);
             return 'number';
-        } else if (ch == '?') {
+        } else if (ch === '?') {
             while (stream.match(/^\\[CM]-/)) {
             }
-            if (stream.eat('\\')) stream.eatWhile(/\w/);
-            else stream.next();
+            if (stream.eat('\\')) {
+                stream.eatWhile(/\w/);
+            } else {
+                stream.next();
+            }
             return 'string';
-        } else if (ch == ':') {
-            if (stream.eat("'")) return chain(readQuoted("'", 'atom', false), stream, state);
-            if (stream.eat('"')) return chain(readQuoted('"', 'atom', true), stream, state);
+        } else if (ch === ':') {
+            if (stream.eat("'")) {
+                return chain(readQuoted("'", 'atom', false), stream, state);
+            }
+            if (stream.eat('"')) {
+                return chain(readQuoted('"', 'atom', true), stream, state);
+            }
 
             // :> :>> :< :<< are valid symbols
             if (stream.eat(/[\<\>]/)) {
@@ -95,11 +119,11 @@ defineMode('ruby', function(config) {
                 return 'atom';
             }
             return 'operator';
-        } else if (ch == '@' && stream.match(/^@?[a-zA-Z_\xa1-\uffff]/)) {
+        } else if (ch === '@' && stream.match(/^@?[a-zA-Z_\xa1-\uffff]/)) {
             stream.eat('@');
             stream.eatWhile(/[\w\xa1-\uffff]/);
             return 'variable-2';
-        } else if (ch == '$') {
+        } else if (ch === '$') {
             if (stream.eat(/[a-zA-Z_]/)) {
                 stream.eatWhile(/[\w]/);
             } else if (stream.eat(/\d/)) {
@@ -111,19 +135,23 @@ defineMode('ruby', function(config) {
         } else if (/[a-zA-Z_\xa1-\uffff]/.test(ch)) {
             stream.eatWhile(/[\w\xa1-\uffff]/);
             stream.eat(/[\?\!]/);
-            if (stream.eat(':')) return 'atom';
+            if (stream.eat(':')) {
+                return 'atom';
+            }
             return 'ident';
-        } else if (ch == '|' && (state.varList || state.lastTok == '{' || state.lastTok == 'do')) {
+        } else if (ch === '|' && (state.varList || state.lastTok === '{' || state.lastTok === 'do')) {
             curPunc = '|';
             return null;
         } else if (/[\(\)\[\]{}\\;]/.test(ch)) {
             curPunc = ch;
             return null;
-        } else if (ch == '-' && stream.eat('>')) {
+        } else if (ch === '-' && stream.eat('>')) {
             return 'arrow';
         } else if (/[=+\-\/*:\.^%<>~|]/.test(ch)) {
             const more = stream.eatWhile(/[=+\-\/*:\.^%<>~|]/);
-            if (ch == '.' && !more) curPunc = '.';
+            if (ch === '.' && !more) {
+                curPunc = '.';
+            }
             return 'operator';
         } else {
             return null;
@@ -132,18 +160,20 @@ defineMode('ruby', function(config) {
 
     function regexpAhead(stream) {
         let start = stream.pos, depth = 0, next, found = false, escaped = false;
-        while ((next = stream.next()) != null) {
+        while ((next = stream.next()) !== null) {
             if (!escaped) {
                 if ('[{('.indexOf(next) > -1) {
                     depth++;
                 } else if (']})'.indexOf(next) > -1) {
                     depth--;
-                    if (depth < 0) break;
-                } else if (next == '/' && depth == 0) {
+                    if (depth < 0) {
+                        break;
+                    }
+                } else if (next === '/' && depth === 0) {
                     found = true;
                     break;
                 }
-                escaped = next == '\\';
+                escaped = next === '\\';
             } else {
                 escaped = false;
             }
@@ -152,17 +182,19 @@ defineMode('ruby', function(config) {
         return found;
     }
 
-    function tokenBaseUntilBrace(depth = undefined) {
-        if (!depth) depth = 1;
+    function tokenBaseUntilBrace(depth?) {
+        if (!depth) {
+            depth = 1;
+        }
         return function(stream, state) {
-            if (stream.peek() == '}') {
-                if (depth == 1) {
+            if (stream.peek() === '}') {
+                if (depth === 1) {
                     state.tokenize.pop();
                     return state.tokenize[state.tokenize.length - 1](stream, state);
                 } else {
                     state.tokenize[state.tokenize.length - 1] = tokenBaseUntilBrace(depth - 1);
                 }
-            } else if (stream.peek() == '{') {
+            } else if (stream.peek() === '{') {
                 state.tokenize[state.tokenize.length - 1] = tokenBaseUntilBrace(depth + 1);
             }
             return tokenBase(stream, state);
@@ -181,7 +213,7 @@ defineMode('ruby', function(config) {
         };
     }
 
-    function readQuoted(quote, style, embed, unescaped = undefined) {
+    function readQuoted(quote, style, embed, unescaped?) {
         return function(stream, state) {
             let escaped = false, ch;
 
@@ -190,14 +222,14 @@ defineMode('ruby', function(config) {
                 stream.eat('}');
             }
 
-            while ((ch = stream.next()) != null) {
-                if (ch == quote && (unescaped || !escaped)) {
+            while ((ch = stream.next()) !== null) {
+                if (ch === quote && (unescaped || !escaped)) {
                     state.tokenize.pop();
                     break;
                 }
-                if (embed && ch == '#' && !escaped) {
+                if (embed && ch === '#' && !escaped) {
                     if (stream.eat('{')) {
-                        if (quote == '}') {
+                        if (quote === '}') {
                             state.context = {prev: state.context, type: 'read-quoted-paused'};
                         }
                         state.tokenize.push(tokenBaseUntilBrace());
@@ -207,7 +239,7 @@ defineMode('ruby', function(config) {
                         break;
                     }
                 }
-                escaped = !escaped && ch == '\\';
+                escaped = !escaped && ch === '\\';
             }
             return style;
         };
@@ -215,21 +247,25 @@ defineMode('ruby', function(config) {
 
     function readHereDoc(phrase) {
         return function(stream, state) {
-            if (stream.match(phrase)) state.tokenize.pop();
-            else stream.skipToEnd();
+            if (stream.match(phrase)) {
+                state.tokenize.pop();
+            } else {
+                stream.skipToEnd();
+            }
             return 'string';
         };
     }
 
     function readBlockComment(stream, state) {
-        if (stream.sol() && stream.match('=end') && stream.eol())
+        if (stream.sol() && stream.match('=end') && stream.eol()) {
             state.tokenize.pop();
+        }
         stream.skipToEnd();
         return 'comment';
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: [tokenBase],
                 indented: 0,
@@ -240,47 +276,60 @@ defineMode('ruby', function(config) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             curPunc = null;
-            if (stream.sol()) state.indented = stream.indentation();
+            if (stream.sol()) {
+                state.indented = stream.indentation();
+            }
             let style = state.tokenize[state.tokenize.length - 1](stream, state), kwtype;
             let thisTok = curPunc;
-            if (style == 'ident') {
+            if (style === 'ident') {
                 const word = stream.current();
-                style = state.lastTok == '.' ? 'property'
+                style = state.lastTok === '.' ? 'property'
                     : keywords.propertyIsEnumerable(stream.current()) ? 'keyword'
                         : /^[A-Z]/.test(word) ? 'tag'
-                            : (state.lastTok == 'def' || state.lastTok == 'class' || state.varList) ? 'def'
+                            : (state.lastTok === 'def' || state.lastTok === 'class' || state.varList) ? 'def'
                                 : 'variable';
-                if (style == 'keyword') {
+                if (style === 'keyword') {
                     thisTok = word;
-                    if (indentWords.propertyIsEnumerable(word)) kwtype = 'indent';
-                    else if (dedentWords.propertyIsEnumerable(word)) kwtype = 'dedent';
-                    else if ((word == 'if' || word == 'unless') && stream.column() == stream.indentation())
+                    if (indentWords.propertyIsEnumerable(word)) {
                         kwtype = 'indent';
-                    else if (word == 'do' && state.context.indented < state.indented)
+                    } else if (dedentWords.propertyIsEnumerable(word)) {
+                        kwtype = 'dedent';
+                    } else if ((word === 'if' || word === 'unless') && stream.column() === stream.indentation()) {
                         kwtype = 'indent';
+                    } else if (word === 'do' && state.context.indented < state.indented) {
+                        kwtype = 'indent';
+                    }
                 }
             }
-            if (curPunc || (style && style != 'comment')) state.lastTok = thisTok;
-            if (curPunc == '|') state.varList = !state.varList;
+            if (curPunc || (style && style !== 'comment')) {
+                state.lastTok = thisTok;
+            }
+            if (curPunc === '|') {
+                state.varList = !state.varList;
+            }
 
-            if (kwtype == 'indent' || /[\(\[\{]/.test(curPunc))
+            if (kwtype === 'indent' || /[\(\[\{]/.test(curPunc)) {
                 state.context = {prev: state.context, type: curPunc || style, indented: state.indented};
-            else if ((kwtype == 'dedent' || /[\)\]\}]/.test(curPunc)) && state.context.prev)
+            } else if ((kwtype === 'dedent' || /[\)\]\}]/.test(curPunc)) && state.context.prev) {
                 state.context = state.context.prev;
+            }
 
-            if (stream.eol())
-                state.continuedLine = (curPunc == '\\' || style == 'operator');
+            if (stream.eol()) {
+                state.continuedLine = (curPunc === '\\' || style === 'operator');
+            }
             return style;
         },
 
-        indent: function(state, textAfter) {
-            if (state.tokenize[state.tokenize.length - 1] != tokenBase) return 0;
+        indent: (state, textAfter) => {
+            if (state.tokenize[state.tokenize.length - 1] !== tokenBase) {
+                return 0;
+            }
             const firstChar = textAfter && textAfter.charAt(0);
             const ct = state.context;
-            const closing = ct.type == matching[firstChar] ||
-                ct.type == 'keyword' && /^(?:end|until|else|elsif|when|rescue)\b/.test(textAfter);
+            const closing = ct.type === matching[firstChar] ||
+                ct.type === 'keyword' && /^(?:end|until|else|elsif|when|rescue)\b/.test(textAfter);
             return ct.indented + (closing ? 0 : config.indentUnit) +
                 (state.continuedLine ? config.indentUnit : 0);
         },

@@ -7,7 +7,9 @@ defineMode('cobol', function() {
 
     function makeKeywords(str) {
         const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 
@@ -142,14 +144,14 @@ defineMode('cobol', function() {
             return true;
         }
         // leading sign
-        if ((ch == '+' || ch == '-') && (tests.digit.test(stream.peek()))) {
+        if ((ch === '+' || ch === '-') && (tests.digit.test(stream.peek()))) {
             stream.eat(tests.sign);
             ch = stream.next();
         }
         if (tests.digit.test(ch)) {
             stream.eat(ch);
             stream.eatWhile(tests.digit);
-            if ('.' == stream.peek()) {
+            if ('.' === stream.peek()) {
                 stream.eat('.');
                 stream.eatWhile(tests.digit);
             }
@@ -163,15 +165,15 @@ defineMode('cobol', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 indentStack: null,
                 indentation: 0,
                 mode: false
             };
         },
-        token: function(stream, state) {
-            if (state.indentStack == null && stream.sol()) {
+        token: (stream, state) => {
+            if (state.indentStack === null && stream.sol()) {
                 // update indentation, but only if indentStack is empty
                 state.indentation = 6; //stream.indentation();
             }
@@ -183,8 +185,8 @@ defineMode('cobol', function() {
             switch (state.mode) {
                 case 'string': // multi-line string parsing mode
                     let next: any = false;
-                    while ((next = stream.next()) != null) {
-                        if (next == '"' || next == "\'") {
+                    while ((next = stream.next()) !== null) {
+                        if (next === '"' || next === "\'") {
                             state.mode = false;
                             break;
                         }
@@ -199,15 +201,15 @@ defineMode('cobol', function() {
                     } else if (col >= 72 && col <= 79) {
                         stream.skipToEnd();
                         returnType = MODTAG;
-                    } else if (ch == '*' && col == 6) { // comment
+                    } else if (ch === '*' && col === 6) { // comment
                         stream.skipToEnd(); // rest of the line is a comment
                         returnType = COMMENT;
-                    } else if (ch == '"' || ch == "\'") {
+                    } else if (ch === '"' || ch === "\'") {
                         state.mode = 'string';
                         returnType = STRING;
-                    } else if (ch == "'" && !(tests.digit_or_colon.test(stream.peek()))) {
+                    } else if (ch === "'" && !(tests.digit_or_colon.test(stream.peek()))) {
                         returnType = ATOM;
-                    } else if (ch == '.') {
+                    } else if (ch === '.') {
                         returnType = PERIOD;
                     } else if (isNumber(ch, stream)) {
                         returnType = NUMBER;
@@ -227,13 +229,17 @@ defineMode('cobol', function() {
                             returnType = BUILTIN;
                         } else if (atoms && atoms.propertyIsEnumerable(stream.current().toUpperCase())) {
                             returnType = ATOM;
-                        } else returnType = null;
+                        } else {
+                            returnType = null;
+                        }
                     }
             }
             return returnType;
         },
-        indent: function(state) {
-            if (state.indentStack == null) return state.indentation;
+        indent: (state) => {
+            if (state.indentStack === null) {
+                return state.indentation;
+            }
             return state.indentStack.indent;
         }
     };

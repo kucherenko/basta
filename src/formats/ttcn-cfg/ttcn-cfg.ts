@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('ttcn-cfg', function(config, parserConfig) {
     const indentUnit = config.indentUnit,
         keywords = parserConfig.keywords || {},
@@ -11,7 +12,7 @@ defineMode('ttcn-cfg', function(config, parserConfig) {
 
     function tokenBase(stream, state) {
         const ch = stream.next();
-        if (ch == '"' || ch == "'") {
+        if (ch === '"' || ch === "'") {
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         }
@@ -19,7 +20,7 @@ defineMode('ttcn-cfg', function(config, parserConfig) {
             curPunc = ch;
             return 'punctuation';
         }
-        if (ch == '#') {
+        if (ch === '#') {
             stream.skipToEnd();
             return 'comment';
         }
@@ -31,17 +32,22 @@ defineMode('ttcn-cfg', function(config, parserConfig) {
             stream.eatWhile(isOperatorChar);
             return 'operator';
         }
-        if (ch == '[') {
+        if (ch === '[') {
             stream.eatWhile(/[\w_\]]/);
             return 'number sectionTitle';
         }
 
         stream.eatWhile(/[\w\$_]/);
         const cur = stream.current();
-        if (keywords.propertyIsEnumerable(cur)) return 'keyword';
-        if (fileNCtrlMaskOptions.propertyIsEnumerable(cur))
+        if (keywords.propertyIsEnumerable(cur)) {
+            return 'keyword';
+        }
+        if (fileNCtrlMaskOptions.propertyIsEnumerable(cur)) {
             return 'negative fileNCtrlMaskOptions';
-        if (externalCommands.propertyIsEnumerable(cur)) return 'negative externalCommands';
+        }
+        if (externalCommands.propertyIsEnumerable(cur)) {
+            return 'negative externalCommands';
+        }
 
         return 'variable';
     }
@@ -49,27 +55,29 @@ defineMode('ttcn-cfg', function(config, parserConfig) {
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     let afterNext = stream.peek();
                     //look if the character if the quote is like the B in '10100010'B
                     if (afterNext) {
                         afterNext = afterNext.toLowerCase();
-                        if (afterNext == 'b' || afterNext == 'h' || afterNext == 'o')
+                        if (afterNext === 'b' || afterNext === 'h' || afterNext === 'o') {
                             stream.next();
+                        }
                     }
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '\\';
+                escaped = !escaped && next === '\\';
             }
-            if (end || !(escaped || multiLineStrings))
+            if (end || !(escaped || multiLineStrings)) {
                 state.tokenize = null;
+            }
             return 'string';
         };
     }
 
-    function Context(indented, column, type, align, prev = undefined) {
+    function Context(indented, column, type, align, prev?) {
         this.indented = indented;
         this.column = column;
         this.type = type;
@@ -79,15 +87,17 @@ defineMode('ttcn-cfg', function(config, parserConfig) {
 
     function pushContext(state, col, type) {
         let indent = state.indented;
-        if (state.context && state.context.type == 'statement')
+        if (state.context && state.context.type === 'statement') {
             indent = state.context.indented;
+        }
         return state.context = new Context(indent, col, type, null, state.context);
     }
 
     function popContext(state) {
         const t = state.context.type;
-        if (t == ')' || t == ']' || t == '}')
+        if (t === ')' || t === ']' || t === '}') {
             state.indented = state.context.indented;
+        }
         return state.context = state.context.prev;
     }
 
@@ -102,36 +112,53 @@ defineMode('ttcn-cfg', function(config, parserConfig) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             let ctx = state.context;
             if (stream.sol()) {
-                if (ctx.align == null) ctx.align = false;
+                if (ctx.align === null) {
+                    ctx.align = false;
+                }
                 state.indented = stream.indentation();
                 state.startOfLine = true;
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             curPunc = null;
             const style = (state.tokenize || tokenBase)(stream, state);
-            if (style == 'comment') return style;
-            if (ctx.align == null) ctx.align = true;
+            if (style === 'comment') {
+                return style;
+            }
+            if (ctx.align === null) {
+                ctx.align = true;
+            }
 
-            if ((curPunc == ';' || curPunc == ':' || curPunc == ',')
-                && ctx.type == 'statement') {
+            if ((curPunc === ';' || curPunc === ':' || curPunc === ',')
+                && ctx.type === 'statement') {
                 popContext(state);
-            }
-            else if (curPunc == '{') pushContext(state, stream.column(), '}');
-            else if (curPunc == '[') pushContext(state, stream.column(), ']');
-            else if (curPunc == '(') pushContext(state, stream.column(), ')');
-            else if (curPunc == '}') {
-                while (ctx.type == 'statement') ctx = popContext(state);
-                if (ctx.type == '}') ctx = popContext(state);
-                while (ctx.type == 'statement') ctx = popContext(state);
-            }
-            else if (curPunc == ctx.type) popContext(state);
-            else if (indentStatements && (((ctx.type == '}' || ctx.type == 'top')
-                && curPunc != ';') || (ctx.type == 'statement'
-                && curPunc == 'newstatement')))
+            } else if (curPunc === '{') {
+                pushContext(state, stream.column(), '}');
+            } else if (curPunc === '[') {
+                pushContext(state, stream.column(), ']');
+            } else if (curPunc === '(') {
+                pushContext(state, stream.column(), ')');
+            } else if (curPunc === '}') {
+                while (ctx.type === 'statement') {
+                    ctx = popContext(state);
+                }
+                if (ctx.type === '}') {
+                    ctx = popContext(state);
+                }
+                while (ctx.type === 'statement') {
+                    ctx = popContext(state);
+                }
+            } else if (curPunc === ctx.type) {
+                popContext(state);
+            } else if (indentStatements && (((ctx.type === '}' || ctx.type === 'top')
+                    && curPunc !== ';') || (ctx.type === 'statement'
+                    && curPunc === 'newstatement'))) {
                 pushContext(state, stream.column(), 'statement');
+            }
             state.startOfLine = false;
             return style;
         },
@@ -144,8 +171,9 @@ defineMode('ttcn-cfg', function(config, parserConfig) {
 
 function words(str) {
     const obj = {}, words = str.split(' ');
-    for (let i = 0; i < words.length; ++i)
+    for (let i = 0; i < words.length; ++i) {
         obj[words[i]] = true;
+    }
     return obj;
 }
 

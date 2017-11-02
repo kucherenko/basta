@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 function words(str) {
     const obj = {};
     const words = str.split(',');
@@ -41,13 +42,15 @@ defineMode('vhdl', function(config, parserConfig) {
         const ch = stream.next();
         if (hooks[ch]) {
             const result = hooks[ch](stream, state);
-            if (result !== false) return result;
+            if (result !== false) {
+                return result;
+            }
         }
-        if (ch == '"') {
+        if (ch === '"') {
             state.tokenize = tokenString2(ch);
             return state.tokenize(stream, state);
         }
-        if (ch == "'") {
+        if (ch === "'") {
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         }
@@ -59,7 +62,7 @@ defineMode('vhdl', function(config, parserConfig) {
             stream.eatWhile(/[\w\.']/);
             return 'number';
         }
-        if (ch == '-') {
+        if (ch === '-') {
             if (stream.eat('-')) {
                 stream.skipToEnd();
                 return 'comment';
@@ -72,25 +75,30 @@ defineMode('vhdl', function(config, parserConfig) {
         stream.eatWhile(/[\w\$_]/);
         const cur = stream.current();
         if (keywords.propertyIsEnumerable(cur.toLowerCase())) {
-            if (blockKeywords.propertyIsEnumerable(cur)) curPunc = 'newstatement';
+            if (blockKeywords.propertyIsEnumerable(cur)) {
+                curPunc = 'newstatement';
+            }
             return 'keyword';
         }
-        if (atoms.propertyIsEnumerable(cur)) return 'atom';
+        if (atoms.propertyIsEnumerable(cur)) {
+            return 'atom';
+        }
         return 'variable';
     }
 
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '--';
+                escaped = !escaped && next === '--';
             }
-            if (end || !(escaped || multiLineStrings))
+            if (end || !(escaped || multiLineStrings)) {
                 state.tokenize = tokenBase;
+            }
             return 'string';
         };
     }
@@ -98,20 +106,21 @@ defineMode('vhdl', function(config, parserConfig) {
     function tokenString2(quote) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '--';
+                escaped = !escaped && next === '--';
             }
-            if (end || !(escaped || multiLineStrings))
+            if (end || !(escaped || multiLineStrings)) {
                 state.tokenize = tokenBase;
+            }
             return 'string-2';
         };
     }
 
-    function Context(indented, column, type, align, prev = undefined) {
+    function Context(indented, column, type, align, prev?) {
         this.indented = indented;
         this.column = column;
         this.type = type;
@@ -125,8 +134,9 @@ defineMode('vhdl', function(config, parserConfig) {
 
     function popContext(state) {
         const t = state.context.type;
-        if (t == ')' || t == ']' || t == '}')
+        if (t === ')' || t === ']' || t === '}') {
             state.indented = state.context.indented;
+        }
         return state.context = state.context.prev;
     }
 
@@ -141,41 +151,66 @@ defineMode('vhdl', function(config, parserConfig) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             let ctx = state.context;
             if (stream.sol()) {
-                if (ctx.align == null) ctx.align = false;
+                if (ctx.align === null) {
+                    ctx.align = false;
+                }
                 state.indented = stream.indentation();
                 state.startOfLine = true;
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             curPunc = null;
             const style = (state.tokenize || tokenBase)(stream, state);
-            if (style == 'comment' || style == 'meta') return style;
-            if (ctx.align == null) ctx.align = true;
-
-            if ((curPunc == ';' || curPunc == ':') && ctx.type == 'statement') popContext(state);
-            else if (curPunc == '{') pushContext(state, stream.column(), '}');
-            else if (curPunc == '[') pushContext(state, stream.column(), ']');
-            else if (curPunc == '(') pushContext(state, stream.column(), ')');
-            else if (curPunc == '}') {
-                while (ctx.type == 'statement') ctx = popContext(state);
-                if (ctx.type == '}') ctx = popContext(state);
-                while (ctx.type == 'statement') ctx = popContext(state);
+            if (style === 'comment' || style === 'meta') {
+                return style;
             }
-            else if (curPunc == ctx.type) popContext(state);
-            else if (ctx.type == '}' || ctx.type == 'top' || (ctx.type == 'statement' && curPunc == 'newstatement'))
+            if (ctx.align === null) {
+                ctx.align = true;
+            }
+
+            if ((curPunc === ';' || curPunc === ':') && ctx.type === 'statement') {
+                popContext(state);
+            } else if (curPunc === '{') {
+                pushContext(state, stream.column(), '}');
+            } else if (curPunc === '[') {
+                pushContext(state, stream.column(), ']');
+            } else if (curPunc === '(') {
+                pushContext(state, stream.column(), ')');
+            } else if (curPunc === '}') {
+                while (ctx.type === 'statement') {
+                    ctx = popContext(state);
+                }
+                if (ctx.type === '}') {
+                    ctx = popContext(state);
+                }
+                while (ctx.type === 'statement') {
+                    ctx = popContext(state);
+                }
+            } else if (curPunc === ctx.type) {
+                popContext(state);
+            } else if (ctx.type === '}' || ctx.type === 'top' || (ctx.type === 'statement' && curPunc === 'newstatement')) {
                 pushContext(state, stream.column(), 'statement');
+            }
             state.startOfLine = false;
             return style;
         },
 
-        indent: function(state, textAfter) {
-            if (state.tokenize != tokenBase && state.tokenize != null) return 0;
-            const firstChar = textAfter && textAfter.charAt(0), ctx = state.context, closing = firstChar == ctx.type;
-            if (ctx.type == 'statement') return ctx.indented + (firstChar == '{' ? 0 : indentUnit);
-            else if (ctx.align) return ctx.column + (closing ? 0 : 1);
-            else return ctx.indented + (closing ? 0 : indentUnit);
+        indent: (state, textAfter) => {
+            if (state.tokenize !== tokenBase && state.tokenize !== null) {
+                return 0;
+            }
+            const firstChar = textAfter && textAfter.charAt(0), ctx = state.context, closing = firstChar === ctx.type;
+            if (ctx.type === 'statement') {
+                return ctx.indented + (firstChar === '{' ? 0 : indentUnit);
+            } else if (ctx.align) {
+                return ctx.column + (closing ? 0 : 1);
+            } else {
+                return ctx.indented + (closing ? 0 : indentUnit);
+            }
         },
 
         electricChars: '{}'

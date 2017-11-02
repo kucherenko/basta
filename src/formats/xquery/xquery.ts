@@ -1,23 +1,23 @@
 import {defineMIME, defineMode} from '../index';
 
-defineMode('xquery', function() {
+defineMode('xquery', () => {
 
     // The keywords object is set to the result of this self executing
     // function. Each keyword is a property of the keywords object whose
     // value is {type: atype, style: astyle}
-    const keywords = function() {
+    const keywords = (() => {
         // convenience functions used to build keywords object
         function kw(type) {
             return {type: type, style: 'keyword'};
         }
 
-        const A = kw('keyword a')
-            , B = kw('keyword b')
-            , C = kw('keyword c')
-            , operator = kw('operator')
-            , atom = {type: 'atom', style: 'atom'}
-            , punctuation = {type: 'punctuation', style: null}
-            , qualifier = {type: 'axis_specifier', style: 'qualifier'};
+        const A = kw('keyword a');
+        const B = kw('keyword b');
+        const C = kw('keyword c');
+        const operator = kw('operator');
+        const atom = {type: 'atom', style: 'atom'};
+        const punctuation = {type: 'punctuation', style: null};
+        const qualifier = {type: 'axis_specifier', style: 'qualifier'};
 
         // kwObj is what is return from this function at the end
         const kwObj = {
@@ -70,7 +70,7 @@ defineMode('xquery', function() {
 
 
         return kwObj;
-    }();
+    })();
 
     function chain(stream, state, f) {
         state.tokenize = f;
@@ -79,14 +79,15 @@ defineMode('xquery', function() {
 
     // the primary mode tokenizer
     function tokenBase(stream, state) {
-        let ch = stream.next(),
-            mightBeFunction = false,
-            isEQName = isEQNameAhead(stream);
+        const ch = stream.next();
+        let mightBeFunction = false;
+        const isEQName = isEQNameAhead(stream);
 
         // an XML tag (if not in some sub, chained tokenizer)
-        if (ch == '<') {
-            if (stream.match('!--', true))
+        if (ch === '<') {
+            if (stream.match('!--', true)) {
                 return chain(stream, state, tokenXMLComment);
+            }
 
             if (stream.match('![CDATA', false)) {
                 state.tokenize = tokenCDATA;
@@ -99,84 +100,69 @@ defineMode('xquery', function() {
 
             const isclose = stream.eat('/');
             stream.eatSpace();
-            let tagName = '', c;
-            while ((c = stream.eat(/[^\s\u00a0=<>\"\'\/?]/))) tagName += c;
+            let tagName = '';
+            let c;
+            while ((c = stream.eat(/[^\s\u00a0=<>\"\'\/?]/))) {
+                tagName += c;
+            }
 
             return chain(stream, state, tokenTag(tagName, isclose));
-        }
-        // start code block
-        else if (ch == '{') {
+        } else if (ch === '{') {
             pushStateStack(state, {type: 'codeblock'});
             return null;
-        }
-        // end code block
-        else if (ch == '}') {
+        } else if (ch === '}') {
             popStateStack(state);
             return null;
-        }
-        // if we're in an XML block
-        else if (isInXmlBlock(state)) {
-            if (ch == '>')
+        } else if (isInXmlBlock(state)) {
+            if (ch === '>') {
                 return 'tag';
-            else if (ch == '/' && stream.eat('>')) {
+            } else if (ch === '/' && stream.eat('>')) {
                 popStateStack(state);
                 return 'tag';
-            }
-            else
+            } else {
                 return 'variable';
-        }
-        // if a number
-        else if (/\d/.test(ch)) {
+            }
+        } else if (/\d/.test(ch)) {
             stream.match(/^\d*(?:\.\d*)?(?:E[+\-]?\d+)?/);
             return 'atom';
-        }
-        // comment start
-        else if (ch === '(' && stream.eat(':')) {
+        } else if (ch === '(' && stream.eat(':')) {
             pushStateStack(state, {type: 'comment'});
             return chain(stream, state, tokenComment);
-        }
-        // quoted string
-        else if (!isEQName && (ch === '"' || ch === "'"))
+        } else if (!isEQName && (ch === '"' || ch === "'")) {
             return chain(stream, state, tokenString(ch));
-        // variable
-        else if (ch === '$') {
+        } else if (ch === '$') {
             return chain(stream, state, tokenVariable);
-        }
-        // assignment
-        else if (ch === ':' && stream.eat('=')) {
+        } else if (ch === ':' && stream.eat('=')) {
             return 'keyword';
-        }
-        // open paren
-        else if (ch === '(') {
+        } else if (ch === '(') {
             pushStateStack(state, {type: 'paren'});
             return null;
-        }
-        // close paren
-        else if (ch === ')') {
+        } else if (ch === ')') {
             popStateStack(state);
             return null;
-        }
-        // open paren
-        else if (ch === '[') {
+        } else if (ch === '[') {
             pushStateStack(state, {type: 'bracket'});
             return null;
-        }
-        // close paren
-        else if (ch === ']') {
+        } else if (ch === ']') {
             popStateStack(state);
             return null;
-        }
-        else {
+        } else {
             let known = keywords.propertyIsEnumerable(ch) && keywords[ch];
 
             // if there's a EQName ahead, consume the rest of the string portion, it's likely a function
-            if (isEQName && ch === '\"') while (stream.next() !== '"') {
+            if (isEQName && ch === '\"') {
+                while (stream.next() !== '"') {
+                }
             }
-            if (isEQName && ch === '\'') while (stream.next() !== '\'') {
+            if (isEQName && ch === '\'') {
+                while (stream.next() !== '\'') {
+                }
             }
 
             // gobble up a word if the character is not known
-            if (!known) stream.eatWhile(/[\w\$_-]/);
+            if (!known) {
+                stream.eatWhile(/[\w\$_-]/);
+            }
 
             // gobble a colon in the case that is a lib func type call fn:doc
             const foundColon = stream.eat(':');
@@ -196,7 +182,9 @@ defineMode('xquery', function() {
 
             // if we think it's a function call but not yet known,
             // set style to variable for now for lack of something better
-            if (mightBeFunction && !known) known = {type: 'function_call', style: 'variable def'};
+            if (mightBeFunction && !known) {
+                known = {type: 'function_call', style: 'variable def'};
+            }
 
             // if the previous word was element, attribute, axis specifier, this word should be the name of that
             if (isInXmlConstructor(state)) {
@@ -205,7 +193,9 @@ defineMode('xquery', function() {
             }
             // as previously checked, if the word is element,attribute, axis specifier, call it an "xmlconstructor" and
             // push the stack so we know to look for it on the next word
-            if (word == 'element' || word == 'attribute' || known.type == 'axis_specifier') pushStateStack(state, {type: 'xmlconstructor'});
+            if (word === 'element' || word === 'attribute' || known.type === 'axis_specifier') {
+                pushStateStack(state, {type: 'xmlconstructor'});
+            }
 
             // if the word is known, return the details of that else just call this a generic 'word'
             return known ? known.style : 'variable';
@@ -216,19 +206,18 @@ defineMode('xquery', function() {
     function tokenComment(stream, state) {
         let maybeEnd = false, maybeNested = false, nestedCount = 0, ch;
         while (ch = stream.next()) {
-            if (ch == ')' && maybeEnd) {
-                if (nestedCount > 0)
+            if (ch === ')' && maybeEnd) {
+                if (nestedCount > 0) {
                     nestedCount--;
-                else {
+                } else {
                     popStateStack(state);
                     break;
                 }
-            }
-            else if (ch == ':' && maybeNested) {
+            } else if (ch === ':' && maybeNested) {
                 nestedCount++;
             }
-            maybeEnd = (ch == ':');
-            maybeNested = (ch == '(');
+            maybeEnd = (ch === ':');
+            maybeNested = (ch === '(');
         }
 
         return 'comment';
@@ -236,13 +225,15 @@ defineMode('xquery', function() {
 
     // tokenizer for string literals
     // optionally pass a tokenizer function to set state.tokenize back to when finished
-    function tokenString(quote, f = undefined) {
-        return function(stream, state) {
+    function tokenString(quote, f?) {
+        return (stream, state) => {
             let ch;
 
-            if (isInString(state) && stream.current() == quote) {
+            if (isInString(state) && stream.current() === quote) {
                 popStateStack(state);
-                if (f) state.tokenize = f;
+                if (f) {
+                    state.tokenize = f;
+                }
                 return 'string';
             }
 
@@ -256,12 +247,13 @@ defineMode('xquery', function() {
 
 
             while (ch = stream.next()) {
-                if (ch == quote) {
+                if (ch === quote) {
                     popStateStack(state);
-                    if (f) state.tokenize = f;
+                    if (f) {
+                        state.tokenize = f;
+                    }
                     break;
-                }
-                else {
+                } else {
                     // if we're in a string and in an XML block, allow an embedded code block in an attribute
                     if (stream.match('{', false) && isInXmlAttributeBlock(state)) {
                         state.tokenize = tokenBase;
@@ -287,7 +279,9 @@ defineMode('xquery', function() {
             stream.eat(':');
         } else {
             stream.eatWhile(isVariableChar);
-            if (!stream.match(':=', false)) stream.eat(':');
+            if (!stream.match(':=', false)) {
+                stream.eat(':');
+            }
         }
         stream.eatWhile(isVariableChar);
         state.tokenize = tokenBase;
@@ -304,13 +298,13 @@ defineMode('xquery', function() {
                 return 'tag';
             }
             // self closing tag without attributes?
-            if (!stream.eat('/'))
+            if (!stream.eat('/')) {
                 pushStateStack(state, {type: 'tag', name: name, tokenize: tokenBase});
+            }
             if (!stream.eat('>')) {
                 state.tokenize = tokenAttribute;
                 return 'tag';
-            }
-            else {
+            } else {
                 state.tokenize = tokenBase;
             }
             return 'tag';
@@ -321,23 +315,32 @@ defineMode('xquery', function() {
     function tokenAttribute(stream, state) {
         const ch = stream.next();
 
-        if (ch == '/' && stream.eat('>')) {
-            if (isInXmlAttributeBlock(state)) popStateStack(state);
-            if (isInXmlBlock(state)) popStateStack(state);
+        if (ch === '/' && stream.eat('>')) {
+            if (isInXmlAttributeBlock(state)) {
+                popStateStack(state);
+            }
+            if (isInXmlBlock(state)) {
+                popStateStack(state);
+            }
             return 'tag';
         }
-        if (ch == '>') {
-            if (isInXmlAttributeBlock(state)) popStateStack(state);
+        if (ch === '>') {
+            if (isInXmlAttributeBlock(state)) {
+                popStateStack(state);
+            }
             return 'tag';
         }
-        if (ch == '=')
+        if (ch === '=') {
             return null;
+        }
         // quoted string
-        if (ch == '"' || ch == "'")
+        if (ch === '"' || ch === "'") {
             return chain(stream, state, tokenString(ch, tokenAttribute));
+        }
 
-        if (!isInXmlAttributeBlock(state))
+        if (!isInXmlAttributeBlock(state)) {
             pushStateStack(state, {type: 'attribute', tokenize: tokenAttribute});
+        }
 
         stream.eat(/[a-zA-Z_:]/);
         stream.eatWhile(/[-a-zA-Z0-9_:.]/);
@@ -356,7 +359,7 @@ defineMode('xquery', function() {
     function tokenXMLComment(stream, state) {
         let ch;
         while (ch = stream.next()) {
-            if (ch == '-' && stream.match('->', true)) {
+            if (ch === '-' && stream.match('->', true)) {
                 state.tokenize = tokenBase;
                 return 'comment';
             }
@@ -368,7 +371,7 @@ defineMode('xquery', function() {
     function tokenCDATA(stream, state) {
         let ch;
         while (ch = stream.next()) {
-            if (ch == ']' && stream.match(']', true)) {
+            if (ch === ']' && stream.match(']', true)) {
                 state.tokenize = tokenBase;
                 return 'comment';
             }
@@ -379,7 +382,7 @@ defineMode('xquery', function() {
     function tokenPreProcessing(stream, state) {
         let ch;
         while (ch = stream.next()) {
-            if (ch == '?' && stream.match('>', true)) {
+            if (ch === '?' && stream.match('>', true)) {
                 state.tokenize = tokenBase;
                 return 'comment meta';
             }
@@ -406,16 +409,17 @@ defineMode('xquery', function() {
 
     function isEQNameAhead(stream) {
         // assume we've already eaten a quote (")
-        if (stream.current() === '"')
+        if (stream.current() === '"') {
             return stream.match(/^[^\"]+\"\:/, false);
-        else if (stream.current() === '\'')
+        } else if (stream.current() === '\'') {
             return stream.match(/^[^\"]+\'\:/, false);
-        else
+        } else {
             return false;
+        }
     }
 
     function isIn(state, type) {
-        return (state.stack.length && state.stack[state.stack.length - 1].type == type);
+        return (state.stack.length && state.stack[state.stack.length - 1].type === type);
     }
 
     function pushStateStack(state, newState) {
@@ -430,7 +434,7 @@ defineMode('xquery', function() {
 
     // the interface for the mode API
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 cc: [],
@@ -438,8 +442,10 @@ defineMode('xquery', function() {
             };
         },
 
-        token: function(stream, state) {
-            if (stream.eatSpace()) return null;
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
+                return null;
+            }
             const style = state.tokenize(stream, state);
             return style;
         },

@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('shell', function() {
 
     const words = {};
@@ -25,7 +26,9 @@ defineMode('shell', function() {
         'touch vi vim wall wc wget who write yes zsh');
 
     function tokenBase(stream, state) {
-        if (stream.eatSpace()) return null;
+        if (stream.eatSpace()) {
+            return null;
+        }
 
         const sol = stream.sol();
         const ch = stream.next();
@@ -66,15 +69,17 @@ defineMode('shell', function() {
         }
         stream.eatWhile(/[\w-]/);
         const cur = stream.current();
-        if (stream.peek() === '=' && /\w+/.test(cur)) return 'def';
+        if (stream.peek() === '=' && /\w+/.test(cur)) {
+            return 'def';
+        }
         return words.hasOwnProperty(cur) ? words[cur] : null;
     }
 
     function tokenString(quote, style) {
-        const close = quote == '(' ? ')' : quote == '{' ? '}' : quote;
+        const close = quote === '(' ? ')' : quote === '{' ? '}' : quote;
         return function(stream, state) {
             let next, end = false, escaped = false;
-            while ((next = stream.next()) != null) {
+            while ((next = stream.next()) !== null) {
                 if (next === close && !escaped) {
                     end = true;
                     break;
@@ -91,19 +96,25 @@ defineMode('shell', function() {
                 }
                 escaped = !escaped && next === '\\';
             }
-            if (end || !escaped) state.tokens.shift();
+            if (end || !escaped) {
+                state.tokens.shift();
+            }
             return style;
         };
     }
 
     const tokenDollar = function(stream, state) {
-        if (state.tokens.length > 1) stream.eat('$');
+        if (state.tokens.length > 1) {
+            stream.eat('$');
+        }
         const ch = stream.next();
         if (/['"({]/.test(ch)) {
-            state.tokens[0] = tokenString(ch, ch == '(' ? 'quote' : ch == '{' ? 'def' : 'string');
+            state.tokens[0] = tokenString(ch, ch === '(' ? 'quote' : ch === '{' ? 'def' : 'string');
             return tokenize(stream, state);
         }
-        if (!/\d/.test(ch)) stream.eatWhile(/\w/);
+        if (!/\d/.test(ch)) {
+            stream.eatWhile(/\w/);
+        }
         state.tokens.shift();
         return 'def';
     };
@@ -113,10 +124,10 @@ defineMode('shell', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokens: []};
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             return tokenize(stream, state);
         },
         closeBrackets: "()[]{}''\"\"``",

@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('rpm-changes', function() {
     const headerSeperator = /^-+$/;
     const headerLine = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)  ?\d{1,2} \d{2}:\d{2}(:\d{2})? [A-Z]{3,4} \d{4} - /;
@@ -37,16 +38,16 @@ defineMode('rpm-spec', function() {
     const operators = /^(\!|\?|\<\=|\<|\>\=|\>|\=\=|\&\&|\|\|)/; // operators in control flow macros
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 controlFlow: false,
                 macroParameters: false,
                 section: false
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             const ch = stream.peek();
-            if (ch == '#') {
+            if (ch === '#') {
                 stream.skipToEnd();
                 return 'comment';
             }

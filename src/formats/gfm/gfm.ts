@@ -11,7 +11,7 @@ defineMode('gfm', function(config, modeConfig) {
     }
 
     const gfmOverlay = {
-        startState: function() {
+        startState: () => {
             return {
                 code: false,
                 codeBlock: false,
@@ -25,7 +25,7 @@ defineMode('gfm', function(config, modeConfig) {
                 ateSpace: s.ateSpace
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             state.combineTokens = null;
 
             // Hack to prevent formatting override inside code blocks (block and inline)
@@ -88,8 +88,8 @@ defineMode('gfm', function(config, modeConfig) {
                 }
             }
             if (stream.match(urlRE) &&
-                stream.string.slice(stream.start - 2, stream.start) != '](' &&
-                (stream.start == 0 || /\W/.test(stream.string.charAt(stream.start - 1)))) {
+                stream.string.slice(stream.start - 2, stream.start) !== '](' &&
+                (stream.start === 0 || /\W/.test(stream.string.charAt(stream.start - 1)))) {
                 // URLs
                 // Taken from http://daringfireball.net/2010/07/improved_regex_for_matching_urls
                 // And then (issue #1160) simplified to make it not crash the Chrome Regexp engine

@@ -1,8 +1,11 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('pascal', function() {
     function words(str) {
         const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 
@@ -15,15 +18,15 @@ defineMode('pascal', function() {
 
     function tokenBase(stream, state) {
         const ch = stream.next();
-        if (ch == '#' && state.startOfLine) {
+        if (ch === '#' && state.startOfLine) {
             stream.skipToEnd();
             return 'meta';
         }
-        if (ch == '"' || ch == "'") {
+        if (ch === '"' || ch === "'") {
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         }
-        if (ch == '(' && stream.eat('*')) {
+        if (ch === '(' && stream.eat('*')) {
             state.tokenize = tokenComment;
             return tokenComment(stream, state);
         }
@@ -34,7 +37,7 @@ defineMode('pascal', function() {
             stream.eatWhile(/[\w\.]/);
             return 'number';
         }
-        if (ch == '/') {
+        if (ch === '/') {
             if (stream.eat('/')) {
                 stream.skipToEnd();
                 return 'comment';
@@ -46,22 +49,28 @@ defineMode('pascal', function() {
         }
         stream.eatWhile(/[\w\$_]/);
         const cur = stream.current();
-        if (keywords.propertyIsEnumerable(cur)) return 'keyword';
-        if (atoms.propertyIsEnumerable(cur)) return 'atom';
+        if (keywords.propertyIsEnumerable(cur)) {
+            return 'keyword';
+        }
+        if (atoms.propertyIsEnumerable(cur)) {
+            return 'atom';
+        }
         return 'variable';
     }
 
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '\\';
+                escaped = !escaped && next === '\\';
             }
-            if (end || !escaped) state.tokenize = null;
+            if (end || !escaped) {
+                state.tokenize = null;
+            }
             return 'string';
         };
     }
@@ -69,11 +78,11 @@ defineMode('pascal', function() {
     function tokenComment(stream, state) {
         let maybeEnd = false, ch;
         while (ch = stream.next()) {
-            if (ch == ')' && maybeEnd) {
+            if (ch === ')' && maybeEnd) {
                 state.tokenize = null;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
@@ -81,14 +90,18 @@ defineMode('pascal', function() {
     // Interface
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokenize: null};
         },
 
-        token: function(stream, state) {
-            if (stream.eatSpace()) return null;
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
+                return null;
+            }
             const style = (state.tokenize || tokenBase)(stream, state);
-            if (style == 'comment' || style == 'meta') return style;
+            if (style === 'comment' || style === 'meta') {
+                return style;
+            }
             return style;
         },
 

@@ -54,7 +54,9 @@ defineMode('octave', function() {
 
     function tokenBase(stream, state) {
         // whitespaces
-        if (stream.eatSpace()) return null;
+        if (stream.eatSpace()) {
+            return null;
+        }
 
         // Handle one line Comments
         if (stream.match('%{')) {
@@ -122,13 +124,13 @@ defineMode('octave', function() {
 
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             const style = state.tokenize(stream, state);
             if (style === 'number' || style === 'variable') {
                 state.tokenize = tokenTranspose;

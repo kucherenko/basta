@@ -50,7 +50,7 @@ defineMode('django:inner', function() {
 
         // Ignore completely any stream series that do not match the
         // Django template opening tags.
-        while (stream.next() != null && !stream.match(/\{[{%#]/, false)) {
+        while (stream.next() !== null && !stream.match(/\{[{%#]/, false)) {
         }
         return null;
     }
@@ -71,7 +71,7 @@ defineMode('django:inner', function() {
 
                 // Take into account the backslash for escaping characters, such as
                 // the string delimiter.
-                if (ch == '\\') {
+                if (ch === '\\') {
                     state.escapeNext = true;
                 }
             }
@@ -86,7 +86,7 @@ defineMode('django:inner', function() {
         if (state.waitDot) {
             state.waitDot = false;
 
-            if (stream.peek() != '.') {
+            if (stream.peek() !== '.') {
                 return 'null';
             }
 
@@ -105,7 +105,7 @@ defineMode('django:inner', function() {
         if (state.waitPipe) {
             state.waitPipe = false;
 
-            if (stream.peek() != '|') {
+            if (stream.peek() !== '|') {
                 return 'null';
             }
 
@@ -185,7 +185,7 @@ defineMode('django:inner', function() {
         if (state.waitDot) {
             state.waitDot = false;
 
-            if (stream.peek() != '.') {
+            if (stream.peek() !== '.') {
                 return 'null';
             }
 
@@ -204,7 +204,7 @@ defineMode('django:inner', function() {
         if (state.waitPipe) {
             state.waitPipe = false;
 
-            if (stream.peek() != '|') {
+            if (stream.peek() !== '|') {
                 return 'null';
             }
 
@@ -270,7 +270,7 @@ defineMode('django:inner', function() {
         // Attempt to match a keyword
         const keywordMatch = stream.match(keywords);
         if (keywordMatch) {
-            if (keywordMatch[0] == 'comment') {
+            if (keywordMatch[0] === 'comment') {
                 state.blockCommentTag = true;
             }
             return 'keyword';
@@ -307,8 +307,11 @@ defineMode('django:inner', function() {
 
     // Mark everything as comment inside the tag and the tag itself.
     function inComment(stream, state) {
-        if (stream.match(/^.*?#\}/)) state.tokenize = tokenBase;
-        else stream.skipToEnd();
+        if (stream.match(/^.*?#\}/)) {
+            state.tokenize = tokenBase;
+        } else {
+            stream.skipToEnd();
+        }
         return 'comment';
     }
 
@@ -325,10 +328,10 @@ defineMode('django:inner', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokenize: tokenBase};
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             return state.tokenize(stream, state);
         },
         blockCommentStart: '{% comment %}',

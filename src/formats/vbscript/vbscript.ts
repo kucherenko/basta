@@ -118,11 +118,9 @@ defineMode('vbscript', function(conf, parserConf) {
             // Floats
             if (stream.match(/^\d*\.\d+/i)) {
                 floatLiteral = true;
-            }
-            else if (stream.match(/^\d+\.\d*/)) {
+            } else if (stream.match(/^\d+\.\d*/)) {
                 floatLiteral = true;
-            }
-            else if (stream.match(/^\.\d+/)) {
+            } else if (stream.match(/^\.\d+/)) {
                 floatLiteral = true;
             }
 
@@ -136,20 +134,14 @@ defineMode('vbscript', function(conf, parserConf) {
             // Hex
             if (stream.match(/^&H[0-9a-f]+/i)) {
                 intLiteral = true;
-            }
-            // Octal
-            else if (stream.match(/^&O[0-7]+/i)) {
+            } else if (stream.match(/^&O[0-7]+/i)) {
                 intLiteral = true;
-            }
-            // Decimal
-            else if (stream.match(/^[1-9]\d*F?/)) {
+            } else if (stream.match(/^[1-9]\d*F?/)) {
                 // Decimal literals may be "imaginary"
                 stream.eat(/J/i);
                 // TODO - Can you have imaginary longs?
                 intLiteral = true;
-            }
-            // Zero by itself with no other piece of number.
-            else if (stream.match(/^0(?![\dx])/i)) {
+            } else if (stream.match(/^0(?![\dx])/i)) {
                 intLiteral = true;
             }
             if (intLiteral) {
@@ -192,10 +184,11 @@ defineMode('vbscript', function(conf, parserConf) {
             return 'keyword';
         }
         if (stream.match(opening)) {
-            if (!state.doInCurrentLine)
+            if (!state.doInCurrentLine) {
                 indent(stream, state);
-            else
+            } else {
                 state.doInCurrentLine = false;
+            }
 
             return 'keyword';
         }
@@ -211,10 +204,11 @@ defineMode('vbscript', function(conf, parserConf) {
             return 'keyword';
         }
         if (stream.match(closing)) {
-            if (!state.doInCurrentLine)
+            if (!state.doInCurrentLine) {
                 dedent(stream, state);
-            else
+            } else {
                 state.doInCurrentLine = false;
+            }
 
             return 'keyword';
         }
@@ -249,10 +243,10 @@ defineMode('vbscript', function(conf, parserConf) {
     }
 
     function tokenStringFactory(delimiter) {
-        const singleline = delimiter.length == 1;
+        const singleline = delimiter.length === 1;
         const OUTCLASS = 'string';
 
-        return function(stream, state) {
+        return (stream, state) => {
             while (!stream.eol()) {
                 stream.eatWhile(/[^'"]/);
                 if (stream.match(delimiter)) {
@@ -284,8 +278,12 @@ defineMode('vbscript', function(conf, parserConf) {
 
             current = stream.current();
             if (style && (style.substr(0, 8) === 'variable' || style === 'builtin' || style === 'keyword')) {//|| knownWords.indexOf(current.substring(1)) > -1) {
-                if (style === 'builtin' || style === 'keyword') style = 'variable';
-                if (knownWords.indexOf(current.substr(1)) > -1) style = 'variable-2';
+                if (style === 'builtin' || style === 'keyword') {
+                    style = 'variable';
+                }
+                if (knownWords.indexOf(current.substr(1)) > -1) {
+                    style = 'variable-2';
+                }
 
                 return style;
             } else {
@@ -298,7 +296,7 @@ defineMode('vbscript', function(conf, parserConf) {
 
     const external = {
         electricChars: 'dDpPtTfFeE ',
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 lastToken: null,
@@ -311,7 +309,7 @@ defineMode('vbscript', function(conf, parserConf) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
                 state.currentIndent += state.nextLineIndent;
                 state.nextLineIndent = 0;
@@ -321,15 +319,21 @@ defineMode('vbscript', function(conf, parserConf) {
 
             state.lastToken = {style: style, content: stream.current()};
 
-            if (style === 'space') style = null;
+            if (style === 'space') {
+                style = null;
+            }
 
             return style;
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             const trueText = textAfter.replace(/^\s+|\s+$/g, '');
-            if (trueText.match(closing) || trueText.match(doubleClosing) || trueText.match(middle)) return conf.indentUnit * (state.currentIndent - 1);
-            if (state.currentIndent < 0) return 0;
+            if (trueText.match(closing) || trueText.match(doubleClosing) || trueText.match(middle)) {
+                return conf.indentUnit * (state.currentIndent - 1);
+            }
+            if (state.currentIndent < 0) {
+                return 0;
+            }
             return state.currentIndent * conf.indentUnit;
         }
 

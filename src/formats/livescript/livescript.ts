@@ -32,16 +32,17 @@ defineMode('livescript', function() {
         return 'error';
     };
     const external = {
-        startState: function() {
+        startState: () => {
             return {
                 next: 'start',
                 lastToken: {style: null, indent: 0, content: ''}
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             let style;
-            while (stream.pos == stream.start)
+            while (stream.pos === stream.start) {
                 style = tokenBase(stream, state);
+            }
             state.lastToken = {
                 style: style,
                 indent: stream.indentation(),
@@ -49,7 +50,7 @@ defineMode('livescript', function() {
             };
             return style.replace(/\./g, ' ');
         },
-        indent: function(state) {
+        indent: (state) => {
             let indentation = state.lastToken.indent;
             if (state.lastToken.content.match(indenter)) {
                 indentation += 2;

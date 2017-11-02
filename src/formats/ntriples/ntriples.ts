@@ -23,48 +23,58 @@ defineMode('ntriples', function() {
         let ret;
 
         // Opening.
-        if (currLocation == Location.PRE_SUBJECT && c == '<') ret = Location.WRITING_SUB_URI;
-        else if (currLocation == Location.PRE_SUBJECT && c == '_') ret = Location.WRITING_BNODE_URI;
-        else if (currLocation == Location.PRE_PRED && c == '<') ret = Location.WRITING_PRED_URI;
-        else if (currLocation == Location.PRE_OBJ && c == '<') ret = Location.WRITING_OBJ_URI;
-        else if (currLocation == Location.PRE_OBJ && c == '_') ret = Location.WRITING_OBJ_BNODE;
-        else if (currLocation == Location.PRE_OBJ && c == '"') ret = Location.WRITING_OBJ_LITERAL;
-
-        // Closing.
-        else if (currLocation == Location.WRITING_SUB_URI && c == '>') ret = Location.PRE_PRED;
-        else if (currLocation == Location.WRITING_BNODE_URI && c == ' ') ret = Location.PRE_PRED;
-        else if (currLocation == Location.WRITING_PRED_URI && c == '>') ret = Location.PRE_OBJ;
-        else if (currLocation == Location.WRITING_OBJ_URI && c == '>') ret = Location.POST_OBJ;
-        else if (currLocation == Location.WRITING_OBJ_BNODE && c == ' ') ret = Location.POST_OBJ;
-        else if (currLocation == Location.WRITING_OBJ_LITERAL && c == '"') ret = Location.POST_OBJ;
-        else if (currLocation == Location.WRITING_LIT_LANG && c == ' ') ret = Location.POST_OBJ;
-        else if (currLocation == Location.WRITING_LIT_TYPE && c == '>') ret = Location.POST_OBJ;
-
-        // Closing typed and language literal.
-        else if (currLocation == Location.WRITING_OBJ_LITERAL && c == '@') ret = Location.WRITING_LIT_LANG;
-        else if (currLocation == Location.WRITING_OBJ_LITERAL && c == '^') ret = Location.WRITING_LIT_TYPE;
-
-        // Spaces.
-        else if (c == ' ' &&
+        if (currLocation === Location.PRE_SUBJECT && c === '<') {
+            ret = Location.WRITING_SUB_URI;
+        } else if (currLocation === Location.PRE_SUBJECT && c === '_') {
+            ret = Location.WRITING_BNODE_URI;
+        } else if (currLocation === Location.PRE_PRED && c === '<') {
+            ret = Location.WRITING_PRED_URI;
+        } else if (currLocation === Location.PRE_OBJ && c === '<') {
+            ret = Location.WRITING_OBJ_URI;
+        } else if (currLocation === Location.PRE_OBJ && c === '_') {
+            ret = Location.WRITING_OBJ_BNODE;
+        } else if (currLocation === Location.PRE_OBJ && c === '"') {
+            ret = Location.WRITING_OBJ_LITERAL;
+        } else if (currLocation === Location.WRITING_SUB_URI && c === '>') {
+            ret = Location.PRE_PRED;
+        } else if (currLocation === Location.WRITING_BNODE_URI && c === ' ') {
+            ret = Location.PRE_PRED;
+        } else if (currLocation === Location.WRITING_PRED_URI && c === '>') {
+            ret = Location.PRE_OBJ;
+        } else if (currLocation === Location.WRITING_OBJ_URI && c === '>') {
+            ret = Location.POST_OBJ;
+        } else if (currLocation === Location.WRITING_OBJ_BNODE && c === ' ') {
+            ret = Location.POST_OBJ;
+        } else if (currLocation === Location.WRITING_OBJ_LITERAL && c === '"') {
+            ret = Location.POST_OBJ;
+        } else if (currLocation === Location.WRITING_LIT_LANG && c === ' ') {
+            ret = Location.POST_OBJ;
+        } else if (currLocation === Location.WRITING_LIT_TYPE && c === '>') {
+            ret = Location.POST_OBJ;
+        } else if (currLocation === Location.WRITING_OBJ_LITERAL && c === '@') {
+            ret = Location.WRITING_LIT_LANG;
+        } else if (currLocation === Location.WRITING_OBJ_LITERAL && c === '^') {
+            ret = Location.WRITING_LIT_TYPE;
+        } else if (c === ' ' &&
             (
-                currLocation == Location.PRE_SUBJECT ||
-                currLocation == Location.PRE_PRED ||
-                currLocation == Location.PRE_OBJ ||
-                currLocation == Location.POST_OBJ
+                currLocation === Location.PRE_SUBJECT ||
+                currLocation === Location.PRE_PRED ||
+                currLocation === Location.PRE_OBJ ||
+                currLocation === Location.POST_OBJ
             )
-        ) ret = currLocation;
-
-        // Reset.
-        else if (currLocation == Location.POST_OBJ && c == '.') ret = Location.PRE_SUBJECT;
-
-        // Error
-        else ret = Location.ERROR;
+        ) {
+            ret = currLocation;
+        } else if (currLocation === Location.POST_OBJ && c === '.') {
+            ret = Location.PRE_SUBJECT;
+        } else {
+            ret = Location.ERROR;
+        }
 
         currState.location = ret;
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 location: Location.PRE_SUBJECT,
                 uris: [],
@@ -74,28 +84,30 @@ defineMode('ntriples', function() {
                 types: []
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             const ch = stream.next();
-            if (ch == '<') {
+            if (ch === '<') {
                 transitState(state, ch);
                 let parsedURI = '';
                 stream.eatWhile(function(c) {
-                    if (c != '#' && c != '>') {
+                    if (c !== '#' && c !== '>') {
                         parsedURI += c;
                         return true;
                     }
                     return false;
                 });
                 state.uris.push(parsedURI);
-                if (stream.match('#', false)) return 'variable';
+                if (stream.match('#', false)) {
+                    return 'variable';
+                }
                 stream.next();
                 transitState(state, '>');
                 return 'variable';
             }
-            if (ch == '#') {
+            if (ch === '#') {
                 let parsedAnchor = '';
                 stream.eatWhile(function(c) {
-                    if (c != '>' && c != ' ') {
+                    if (c !== '>' && c !== ' ') {
                         parsedAnchor += c;
                         return true;
                     }
@@ -104,15 +116,15 @@ defineMode('ntriples', function() {
                 state.anchors.push(parsedAnchor);
                 return 'variable-2';
             }
-            if (ch == '>') {
+            if (ch === '>') {
                 transitState(state, '>');
                 return 'variable';
             }
-            if (ch == '_') {
+            if (ch === '_') {
                 transitState(state, ch);
                 let parsedBNode = '';
                 stream.eatWhile(function(c) {
-                    if (c != ' ') {
+                    if (c !== ' ') {
                         parsedBNode += c;
                         return true;
                     }
@@ -123,22 +135,22 @@ defineMode('ntriples', function() {
                 transitState(state, ' ');
                 return 'builtin';
             }
-            if (ch == '"') {
+            if (ch === '"') {
                 transitState(state, ch);
                 stream.eatWhile(function(c) {
-                    return c != '"';
+                    return c !== '"';
                 });
                 stream.next();
-                if (stream.peek() != '@' && stream.peek() != '^') {
+                if (stream.peek() !== '@' && stream.peek() !== '^') {
                     transitState(state, '"');
                 }
                 return 'string';
             }
-            if (ch == '@') {
+            if (ch === '@') {
                 transitState(state, '@');
                 let parsedLang = '';
                 stream.eatWhile(function(c) {
-                    if (c != ' ') {
+                    if (c !== ' ') {
                         parsedLang += c;
                         return true;
                     }
@@ -149,12 +161,12 @@ defineMode('ntriples', function() {
                 transitState(state, ' ');
                 return 'string-2';
             }
-            if (ch == '^') {
+            if (ch === '^') {
                 stream.next();
                 transitState(state, '^');
                 let parsedType = '';
                 stream.eatWhile(function(c) {
-                    if (c != '>') {
+                    if (c !== '>') {
                         parsedType += c;
                         return true;
                     }
@@ -165,10 +177,10 @@ defineMode('ntriples', function() {
                 transitState(state, '>');
                 return 'variable';
             }
-            if (ch == ' ') {
+            if (ch === ' ') {
                 transitState(state, ch);
             }
-            if (ch == '.') {
+            if (ch === '.') {
                 transitState(state, ch);
             }
         }

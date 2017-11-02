@@ -1,11 +1,10 @@
 #Navigation Map for Basta Copy/Paste Detection Tool
 
-
 ##Version: **1.x**
  - ~~Export basta API~~
  - ~~Tokens reducers~~
  - ~~Config file processing~~
- - ~~Custom reporter
+ - ~~Custom reporter~~
     - ~~register reporters~~
     - ~~register existing reporters~~
  - ~~Threshold~~
@@ -15,7 +14,7 @@
     - options for custom storage
  - Blame
  - ~~add help command for get all supported formats~~
- - file for execute as cli
+ - ~~file for execute as cli~~
  - Documentation 
 
 ##Version: **2.x**
@@ -30,6 +29,7 @@
     - sublimetext?
     - eclipse/netbeans?
 - move reporters to separate packages
+- optimize algorithm 
 
 ##Improvements && bugs:
   - ~~Improve JSX tokenizer~~

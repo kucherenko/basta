@@ -3,7 +3,9 @@ import {defineMIME, defineMode} from '../index';
 defineMode('sieve', function(config) {
     function words(str) {
         const obj = {}, words = str.split(' ');
-        for (let i = 0; i < words.length; ++i) obj[words[i]] = true;
+        for (let i = 0; i < words.length; ++i) {
+            obj[words[i]] = true;
+        }
         return obj;
     }
 
@@ -14,7 +16,7 @@ defineMode('sieve', function(config) {
     function tokenBase(stream, state) {
 
         const ch = stream.next();
-        if (ch == '/' && stream.eat('*')) {
+        if (ch === '/' && stream.eat('*')) {
             state.tokenize = tokenCComment;
             return tokenCComment(stream, state);
         }
@@ -24,12 +26,12 @@ defineMode('sieve', function(config) {
             return 'comment';
         }
 
-        if (ch == '"') {
+        if (ch === '"') {
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         }
 
-        if (ch == '(') {
+        if (ch === '(') {
             state._indent.push('(');
             // add virtual angel wings so that editor behaves...
             // ...more sane incase of broken brackets
@@ -42,7 +44,7 @@ defineMode('sieve', function(config) {
             return null;
         }
 
-        if (ch == ')') {
+        if (ch === ')') {
             state._indent.pop();
             state._indent.pop();
         }
@@ -52,15 +54,18 @@ defineMode('sieve', function(config) {
             return null;
         }
 
-        if (ch == ',')
+        if (ch === ',') {
             return null;
+        }
 
-        if (ch == ';')
+        if (ch === ';') {
             return null;
+        }
 
 
-        if (/[{}\(\),;]/.test(ch))
+        if (/[{}\(\),;]/.test(ch)) {
             return null;
+        }
 
         // 1*DIGIT "K" / "M" / "G"
         if (/\d/.test(ch)) {
@@ -70,7 +75,7 @@ defineMode('sieve', function(config) {
         }
 
         // ":" (ALPHA / "_") *(ALPHA / DIGIT / "_")
-        if (ch == ':') {
+        if (ch === ':') {
             stream.eatWhile(/[a-zA-Z_]/);
             stream.eatWhile(/[a-zA-Z0-9_]/);
 
@@ -83,16 +88,18 @@ defineMode('sieve', function(config) {
         // "text:" *(SP / HTAB) (hash-comment / CRLF)
         // *(multiline-literal / multiline-dotstart)
         // "." CRLF
-        if ((cur == 'text') && stream.eat(':')) {
+        if ((cur === 'text') && stream.eat(':')) {
             state.tokenize = tokenMultiLineString;
             return 'string';
         }
 
-        if (keywords.propertyIsEnumerable(cur))
+        if (keywords.propertyIsEnumerable(cur)) {
             return 'keyword';
+        }
 
-        if (atoms.propertyIsEnumerable(cur))
+        if (atoms.propertyIsEnumerable(cur)) {
             return 'atom';
+        }
 
         return null;
     }
@@ -103,7 +110,7 @@ defineMode('sieve', function(config) {
         if (!stream.sol()) {
             stream.eatSpace();
 
-            if (stream.peek() == '#') {
+            if (stream.peek() === '#') {
                 stream.skipToEnd();
                 return 'comment';
             }
@@ -112,7 +119,7 @@ defineMode('sieve', function(config) {
             return 'string';
         }
 
-        if ((stream.next() == '.') && (stream.eol())) {
+        if ((stream.next() === '.') && (stream.eol())) {
             state._multiLineString = false;
             state.tokenize = tokenBase;
         }
@@ -122,12 +129,12 @@ defineMode('sieve', function(config) {
 
     function tokenCComment(stream, state) {
         let maybeEnd = false, ch;
-        while ((ch = stream.next()) != null) {
-            if (maybeEnd && ch == '/') {
+        while ((ch = stream.next()) !== null) {
+            if (maybeEnd && ch === '/') {
                 state.tokenize = tokenBase;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
@@ -135,12 +142,15 @@ defineMode('sieve', function(config) {
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, ch;
-            while ((ch = stream.next()) != null) {
-                if (ch == quote && !escaped)
+            while ((ch = stream.next()) !== null) {
+                if (ch === quote && !escaped) {
                     break;
-                escaped = !escaped && ch == '\\';
+                }
+                escaped = !escaped && ch === '\\';
             }
-            if (!escaped) state.tokenize = tokenBase;
+            if (!escaped) {
+                state.tokenize = tokenBase;
+            }
             return 'string';
         };
     }
@@ -154,20 +164,23 @@ defineMode('sieve', function(config) {
             };
         },
 
-        token: function(stream, state) {
-            if (stream.eatSpace())
+        token: (stream, state) => {
+            if (stream.eatSpace()) {
                 return null;
+            }
 
             return (state.tokenize || tokenBase)(stream, state);
         },
 
         indent: function(state, _textAfter) {
             let length = state._indent.length;
-            if (_textAfter && (_textAfter[0] == '}'))
+            if (_textAfter && (_textAfter[0] === '}')) {
                 length--;
+            }
 
-            if (length < 0)
+            if (length < 0) {
                 length = 0;
+            }
 
             return length * indentUnit;
         },

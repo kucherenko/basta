@@ -1,7 +1,10 @@
 import {defineMIME, defineMode} from '../index';
+
 function wordSet(words) {
     const set = {};
-    for (let i = 0; i < words.length; i++) set[words[i]] = true;
+    for (let i = 0; i < words.length; i++) {
+        set[words[i]] = true;
+    }
     return set;
 }
 
@@ -29,11 +32,15 @@ const attribute = /^@(?:\$\d+|(`?)[_A-Za-z][_A-Za-z$0-9]*\1)/;
 //let regexp = /^\/(?!\s)(?:\/\/)?(?:\\.|[^\/])+\//
 
 function tokenBase(stream, state, prev) {
-    if (stream.sol()) state.indented = stream.indentation();
-    if (stream.eatSpace()) return null;
+    if (stream.sol()) {
+        state.indented = stream.indentation();
+    }
+    if (stream.eatSpace()) {
+        return null;
+    }
 
     const ch = stream.peek();
-    if (ch == '/') {
+    if (ch === '/') {
         if (stream.match('//')) {
             stream.skipToEnd();
             return 'comment';
@@ -43,13 +50,27 @@ function tokenBase(stream, state, prev) {
             return tokenComment(stream, state);
         }
     }
-    if (stream.match(instruction)) return 'builtin';
-    if (stream.match(attribute)) return 'attribute';
-    if (stream.match(binary)) return 'number';
-    if (stream.match(octal)) return 'number';
-    if (stream.match(hexadecimal)) return 'number';
-    if (stream.match(decimal)) return 'number';
-    if (stream.match(property)) return 'property';
+    if (stream.match(instruction)) {
+        return 'builtin';
+    }
+    if (stream.match(attribute)) {
+        return 'attribute';
+    }
+    if (stream.match(binary)) {
+        return 'number';
+    }
+    if (stream.match(octal)) {
+        return 'number';
+    }
+    if (stream.match(hexadecimal)) {
+        return 'number';
+    }
+    if (stream.match(decimal)) {
+        return 'number';
+    }
+    if (stream.match(property)) {
+        return 'property';
+    }
     if (operators.indexOf(ch) > -1) {
         stream.next();
         return 'operator';
@@ -59,7 +80,7 @@ function tokenBase(stream, state, prev) {
         stream.match('..');
         return 'punctuation';
     }
-    if (ch == '"' || ch == "'") {
+    if (ch === '"' || ch === "'") {
         stream.next();
         const tokenize = tokenString(ch);
         state.tokenize.push(tokenize);
@@ -68,14 +89,21 @@ function tokenBase(stream, state, prev) {
 
     if (stream.match(identifier)) {
         const ident = stream.current();
-        if (types.hasOwnProperty(ident)) return 'variable-2';
-        if (atoms.hasOwnProperty(ident)) return 'atom';
+        if (types.hasOwnProperty(ident)) {
+            return 'variable-2';
+        }
+        if (atoms.hasOwnProperty(ident)) {
+            return 'atom';
+        }
         if (keywords.hasOwnProperty(ident)) {
-            if (definingKeywords.hasOwnProperty(ident))
+            if (definingKeywords.hasOwnProperty(ident)) {
                 state.prev = 'define';
+            }
             return 'keyword';
         }
-        if (prev == 'define') return 'def';
+        if (prev === 'define') {
+            return 'def';
+        }
         return 'variable';
     }
 
@@ -87,15 +115,17 @@ function tokenUntilClosingParen() {
     let depth = 0;
     return function(stream, state, prev) {
         const inner = tokenBase(stream, state, prev);
-        if (inner == 'punctuation') {
-            if (stream.current() == '(') ++depth;
-            else if (stream.current() == ')') {
-                if (depth == 0) {
+        if (inner === 'punctuation') {
+            if (stream.current() === '(') {
+                ++depth;
+            } else if (stream.current() === ')') {
+                if (depth === 0) {
                     stream.backUp(1);
                     state.tokenize.pop();
                     return state.tokenize[state.tokenize.length - 1](stream, state);
+                } else {
+                    --depth;
                 }
-                else --depth;
             }
         }
         return inner;
@@ -107,15 +137,15 @@ function tokenString(quote) {
         let ch, escaped = false;
         while (ch = stream.next()) {
             if (escaped) {
-                if (ch == '(') {
+                if (ch === '(') {
                     state.tokenize.push(tokenUntilClosingParen());
                     return 'string';
                 }
                 escaped = false;
-            } else if (ch == quote) {
+            } else if (ch === quote) {
                 break;
             } else {
-                escaped = ch == '\\';
+                escaped = ch === '\\';
             }
         }
         state.tokenize.pop();
@@ -125,7 +155,9 @@ function tokenString(quote) {
 
 function tokenComment(stream, state) {
     stream.match(/^(?:[^*]|\*(?!\/))*/);
-    if (stream.match('*/')) state.tokenize.pop();
+    if (stream.match('*/')) {
+        state.tokenize.pop();
+    }
     return 'comment';
 }
 
@@ -149,7 +181,7 @@ function popContext(state) {
 
 defineMode('swift', function(config) {
     return {
-        startState: function() {
+        startState: () => {
             return {
                 prev: null,
                 context: null,
@@ -158,27 +190,36 @@ defineMode('swift', function(config) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             const prev = state.prev;
             state.prev = null;
             const tokenize = state.tokenize[state.tokenize.length - 1] || tokenBase;
             const style = tokenize(stream, state, prev);
-            if (!style || style == 'comment') state.prev = prev;
-            else if (!state.prev) state.prev = style;
+            if (!style || style === 'comment') {
+                state.prev = prev;
+            } else if (!state.prev) {
+                state.prev = style;
+            }
 
-            if (style == 'punctuation') {
+            if (style === 'punctuation') {
                 const bracket = /[\(\[\{]|([\]\)\}])/.exec(stream.current());
-                if (bracket) (bracket[1] ? popContext : pushContext)(state, stream);
+                if (bracket) {
+                    (bracket[1] ? popContext : pushContext)(state, stream);
+                }
             }
 
             return style;
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             const cx = state.context;
-            if (!cx) return 0;
+            if (!cx) {
+                return 0;
+            }
             const closing = /^[\]\}\)]/.test(textAfter);
-            if (cx.align != null) return cx.align - (closing ? 1 : 0);
+            if (cx.align !== null) {
+                return cx.align - (closing ? 1 : 0);
+            }
             return cx.indented + (closing ? 0 : config.indentUnit);
         },
 

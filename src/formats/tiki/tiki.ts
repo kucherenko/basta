@@ -1,7 +1,7 @@
 import {defineMIME, defineMode} from '../index';
 
 defineMode('tiki', function(config) {
-    function inBlock(style, terminator, returnTokenizer = undefined) {
+    function inBlock(style, terminator, returnTokenizer?) {
         return function(stream, state) {
             while (!stream.eol()) {
                 if (stream.match(terminator)) {
@@ -11,7 +11,9 @@ defineMode('tiki', function(config) {
                 stream.next();
             }
 
-            if (returnTokenizer) state.tokenize = returnTokenizer;
+            if (returnTokenizer) {
+                state.tokenize = returnTokenizer;
+            }
 
             return style;
         };
@@ -45,22 +47,26 @@ defineMode('tiki', function(config) {
                 state.tokenize = inPlugin;
                 return 'tag';
             case '_': //bold
-                if (stream.eat('_'))
+                if (stream.eat('_')) {
                     return chain(inBlock('strong', '__', inText));
+                }
                 break;
             case "'": //italics
-                if (stream.eat("'"))
+                if (stream.eat("'")) {
                     return chain(inBlock('em', "''", inText));
+                }
                 break;
             case '(':// Wiki Link
-                if (stream.eat('('))
+                if (stream.eat('(')) {
                     return chain(inBlock('variable-2', '))', inText));
+                }
                 break;
             case '[':// Weblink
                 return chain(inBlock('variable-3', ']', inText));
             case '|': //table
-                if (stream.eat('|'))
+                if (stream.eat('|')) {
                     return chain(inBlock('comment', '||'));
+                }
                 break;
             case '-':
                 if (stream.eat('=')) {//titleBar
@@ -70,18 +76,21 @@ defineMode('tiki', function(config) {
                 }
                 break;
             case '=': //underline
-                if (stream.match('=='))
+                if (stream.match('==')) {
                     return chain(inBlock('tw-underline', '===', inText));
+                }
                 break;
             case ':':
-                if (stream.eat(':'))
+                if (stream.eat(':')) {
                     return chain(inBlock('comment', '::'));
+                }
                 break;
             case '^': //box
                 return chain(inBlock('tw-box', '^'));
             case '~': //np
-                if (stream.match('np~'))
+                if (stream.match('np~')) {
                     return chain(inBlock('meta', '~/np~'));
+                }
                 break;
         }
 
@@ -120,16 +129,16 @@ defineMode('tiki', function(config) {
         const ch = stream.next();
         let peek = stream.peek();
 
-        if (ch == '}') {
+        if (ch === '}') {
             state.tokenize = inText;
-            //type = ch == ")" ? "endPlugin" : "selfclosePlugin"; inPlugin
+            //type = ch === ")" ? "endPlugin" : "selfclosePlugin"; inPlugin
             return 'tag';
-        } else if (ch == '(' || ch == ')') {
+        } else if (ch === '(' || ch === ')') {
             return 'bracket';
-        } else if (ch == '=') {
+        } else if (ch === '=') {
             type = 'equals';
 
-            if (peek == '>') {
+            if (peek === '>') {
                 stream.next();
                 peek = stream.peek();
             }
@@ -153,7 +162,7 @@ defineMode('tiki', function(config) {
     function inAttribute(quote) {
         return function(stream, state) {
             while (!stream.eol()) {
-                if (stream.next() == quote) {
+                if (stream.next() === quote) {
                     state.tokenize = inPlugin;
                     break;
                 }
@@ -167,7 +176,7 @@ defineMode('tiki', function(config) {
             while (!stream.eol()) {
                 const ch = stream.next();
                 const peek = stream.peek();
-                if (ch == ' ' || ch == ',' || /[ )}]/.test(peek)) {
+                if (ch === ' ' || ch === ',' || /[ )}]/.test(peek)) {
                     state.tokenize = inPlugin;
                     break;
                 }
@@ -179,7 +188,9 @@ defineMode('tiki', function(config) {
     let curState, setStyle;
 
     function pass() {
-        for (let i = arguments.length - 1; i >= 0; i--) curState.cc.push(arguments[i]);
+        for (let i = arguments.length - 1; i >= 0; i--) {
+            curState.cc.push(arguments[i]);
+        }
     }
 
     function cont(...args) {
@@ -187,7 +198,7 @@ defineMode('tiki', function(config) {
         return true;
     }
 
-    function pushContext(pluginName, startOfLine = undefined) {
+    function pushContext(pluginName, startOfLine?) {
         const noIndent = curState.context && curState.context.noIndent;
         curState.context = {
             prev: curState.context,
@@ -199,41 +210,49 @@ defineMode('tiki', function(config) {
     }
 
     function popContext() {
-        if (curState.context) curState.context = curState.context.prev;
+        if (curState.context) {
+            curState.context = curState.context.prev;
+        }
     }
 
     function element(type) {
-        if (type == 'openPlugin') {
+        if (type === 'openPlugin') {
             curState.pluginName = pluginName;
             return cont(attributes, endplugin(curState.startOfLine));
-        }
-        else if (type == 'closePlugin') {
+        } else if (type === 'closePlugin') {
             let err = false;
             if (curState.context) {
-                err = curState.context.pluginName != pluginName;
+                err = curState.context.pluginName !== pluginName;
                 popContext();
             } else {
                 err = true;
             }
-            if (err) setStyle = 'error';
+            if (err) {
+                setStyle = 'error';
+            }
             return cont(endcloseplugin(err));
-        }
-        else if (type == 'string') {
-            if (!curState.context || curState.context.name != '!cdata') pushContext('!cdata');
-            if (curState.tokenize == inText) popContext();
+        } else if (type === 'string') {
+            if (!curState.context || curState.context.name !== '!cdata') {
+                pushContext('!cdata');
+            }
+            if (curState.tokenize === inText) {
+                popContext();
+            }
+            return cont();
+        } else {
             return cont();
         }
-        else return cont();
     }
 
     function endplugin(startOfLine) {
         return function(type) {
             if (
-                type == 'selfclosePlugin' ||
-                type == 'endPlugin'
-            )
+                type === 'selfclosePlugin' ||
+                type === 'endPlugin'
+            ) {
                 return cont();
-            if (type == 'endPlugin') {
+            }
+            if (type === 'endPlugin') {
                 pushContext(curState.pluginName, startOfLine);
                 return cont();
             }
@@ -243,67 +262,89 @@ defineMode('tiki', function(config) {
 
     function endcloseplugin(err) {
         return function(type) {
-            if (err) setStyle = 'error';
-            if (type == 'endPlugin') return cont();
+            if (err) {
+                setStyle = 'error';
+            }
+            if (type === 'endPlugin') {
+                return cont();
+            }
             return pass();
         };
     }
 
     function attributes(type) {
-        if (type == 'keyword') {
+        if (type === 'keyword') {
             setStyle = 'attribute';
             return cont(attributes);
         }
-        if (type == 'equals') return cont(attvalue, attributes);
+        if (type === 'equals') {
+            return cont(attvalue, attributes);
+        }
         return pass();
     }
 
     function attvalue(type) {
-        if (type == 'keyword') {
+        if (type === 'keyword') {
             setStyle = 'string';
             return cont();
         }
-        if (type == 'string') return cont(attvaluemaybe);
+        if (type === 'string') {
+            return cont(attvaluemaybe);
+        }
         return pass();
     }
 
     function attvaluemaybe(type) {
-        if (type == 'string') return cont(attvaluemaybe);
-        else return pass();
+        if (type === 'string') {
+            return cont(attvaluemaybe);
+        } else {
+            return pass();
+        }
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokenize: inText, cc: [], indented: 0, startOfLine: true, pluginName: null, context: null};
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
                 state.startOfLine = true;
                 state.indented = stream.indentation();
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
 
             setStyle = type = pluginName = null;
             const style = state.tokenize(stream, state);
-            if ((style || type) && style != 'comment') {
+            if ((style || type) && style !== 'comment') {
                 curState = state;
                 while (true) {
                     const comb = state.cc.pop() || element;
-                    if (comb(type || style)) break;
+                    if (comb(type || style)) {
+                        break;
+                    }
                 }
             }
             state.startOfLine = false;
             return setStyle || style;
         },
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             let context = state.context;
-            if (context && context.noIndent) return 0;
-            if (context && /^{\//.test(textAfter))
+            if (context && context.noIndent) {
+                return 0;
+            }
+            if (context && /^{\//.test(textAfter)) {
                 context = context.prev;
-            while (context && !context.startOfLine)
+            }
+            while (context && !context.startOfLine) {
                 context = context.prev;
-            if (context) return context.indent + indentUnit;
-            else return 0;
+            }
+            if (context) {
+                return context.indent + indentUnit;
+            } else {
+                return 0;
+            }
         },
         electricChars: '/'
     };

@@ -7,7 +7,7 @@ defineMode('haml', function(config) {
     function rubyInQuote(endQuote) {
         return function(stream, state) {
             const ch = stream.peek();
-            if (ch == endQuote && state.rubyState.tokenize.length == 1) {
+            if (ch === endQuote && state.rubyState.tokenize.length === 1) {
                 // step out of ruby context as it seems to complete processing all the braces
                 stream.next();
                 state.tokenize = html;
@@ -31,7 +31,7 @@ defineMode('haml', function(config) {
 
         // handle haml declarations. All declarations that cant be handled here
         // will be passed to html mode
-        if (state.previousToken.style == 'comment') {
+        if (state.previousToken.style === 'comment') {
             if (state.indented > state.previousToken.indented) {
                 stream.skipToEnd();
                 return 'commentLine';
@@ -39,7 +39,7 @@ defineMode('haml', function(config) {
         }
 
         if (state.startOfLine) {
-            if (ch == '!' && stream.match('!!')) {
+            if (ch === '!' && stream.match('!!')) {
                 stream.skipToEnd();
                 return 'tag';
             } else if (stream.match(/^%[\w:#\.]+=/)) {
@@ -47,32 +47,32 @@ defineMode('haml', function(config) {
                 return 'hamlTag';
             } else if (stream.match(/^%[\w:]+/)) {
                 return 'hamlTag';
-            } else if (ch == '/') {
+            } else if (ch === '/') {
                 stream.skipToEnd();
                 return 'comment';
             }
         }
 
-        if (state.startOfLine || state.previousToken.style == 'hamlTag') {
-            if (ch == '#' || ch == '.') {
+        if (state.startOfLine || state.previousToken.style === 'hamlTag') {
+            if (ch === '#' || ch === '.') {
                 stream.match(/[\w-#\.]*/);
                 return 'hamlAttribute';
             }
         }
 
         // donot handle --> as valid ruby, make it HTML close comment instead
-        if (state.startOfLine && !stream.match('-->', false) && (ch == '=' || ch == '-')) {
+        if (state.startOfLine && !stream.match('-->', false) && (ch === '=' || ch === '-')) {
             state.tokenize = ruby;
             return state.tokenize(stream, state);
         }
 
-        if (state.previousToken.style == 'hamlTag' ||
-            state.previousToken.style == 'closeAttributeTag' ||
-            state.previousToken.style == 'hamlAttribute') {
-            if (ch == '(') {
+        if (state.previousToken.style === 'hamlTag' ||
+            state.previousToken.style === 'closeAttributeTag' ||
+            state.previousToken.style === 'hamlAttribute') {
+            if (ch === '(') {
                 state.tokenize = rubyInQuote(')');
                 return state.tokenize(stream, state);
-            } else if (ch == '{') {
+            } else if (ch === '{') {
                 if (!stream.match(/^\{%.*/)) {
                     state.tokenize = rubyInQuote('}');
                     return state.tokenize(stream, state);
@@ -85,7 +85,7 @@ defineMode('haml', function(config) {
 
     return {
         // default to html mode
-        startState: function() {
+        startState: () => {
             const htmlState = startState(htmlMode);
             const rubyState = startState(rubyMode);
             return {
@@ -97,7 +97,7 @@ defineMode('haml', function(config) {
             };
         },
 
-        copyState: function(state) {
+        copyState: (state) => {
             return {
                 htmlState: copyState(htmlMode, state.htmlState),
                 rubyState: copyState(rubyMode, state.rubyState),
@@ -107,37 +107,39 @@ defineMode('haml', function(config) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
                 state.indented = stream.indentation();
                 state.startOfLine = true;
             }
-            if (stream.eatSpace()) return null;
+            if (stream.eatSpace()) {
+                return null;
+            }
             let style = state.tokenize(stream, state);
             state.startOfLine = false;
             // dont record comment line as we only want to measure comment line with
             // the opening comment block
-            if (style && style != 'commentLine') {
+            if (style && style !== 'commentLine') {
                 state.previousToken = {style: style, indented: state.indented};
             }
             // if current state is ruby and the previous token is not `,` reset the
             // tokenize to html
-            if (stream.eol() && state.tokenize == ruby) {
+            if (stream.eol() && state.tokenize === ruby) {
                 stream.backUp(1);
                 const ch = stream.peek();
                 stream.next();
-                if (ch && ch != ',') {
+                if (ch && ch !== ',') {
                     state.tokenize = html;
                 }
             }
             // reprocess some of the specific style tag when finish setting previousToken
-            if (style == 'hamlTag') {
+            if (style === 'hamlTag') {
                 style = 'tag';
-            } else if (style == 'commentLine') {
+            } else if (style === 'commentLine') {
                 style = 'comment';
-            } else if (style == 'hamlAttribute') {
+            } else if (style === 'hamlAttribute') {
                 style = 'attribute';
-            } else if (style == 'closeAttributeTag') {
+            } else if (style === 'closeAttributeTag') {
                 style = null;
             }
             return style;

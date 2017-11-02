@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('http', function() {
     function failFirstLine(stream, state) {
         stream.skipToEnd();
@@ -20,7 +21,9 @@ defineMode('http', function() {
 
     function responseStatusCode(stream, state) {
         const code = stream.match(/^\d+/);
-        if (!code) return failFirstLine(stream, state);
+        if (!code) {
+            return failFirstLine(stream, state);
+        }
 
         state.cur = responseStatusText;
         const status = Number(code[0]);
@@ -80,9 +83,11 @@ defineMode('http', function() {
     }
 
     return {
-        token: function(stream, state) {
+        token: (stream, state) => {
             const cur = state.cur;
-            if (cur != header && cur != body && stream.eatSpace()) return null;
+            if (cur !== header && cur !== body && stream.eatSpace()) {
+                return null;
+            }
             return cur(stream, state);
         },
 
@@ -90,7 +95,7 @@ defineMode('http', function() {
             state.cur = body;
         },
 
-        startState: function() {
+        startState: () => {
             return {cur: start};
         }
     };

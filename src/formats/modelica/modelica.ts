@@ -1,5 +1,6 @@
 import {defineMIME, defineMode} from '../index';
 import {Pass} from '../misc';
+
 defineMode('modelica', function(config, parserConfig) {
 
     const indentUnit = config.indentUnit;
@@ -21,24 +22,24 @@ defineMode('modelica', function(config, parserConfig) {
     function tokenBlockComment(stream, state) {
         let maybeEnd = false, ch;
         while (ch = stream.next()) {
-            if (maybeEnd && ch == '/') {
+            if (maybeEnd && ch === '/') {
                 state.tokenize = null;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
 
     function tokenString(stream, state) {
         let escaped = false, ch;
-        while ((ch = stream.next()) != null) {
-            if (ch == '"' && !escaped) {
+        while ((ch = stream.next()) !== null) {
+            if (ch === '"' && !escaped) {
                 state.tokenize = null;
                 state.sol = false;
                 break;
             }
-            escaped = !escaped && ch == '\\';
+            escaped = !escaped && ch === '\\';
         }
 
         return 'string';
@@ -52,16 +53,24 @@ defineMode('modelica', function(config, parserConfig) {
 
         const cur = stream.current();
 
-        if (state.sol && (cur == 'package' || cur == 'model' || cur == 'when' || cur == 'connector')) state.level++;
-        else if (state.sol && cur == 'end' && state.level > 0) state.level--;
+        if (state.sol && (cur === 'package' || cur === 'model' || cur === 'when' || cur === 'connector')) {
+            state.level++;
+        } else if (state.sol && cur === 'end' && state.level > 0) {
+            state.level--;
+        }
 
         state.tokenize = null;
         state.sol = false;
 
-        if (keywords.propertyIsEnumerable(cur)) return 'keyword';
-        else if (builtin.propertyIsEnumerable(cur)) return 'builtin';
-        else if (atoms.propertyIsEnumerable(cur)) return 'atom';
-        else return 'variable';
+        if (keywords.propertyIsEnumerable(cur)) {
+            return 'keyword';
+        } else if (builtin.propertyIsEnumerable(cur)) {
+            return 'builtin';
+        } else if (atoms.propertyIsEnumerable(cur)) {
+            return 'atom';
+        } else {
+            return 'variable';
+        }
     }
 
     function tokenQIdent(stream, state) {
@@ -71,10 +80,11 @@ defineMode('modelica', function(config, parserConfig) {
         state.tokenize = null;
         state.sol = false;
 
-        if (stream.eat("'"))
+        if (stream.eat("'")) {
             return 'variable';
-        else
+        } else {
             return 'error';
+        }
     }
 
     function tokenUnsignedNuber(stream, state) {
@@ -83,8 +93,9 @@ defineMode('modelica', function(config, parserConfig) {
             stream.eatWhile(isDigit);
         }
         if (stream.eat('e') || stream.eat('E')) {
-            if (!stream.eat('-'))
+            if (!stream.eat('-')) {
                 stream.eat('+');
+            }
             stream.eatWhile(isDigit);
         }
 
@@ -95,7 +106,7 @@ defineMode('modelica', function(config, parserConfig) {
 
     // Interface
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: null,
                 level: 0,
@@ -103,8 +114,8 @@ defineMode('modelica', function(config, parserConfig) {
             };
         },
 
-        token: function(stream, state) {
-            if (state.tokenize != null) {
+        token: (stream, state) => {
+            if (state.tokenize !== null) {
                 return state.tokenize(stream, state);
             }
 
@@ -121,42 +132,26 @@ defineMode('modelica', function(config, parserConfig) {
             const ch = stream.next();
 
             // LINECOMMENT
-            if (ch == '/' && stream.eat('/')) {
+            if (ch === '/' && stream.eat('/')) {
                 state.tokenize = tokenLineComment;
-            }
-            // BLOCKCOMMENT
-            else if (ch == '/' && stream.eat('*')) {
+            } else if (ch === '/' && stream.eat('*')) {
                 state.tokenize = tokenBlockComment;
-            }
-            // TWO SYMBOL TOKENS
-            else if (isDoubleOperatorChar.test(ch + stream.peek())) {
+            } else if (isDoubleOperatorChar.test(ch + stream.peek())) {
                 stream.next();
                 state.tokenize = null;
                 return 'operator';
-            }
-            // SINGLE SYMBOL TOKENS
-            else if (isSingleOperatorChar.test(ch)) {
+            } else if (isSingleOperatorChar.test(ch)) {
                 state.tokenize = null;
                 return 'operator';
-            }
-            // IDENT
-            else if (isNonDigit.test(ch)) {
+            } else if (isNonDigit.test(ch)) {
                 state.tokenize = tokenIdent;
-            }
-            // Q-IDENT
-            else if (ch == "'" && stream.peek() && stream.peek() != "'") {
+            } else if (ch === "'" && stream.peek() && stream.peek() !== "'") {
                 state.tokenize = tokenQIdent;
-            }
-            // STRING
-            else if (ch == '"') {
+            } else if (ch === '"') {
                 state.tokenize = tokenString;
-            }
-            // UNSIGNED_NUBER
-            else if (isDigit.test(ch)) {
+            } else if (isDigit.test(ch)) {
                 state.tokenize = tokenUnsignedNuber;
-            }
-            // ERROR
-            else {
+            } else {
                 state.tokenize = null;
                 return 'error';
             }
@@ -164,20 +159,33 @@ defineMode('modelica', function(config, parserConfig) {
             return state.tokenize(stream, state);
         },
 
-        indent: function(state, textAfter) {
-            if (state.tokenize != null) return Pass;
+        indent: (state, textAfter) => {
+            if (state.tokenize !== null) {
+                return Pass;
+            }
 
             let level = state.level;
-            if (/(algorithm)/.test(textAfter)) level--;
-            if (/(equation)/.test(textAfter)) level--;
-            if (/(initial algorithm)/.test(textAfter)) level--;
-            if (/(initial equation)/.test(textAfter)) level--;
-            if (/(end)/.test(textAfter)) level--;
+            if (/(algorithm)/.test(textAfter)) {
+                level--;
+            }
+            if (/(equation)/.test(textAfter)) {
+                level--;
+            }
+            if (/(initial algorithm)/.test(textAfter)) {
+                level--;
+            }
+            if (/(initial equation)/.test(textAfter)) {
+                level--;
+            }
+            if (/(end)/.test(textAfter)) {
+                level--;
+            }
 
-            if (level > 0)
+            if (level > 0) {
                 return indentUnit * level;
-            else
+            } else {
                 return 0;
+            }
         },
 
         blockCommentStart: '/*',
@@ -188,8 +196,9 @@ defineMode('modelica', function(config, parserConfig) {
 
 function words(str) {
     const obj = {}, words = str.split(' ');
-    for (let i = 0; i < words.length; ++i)
+    for (let i = 0; i < words.length; ++i) {
         obj[words[i]] = true;
+    }
     return obj;
 }
 
@@ -198,16 +207,20 @@ const modelicaBuiltin = 'abs acos actualStream asin atan atan2 cardinality ceil 
 const modelicaAtoms = 'Real Boolean Integer String';
 
 function def(mimes, mode) {
-    if (typeof mimes == 'string')
+    if (typeof mimes === 'string') {
         mimes = [mimes];
+    }
 
     const words = [];
 
     function add(obj) {
-        if (obj)
-            for (const prop in obj)
-                if (obj.hasOwnProperty(prop))
+        if (obj) {
+            for (const prop in obj) {
+                if (obj.hasOwnProperty(prop)) {
                     words.push(prop);
+                }
+            }
+        }
     }
 
     add(mode.keywords);

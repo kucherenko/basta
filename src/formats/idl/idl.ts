@@ -232,7 +232,9 @@ const boolOperators = new RegExp('(and|or|eq|lt|le|gt|ge|ne|not)', 'i');
 
 function tokenBase(stream) {
     // whitespaces
-    if (stream.eatSpace()) return null;
+    if (stream.eatSpace()) {
+        return null;
+    }
 
     // Handle one line Comments
     if (stream.match(';')) {
@@ -242,12 +244,15 @@ function tokenBase(stream) {
 
     // Handle Number Literals
     if (stream.match(/^[0-9\.+-]/, false)) {
-        if (stream.match(/^[+-]?0x[0-9a-fA-F]+/))
+        if (stream.match(/^[+-]?0x[0-9a-fA-F]+/)) {
             return 'number';
-        if (stream.match(/^[+-]?\d*\.\d+([EeDd][+-]?\d+)?/))
+        }
+        if (stream.match(/^[+-]?\d*\.\d+([EeDd][+-]?\d+)?/)) {
             return 'number';
-        if (stream.match(/^[+-]?\d+([EeDd][+-]?\d+)?/))
+        }
+        if (stream.match(/^[+-]?\d+([EeDd][+-]?\d+)?/)) {
             return 'number';
+        }
     }
 
     // Handle Strings

@@ -147,7 +147,7 @@ defineMode('clike', (config, parserConfig) => {
             let escaped = false;
             let next;
             let end = false;
-            while ((next = stream.next()) != null) {
+            while ((next = stream.next()) !== null) {
                 if (next === quote && !escaped) {
                     end = true;
                     break;
@@ -217,11 +217,9 @@ defineMode('clike', (config, parserConfig) => {
                 while (state.context.type === 'statement') {
                     popContext(state);
                 }
-            }
-            else if (curPunc === '{') {
+            } else if (curPunc === '{') {
                 pushContext(state, stream.column(), '}', undefined);
-            }
-            else if (curPunc === '[') {
+            } else if (curPunc === '[') {
                 pushContext(state, stream.column(), ']', undefined);
             } else if (curPunc === '(') {
                 pushContext(state, stream.column(), ')', undefined);
@@ -355,7 +353,9 @@ function cppHook(stream, state) {
 }
 
 function pointerHook(_stream, state) {
-    if (state.prevToken === 'type') return 'type';
+    if (state.prevToken === 'type') {
+        return 'type';
+    }
     return false;
 }
 
@@ -396,7 +396,7 @@ function cppLooksLikeConstructor(word) {
 // C#-style strings where "" escapes a quote.
 function tokenAtString(stream, state) {
     let next;
-    while ((next = stream.next()) != null) {
+    while ((next = stream.next()) !== null) {
         if (next === '"' && !stream.eat('"')) {
             state.tokenize = null;
             break;

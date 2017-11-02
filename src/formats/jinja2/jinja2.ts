@@ -58,12 +58,12 @@ defineMode('jinja2', function() {
             }
 
             if (state.instring) {
-                if (ch == state.instring) {
+                if (ch === state.instring) {
                     state.instring = false;
                 }
                 stream.next();
                 return 'string';
-            } else if (ch == "'" || ch == '"') {
+            } else if (ch === "'" || ch === '"') {
                 state.instring = ch;
                 stream.next();
                 return 'string';
@@ -109,7 +109,7 @@ defineMode('jinja2', function() {
             } else if (ch = stream.eat(/\{|%/)) {
                 //Cache close tag
                 state.intag = ch;
-                if (ch == '{') {
+                if (ch === '{') {
                     state.intag = '}';
                 }
                 stream.eat('-');
@@ -120,10 +120,10 @@ defineMode('jinja2', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokenize: tokenBase};
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             return state.tokenize(stream, state);
         }
     };

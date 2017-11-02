@@ -499,8 +499,9 @@ defineMode('perl', () => {
 
     function tokenSOMETHING(stream, state, string) {
         state.tokenize = (stream, state) => {
-            if (stream.string === string)
+            if (stream.string === string) {
                 state.tokenize = tokenPerl;
+            }
             stream.skipToEnd();
             return 'string';
         };
@@ -508,13 +509,17 @@ defineMode('perl', () => {
     }
 
     function tokenPerl(stream, state) {
-        if (stream.eatSpace())
+        if (stream.eatSpace()) {
             return null;
-        if (state.chain)
+        }
+        if (state.chain) {
             return tokenChain(stream, state, state.chain, state.style, state.tail);
-        if (stream.match(/^\-?[\d\.]/, false))
-            if (stream.match(/^(\-?(\d*\.\d+(e[+-]?\d+)?|\d+\.\d*)|0x[\da-fA-F]+|0b[01]+|\d+(e[+-]?\d+)?)/))
+        }
+        if (stream.match(/^\-?[\d\.]/, false)) {
+            if (stream.match(/^(\-?(\d*\.\d+(e[+-]?\d+)?|\d+\.\d*)|0x[\da-fA-F]+|0b[01]+|\d+(e[+-]?\d+)?)/)) {
                 return 'number';
+            }
+        }
         if (stream.match(/^<<(?=\w)/)) {                  // NOTE: <<SOMETHING\n...\nSOMETHING\n
             stream.eatWhile(/\w/);
             return tokenSOMETHING(stream, state, stream.current().substr(2));
@@ -529,8 +534,9 @@ defineMode('perl', () => {
                 const p = stream.pos;
                 stream.eatWhile(/\w/);
                 const n = stream.current().substr(1);
-                if (n && stream.eat(ch))
+                if (n && stream.eat(ch)) {
                     return tokenSOMETHING(stream, state, n);
+                }
                 stream.pos = p;
             }
             return tokenChain(stream, state, [ch], 'string');
@@ -743,10 +749,11 @@ defineMode('perl', () => {
             return tokenChain(stream, state, [ch], 'variable-2');
         }
         if (ch === '/') {
-            if (!/~\s*$/.test(prefix(stream)))
+            if (!/~\s*$/.test(prefix(stream))) {
                 return 'operator';
-            else
+            } else {
                 return tokenChain(stream, state, [ch], RXstyle, RXmodifiers);
+            }
         }
         if (ch === '$') {
             const p = stream.pos;
@@ -769,14 +776,15 @@ defineMode('perl', () => {
         if (/[$@%&]/.test(ch)) {
             if (stream.eatWhile(/[\w$\[\]]/) || stream.eat('{') && stream.eatWhile(/[\w$\[\]]/) && stream.eat('}')) {
                 const c = stream.current();
-                if (PERL[c])
+                if (PERL[c]) {
                     return 'variable-2';
-                else
+                } else {
                     return 'variable';
+                }
             }
         }
         if (ch === '#') {
-            if (look(stream, -2) != '$') {
+            if (look(stream, -2) !== '$') {
                 stream.skipToEnd();
                 return 'comment';
             }
@@ -784,30 +792,30 @@ defineMode('perl', () => {
         if (/[:+\-\^*$&%@=<>!?|\/~\.]/.test(ch)) {
             const p = stream.pos;
             stream.eatWhile(/[:+\-\^*$&%@=<>!?|\/~\.]/);
-            if (PERL[stream.current()])
+            if (PERL[stream.current()]) {
                 return 'operator';
-            else
+            } else {
                 stream.pos = p;
+            }
         }
         if (ch === '_') {
             if (stream.pos === 1) {
                 if (suffix(stream, 6) === '_END__') {
                     return tokenChain(stream, state, ['\0'], 'comment');
-                }
-                else if (suffix(stream, 7) === '_DATA__') {
+                } else if (suffix(stream, 7) === '_DATA__') {
                     return tokenChain(stream, state, ['\0'], 'variable-2');
-                }
-                else if (suffix(stream, 7) === '_C__') {
+                } else if (suffix(stream, 7) === '_C__') {
                     return tokenChain(stream, state, ['\0'], 'string');
                 }
             }
         }
         if (/\w/.test(ch)) {
             const p = stream.pos;
-            if (look(stream, -2) === '{' && (look(stream, 0) === '}' || stream.eatWhile(/\w/) && look(stream, 0) === '}'))
+            if (look(stream, -2) === '{' && (look(stream, 0) === '}' || stream.eatWhile(/\w/) && look(stream, 0) === '}')) {
                 return 'string';
-            else
+            } else {
                 stream.pos = p;
+            }
         }
         if (/[A-Z]/.test(ch)) {
             const l = look(stream, -2);
@@ -815,55 +823,60 @@ defineMode('perl', () => {
             stream.eatWhile(/[A-Z_]/);
             if (/[\da-z]/.test(look(stream, 0))) {
                 stream.pos = p;
-            }
-            else {
+            } else {
                 let c = PERL[stream.current()];
-                if (!c)
+                if (!c) {
                     return 'meta';
-                if (c[1])
-                    c = c[0];
-                if (l != ':') {
-                    if (c === 1)
-                        return 'keyword';
-                    else if (c === 2)
-                        return 'def';
-                    else if (c === 3)
-                        return 'atom';
-                    else if (c === 4)
-                        return 'operator';
-                    else if (c === 5)
-                        return 'variable-2';
-                    else
-                        return 'meta';
                 }
-                else
+                if (c[1]) {
+                    c = c[0];
+                }
+                if (l !== ':') {
+                    if (c === 1) {
+                        return 'keyword';
+                    } else if (c === 2) {
+                        return 'def';
+                    } else if (c === 3) {
+                        return 'atom';
+                    } else if (c === 4) {
+                        return 'operator';
+                    } else if (c === 5) {
+                        return 'variable-2';
+                    } else {
+                        return 'meta';
+                    }
+                } else {
                     return 'meta';
+                }
             }
         }
         if (/[a-zA-Z_]/.test(ch)) {
             const l = look(stream, -2);
             stream.eatWhile(/\w/);
             let c = PERL[stream.current()];
-            if (!c)
+            if (!c) {
                 return 'meta';
-            if (c[1])
-                c = c[0];
-            if (l != ':') {
-                if (c === 1)
-                    return 'keyword';
-                else if (c === 2)
-                    return 'def';
-                else if (c === 3)
-                    return 'atom';
-                else if (c === 4)
-                    return 'operator';
-                else if (c === 5)
-                    return 'variable-2';
-                else
-                    return 'meta';
             }
-            else
+            if (c[1]) {
+                c = c[0];
+            }
+            if (l !== ':') {
+                if (c === 1) {
+                    return 'keyword';
+                } else if (c === 2) {
+                    return 'def';
+                } else if (c === 3) {
+                    return 'atom';
+                } else if (c === 4) {
+                    return 'operator';
+                } else if (c === 5) {
+                    return 'variable-2';
+                } else {
+                    return 'meta';
+                }
+            } else {
                 return 'meta';
+            }
         }
         return null;
     }
@@ -894,7 +907,7 @@ function look(stream, c) {
 }
 
 // return a part of prefix of current stream from current position
-function prefix(stream, c = undefined) {
+function prefix(stream, c?) {
     if (c) {
         const x = stream.pos - c;
         return stream.string.substr((x >= 0 ? x : 0), c);

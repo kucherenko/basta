@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 const languages = {
     mscgen: {
         'keywords': ['msc'],
@@ -95,10 +96,11 @@ function produceTokenFunction(pConfig) {
             }
         }
         if (pState.inComment) {
-            if (pStream.match(/[^\*\/]*\*\//, true, true))
+            if (pStream.match(/[^\*\/]*\*\//, true, true)) {
                 pState.inComment = false;
-            else
+            } else {
                 pStream.skipToEnd();
+            }
             return 'comment';
         }
         /* strings */
@@ -107,30 +109,37 @@ function produceTokenFunction(pConfig) {
             return 'string';
         }
         if (pState.inString) {
-            if (pStream.match(/[^\"]*\"/, true, true))
+            if (pStream.match(/[^\"]*\"/, true, true)) {
                 pState.inString = false;
-            else
+            } else {
                 pStream.skipToEnd();
+            }
             return 'string';
         }
         /* keywords & operators */
-        if (!!pConfig.keywords && pStream.match(wordRegexpBoundary(pConfig.keywords), true, true))
+        if (!!pConfig.keywords && pStream.match(wordRegexpBoundary(pConfig.keywords), true, true)) {
             return 'keyword';
+        }
 
-        if (pStream.match(wordRegexpBoundary(pConfig.options), true, true))
+        if (pStream.match(wordRegexpBoundary(pConfig.options), true, true)) {
             return 'keyword';
+        }
 
-        if (pStream.match(wordRegexpBoundary(pConfig.arcsWords), true, true))
+        if (pStream.match(wordRegexpBoundary(pConfig.arcsWords), true, true)) {
             return 'keyword';
+        }
 
-        if (pStream.match(wordRegexp(pConfig.arcsOthers), true, true))
+        if (pStream.match(wordRegexp(pConfig.arcsOthers), true, true)) {
             return 'keyword';
+        }
 
-        if (!!pConfig.operators && pStream.match(wordRegexp(pConfig.operators), true, true))
+        if (!!pConfig.operators && pStream.match(wordRegexp(pConfig.operators), true, true)) {
             return 'operator';
+        }
 
-        if (!!pConfig.constants && pStream.match(wordRegexp(pConfig.constants), true, true))
+        if (!!pConfig.constants && pStream.match(wordRegexp(pConfig.constants), true, true)) {
             return 'variable';
+        }
 
         /* attribute lists */
         if (!pConfig.inAttributeList && !!pConfig.attributes && pStream.match(/\[/, true, true)) {

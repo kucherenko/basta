@@ -104,7 +104,7 @@ defineMode('slim', (config) => {
     }
 
     function finishContinue(state) {
-        if (state.line == state.tokenize) {
+        if (state.line === state.tokenize) {
             state.line = state.stack.tokenize;
             state.stack = state.stack.parent;
         }
@@ -140,7 +140,7 @@ defineMode('slim', (config) => {
         // TODO: add multi line support
         return (stream, state) => {
             const ch = stream.peek();
-            if (ch == endQuote && state.rubyState.tokenize.length == 1) {
+            if (ch === endQuote && state.rubyState.tokenize.length === 1) {
                 // step out of ruby context as it seems to complete processing all the braces
                 stream.next();
                 state.tokenize = tokenize;
@@ -154,7 +154,7 @@ defineMode('slim', (config) => {
     function startRubySplat(tokenize) {
         let rubyState;
         const runSplat = (stream, state) => {
-            if (state.rubyState.tokenize.length == 1 && !state.rubyState.context.prev) {
+            if (state.rubyState.tokenize.length === 1 && !state.rubyState.context.prev) {
                 stream.backUp(1);
                 if (stream.eatSpace()) {
                     state.rubyState = rubyState;
@@ -467,7 +467,7 @@ defineMode('slim', (config) => {
             }
             let escaped = false;
             let ch;
-            while ((ch = stream.next()) != null) {
+            while ((ch = stream.next()) !== null) {
                 if (ch === quote && (unescaped || !escaped)) {
                     state.tokenize = nextTokenize;
                     break;
@@ -478,7 +478,7 @@ defineMode('slim', (config) => {
                         break;
                     }
                 }
-                escaped = !escaped && ch == '\\';
+                escaped = !escaped && ch === '\\';
             }
             if (stream.eol() && escaped) {
                 stream.backUp(1);
@@ -536,7 +536,7 @@ defineMode('slim', (config) => {
                 state.indented = stream.indentation();
                 state.startOfLine = true;
                 state.tokenize = state.line;
-                while (state.stack && state.stack.indented > state.indented && state.last != 'slimSubmode') {
+                while (state.stack && state.stack.indented > state.indented && state.last !== 'slimSubmode') {
                     state.line = state.tokenize = state.stack.tokenize;
                     state.stack = state.stack.parent;
                     state.subMode = null;
@@ -567,7 +567,7 @@ defineMode('slim', (config) => {
             return {state: state, mode: mode};
         }
 
-        //indent: function(state) {
+        //indent: (state) => {
         //  return state.indented;
         //}
     };

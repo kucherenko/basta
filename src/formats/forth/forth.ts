@@ -62,7 +62,7 @@ defineMode('forth', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 state: '',
                 base: 10,

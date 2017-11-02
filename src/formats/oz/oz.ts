@@ -51,18 +51,20 @@ defineMode('oz', function(conf) {
         // Opening keywords
         const matched = stream.match(openingKeywords);
         if (matched) {
-            if (!state.doInCurrentLine)
+            if (!state.doInCurrentLine) {
                 state.currentIndent++;
-            else
+            } else {
                 state.doInCurrentLine = false;
+            }
 
             // Special matching for signatures
-            if (matched[0] == 'proc' || matched[0] == 'fun')
+            if (matched[0] === 'proc' || matched[0] === 'fun') {
                 state.tokenize = tokenFunProc;
-            else if (matched[0] == 'class')
+            } else if (matched[0] === 'class') {
                 state.tokenize = tokenClass;
-            else if (matched[0] == 'meth')
+            } else if (matched[0] === 'meth') {
                 state.tokenize = tokenMeth;
+            }
 
             return 'keyword';
         }
@@ -82,32 +84,33 @@ defineMode('oz', function(conf) {
         const ch = stream.next();
 
         // Strings
-        if (ch == '"' || ch == "'") {
+        if (ch === '"' || ch === "'") {
             state.tokenize = tokenString(ch);
             return state.tokenize(stream, state);
         }
 
         // Numbers
         if (/[~\d]/.test(ch)) {
-            if (ch == '~') {
-                if (!/^[0-9]/.test(stream.peek()))
+            if (ch === '~') {
+                if (!/^[0-9]/.test(stream.peek())) {
                     return null;
-                else if ((stream.next() == '0' && stream.match(/^[xX][0-9a-fA-F]+/)) || stream.match(/^[0-9]*(\.[0-9]+)?([eE][~+]?[0-9]+)?/))
+                } else if ((stream.next() === '0' && stream.match(/^[xX][0-9a-fA-F]+/)) || stream.match(/^[0-9]*(\.[0-9]+)?([eE][~+]?[0-9]+)?/)) {
                     return 'number';
+                }
             }
 
-            if ((ch == '0' && stream.match(/^[xX][0-9a-fA-F]+/)) || stream.match(/^[0-9]*(\.[0-9]+)?([eE][~+]?[0-9]+)?/))
+            if ((ch === '0' && stream.match(/^[xX][0-9a-fA-F]+/)) || stream.match(/^[0-9]*(\.[0-9]+)?([eE][~+]?[0-9]+)?/)) {
                 return 'number';
+            }
 
             return null;
         }
 
         // Comments
-        if (ch == '%') {
+        if (ch === '%') {
             stream.skipToEnd();
             return 'comment';
-        }
-        else if (ch == '/') {
+        } else if (ch === '/') {
             if (stream.eat('*')) {
                 state.tokenize = tokenComment;
                 return tokenComment(stream, state);
@@ -151,14 +154,12 @@ defineMode('oz', function(conf) {
         if (!state.hasPassedFirstStage && stream.eat('{')) {
             state.hasPassedFirstStage = true;
             return 'bracket';
-        }
-        else if (state.hasPassedFirstStage) {
+        } else if (state.hasPassedFirstStage) {
             stream.match(/([A-Z][A-Za-z0-9_]*)|(`.+`)|\$/);
             state.hasPassedFirstStage = false;
             state.tokenize = tokenBase;
             return 'def';
-        }
-        else {
+        } else {
             state.tokenize = tokenBase;
             return null;
         }
@@ -167,11 +168,11 @@ defineMode('oz', function(conf) {
     function tokenComment(stream, state) {
         let maybeEnd = false, ch;
         while (ch = stream.next()) {
-            if (ch == '/' && maybeEnd) {
+            if (ch === '/' && maybeEnd) {
                 state.tokenize = tokenBase;
                 break;
             }
-            maybeEnd = (ch == '*');
+            maybeEnd = (ch === '*');
         }
         return 'comment';
     }
@@ -179,15 +180,16 @@ defineMode('oz', function(conf) {
     function tokenString(quote) {
         return function(stream, state) {
             let escaped = false, next, end = false;
-            while ((next = stream.next()) != null) {
-                if (next == quote && !escaped) {
+            while ((next = stream.next()) !== null) {
+                if (next === quote && !escaped) {
                     end = true;
                     break;
                 }
-                escaped = !escaped && next == '\\';
+                escaped = !escaped && next === '\\';
             }
-            if (end || !escaped)
+            if (end || !escaped) {
                 state.tokenize = tokenBase;
+            }
             return 'string';
         };
     }
@@ -201,7 +203,7 @@ defineMode('oz', function(conf) {
 
     return {
 
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: tokenBase,
                 currentIndent: 0,
@@ -210,21 +212,24 @@ defineMode('oz', function(conf) {
             };
         },
 
-        token: function(stream, state) {
-            if (stream.sol())
+        token: (stream, state) => {
+            if (stream.sol()) {
                 state.doInCurrentLine = 0;
+            }
 
             return state.tokenize(stream, state);
         },
 
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             const trueText = textAfter.replace(/^\s+|\s+$/g, '');
 
-            if (trueText.match(endKeywords) || trueText.match(middleKeywords) || trueText.match(/(\[])/))
+            if (trueText.match(endKeywords) || trueText.match(middleKeywords) || trueText.match(/(\[])/)) {
                 return conf.indentUnit * (state.currentIndent - 1);
+            }
 
-            if (state.currentIndent < 0)
+            if (state.currentIndent < 0) {
                 return 0;
+            }
 
             return state.currentIndent * conf.indentUnit;
         },

@@ -222,7 +222,7 @@ defineMode('gas', function(_config, parserConfig) {
 
     function nextUntilUnescaped(stream, end) {
         let escaped = false, next;
-        while ((next = stream.next()) != null) {
+        while ((next = stream.next()) !== null) {
             if (next === end && !escaped) {
                 return false;
             }
@@ -233,7 +233,7 @@ defineMode('gas', function(_config, parserConfig) {
 
     function clikeComment(stream, state) {
         let maybeEnd = false, ch;
-        while ((ch = stream.next()) != null) {
+        while ((ch = stream.next()) !== null) {
             if (ch === '/' && maybeEnd) {
                 state.tokenize = null;
                 break;
@@ -244,13 +244,13 @@ defineMode('gas', function(_config, parserConfig) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 tokenize: null
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (state.tokenize) {
                 return state.tokenize(stream, state);
             }

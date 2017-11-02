@@ -34,9 +34,15 @@ defineMode('cypher', function(config) {
                 return 'atom';
             }
             const word = stream.current();
-            if (funcs.test(word)) return 'builtin';
-            if (preds.test(word)) return 'def';
-            if (keywords.test(word)) return 'keyword';
+            if (funcs.test(word)) {
+                return 'builtin';
+            }
+            if (preds.test(word)) {
+                return 'def';
+            }
+            if (keywords.test(word)) {
+                return 'keyword';
+            }
             return 'variable';
         }
     };
@@ -68,9 +74,9 @@ defineMode('cypher', function(config) {
                 col: 0
             };
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             if (stream.sol()) {
-                if (state.context && (state.context.align == null)) {
+                if (state.context && (state.context.align === null)) {
                     state.context.align = false;
                 }
                 state.indent = stream.indentation();
@@ -79,7 +85,7 @@ defineMode('cypher', function(config) {
                 return null;
             }
             const style = state.tokenize(stream, state);
-            if (style !== 'comment' && state.context && (state.context.align == null) && state.context.type !== 'pattern') {
+            if (style !== 'comment' && state.context && (state.context.align === null) && state.context.type !== 'pattern') {
                 state.context.align = true;
             }
             if (curPunc === '(') {
@@ -107,7 +113,7 @@ defineMode('cypher', function(config) {
             }
             return style;
         },
-        indent: function(state, textAfter) {
+        indent: (state, textAfter) => {
             const firstChar = textAfter && textAfter.charAt(0);
             let context = state.context;
             if (/[\]\}]/.test(firstChar)) {
@@ -116,11 +122,15 @@ defineMode('cypher', function(config) {
                 }
             }
             const closing = context && firstChar === context.type;
-            if (!context) return 0;
+            if (!context) {
+                return 0;
+            }
             // if (context.type === "keywords") {
             //     return commands.newlineAndIndent;
             // }
-            if (context.align) return context.col + (closing ? 0 : 1);
+            if (context.align) {
+                return context.col + (closing ? 0 : 1);
+            }
             return context.indent + (closing ? 0 : indentUnit);
         }
     };

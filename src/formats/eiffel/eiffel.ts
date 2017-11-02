@@ -1,8 +1,11 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('eiffel', function() {
     function wordObj(words) {
         const o = {};
-        for (let i = 0, e = words.length; i < e; ++i) o[words[i]] = true;
+        for (let i = 0, e = words.length; i < e; ++i) {
+            o[words[i]] = true;
+        }
         return o;
     }
 
@@ -80,14 +83,16 @@ defineMode('eiffel', function() {
     }
 
     function tokenBase(stream, state) {
-        if (stream.eatSpace()) return null;
+        if (stream.eatSpace()) {
+            return null;
+        }
         const ch = stream.next();
-        if (ch == '"' || ch == "'") {
+        if (ch === '"' || ch === "'") {
             return chain(readQuoted(ch, 'string'), stream, state);
-        } else if (ch == '-' && stream.eat('-')) {
+        } else if (ch === '-' && stream.eat('-')) {
             stream.skipToEnd();
             return 'comment';
-        } else if (ch == ':' && stream.eat('=')) {
+        } else if (ch === ':' && stream.eat('=')) {
             return 'operator';
         } else if (/[0-9]/.test(ch)) {
             stream.eatWhile(/[xXbBCc0-9\.]/);
@@ -105,28 +110,28 @@ defineMode('eiffel', function() {
         }
     }
 
-    function readQuoted(quote, style, unescaped = undefined) {
+    function readQuoted(quote, style, unescaped?) {
         return function(stream, state) {
             let escaped = false, ch;
-            while ((ch = stream.next()) != null) {
-                if (ch == quote && (unescaped || !escaped)) {
+            while ((ch = stream.next()) !== null) {
+                if (ch === quote && (unescaped || !escaped)) {
                     state.tokenize.pop();
                     break;
                 }
-                escaped = !escaped && ch == '%';
+                escaped = !escaped && ch === '%';
             }
             return style;
         };
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {tokenize: [tokenBase]};
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             let style = state.tokenize[state.tokenize.length - 1](stream, state);
-            if (style == 'ident') {
+            if (style === 'ident') {
                 const word = stream.current();
                 style = keywords.propertyIsEnumerable(stream.current()) ? 'keyword'
                     : operators.propertyIsEnumerable(stream.current()) ? 'operator'

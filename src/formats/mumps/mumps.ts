@@ -1,4 +1,5 @@
 import {defineMIME, defineMode} from '../index';
+
 defineMode('mumps', function() {
     function wordRegexp(words) {
         return new RegExp('^((' + words.join(')|(') + '))\\b', 'i');
@@ -29,22 +30,25 @@ defineMode('mumps', function() {
         //   >0 => command    0 => argument    <0 => command post-conditional
         const ch = stream.peek();
 
-        if (ch == ' ' || ch == '\t') { // Pre-process <space>
+        if (ch === ' ' || ch === '\t') { // Pre-process <space>
             state.label = false;
-            if (state.commandMode == 0)
+            if (state.commandMode === 0) {
                 state.commandMode = 1;
-            else if ((state.commandMode < 0) || (state.commandMode == 2))
+            } else if ((state.commandMode < 0) || (state.commandMode === 2)) {
                 state.commandMode = 0;
-        } else if ((ch != '.') && (state.commandMode > 0)) {
-            if (ch == ':')
-                state.commandMode = -1;   // SIS - Command post-conditional
-            else
+            }
+        } else if ((ch !== '.') && (state.commandMode > 0)) {
+            if (ch === ':') {
+                state.commandMode = -1;
+            } else {
                 state.commandMode = 2;
+            }
         }
 
         // Do not color parameter list as line tag
-        if ((ch === '(') || (ch === '\u0009'))
+        if ((ch === '(') || (ch === '\u0009')) {
             state.label = false;
+        }
 
         // MUMPS comment starts with ";"
         if (ch === ';') {
@@ -53,11 +57,12 @@ defineMode('mumps', function() {
         }
 
         // Number Literals // SIS/RLM - MUMPS permits canonic number followed by concatenate operator
-        if (stream.match(/^[-+]?\d+(\.\d+)?([eE][-+]?\d+)?/))
+        if (stream.match(/^[-+]?\d+(\.\d+)?([eE][-+]?\d+)?/)) {
             return 'number';
+        }
 
         // Handle Strings
-        if (ch == '"') {
+        if (ch === '"') {
             if (stream.skipTo('"')) {
                 stream.next();
                 return 'string';
@@ -68,26 +73,31 @@ defineMode('mumps', function() {
         }
 
         // Handle operators and Delimiters
-        if (stream.match(doubleOperators) || stream.match(singleOperators))
+        if (stream.match(doubleOperators) || stream.match(singleOperators)) {
             return 'operator';
+        }
 
         // Prevents leading "." in DO block from falling through to error
-        if (stream.match(singleDelimiters))
+        if (stream.match(singleDelimiters)) {
             return null;
+        }
 
         if (brackets.test(ch)) {
             stream.next();
             return 'bracket';
         }
 
-        if (state.commandMode > 0 && stream.match(command))
+        if (state.commandMode > 0 && stream.match(command)) {
             return 'variable-2';
+        }
 
-        if (stream.match(intrinsicFuncs))
+        if (stream.match(intrinsicFuncs)) {
             return 'builtin';
+        }
 
-        if (stream.match(identifiers))
+        if (stream.match(identifiers)) {
             return 'variable';
+        }
 
         // Detect dollar-sign when not a documented intrinsic function
         // "^" may introduce a GVN or SSVN - Color same as function
@@ -113,16 +123,18 @@ defineMode('mumps', function() {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 label: false,
                 commandMode: 0
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             const style = tokenBase(stream, state);
-            if (state.label) return 'tag';
+            if (state.label) {
+                return 'tag';
+            }
             return style;
         }
     };

@@ -1,66 +1,65 @@
 import {defineMIME, defineMode} from '../index';
-defineMode('properties', function() {
-    return {
-        token: function(stream, state) {
-            const sol = stream.sol() || state.afterSection;
-            const eol = stream.eol();
 
-            state.afterSection = false;
+defineMode('properties', () => ({
+    token: (stream, state) => {
+        const sol = stream.sol() || state.afterSection;
+        const eol = stream.eol();
 
-            if (sol) {
-                if (state.nextMultiline) {
-                    state.inMultiline = true;
-                    state.nextMultiline = false;
-                } else {
-                    state.position = 'def';
-                }
-            }
+        state.afterSection = false;
 
-            if (eol && !state.nextMultiline) {
-                state.inMultiline = false;
+        if (sol) {
+            if (state.nextMultiline) {
+                state.inMultiline = true;
+                state.nextMultiline = false;
+            } else {
                 state.position = 'def';
             }
-
-            if (sol) {
-                while (stream.eatSpace()) {
-                }
-            }
-
-            const ch = stream.next();
-
-            if (sol && (ch === '#' || ch === '!' || ch === ';')) {
-                state.position = 'comment';
-                stream.skipToEnd();
-                return 'comment';
-            } else if (sol && ch === '[') {
-                state.afterSection = true;
-                stream.skipTo(']');
-                stream.eat(']');
-                return 'header';
-            } else if (ch === '=' || ch === ':') {
-                state.position = 'quote';
-                return null;
-            } else if (ch === '\\' && state.position === 'quote') {
-                if (stream.eol()) {  // end of line?
-                    // Multiline value
-                    state.nextMultiline = true;
-                }
-            }
-
-            return state.position;
-        },
-
-        startState: function() {
-            return {
-                position: 'def',       // Current position, "def", "quote" or "comment"
-                nextMultiline: false,  // Is the next line multiline value
-                inMultiline: false,    // Is the current line a multiline value
-                afterSection: false    // Did we just open a section
-            };
         }
 
-    };
-});
+        if (eol && !state.nextMultiline) {
+            state.inMultiline = false;
+            state.position = 'def';
+        }
+
+        if (sol) {
+            while (stream.eatSpace()) {
+            }
+        }
+
+        const ch = stream.next();
+
+        if (sol && (ch === '#' || ch === '!' || ch === ';')) {
+            state.position = 'comment';
+            stream.skipToEnd();
+            return 'comment';
+        } else if (sol && ch === '[') {
+            state.afterSection = true;
+            stream.skipTo(']');
+            stream.eat(']');
+            return 'header';
+        } else if (ch === '=' || ch === ':') {
+            state.position = 'quote';
+            return null;
+        } else if (ch === '\\' && state.position === 'quote') {
+            if (stream.eol()) {  // end of line?
+                // Multiline value
+                state.nextMultiline = true;
+            }
+        }
+
+        return state.position;
+    },
+
+    startState: () => {
+        return {
+            position: 'def',       // Current position, "def", "quote" or "comment"
+            nextMultiline: false,  // Is the next line multiline value
+            inMultiline: false,    // Is the current line a multiline value
+            afterSection: false    // Did we just open a section
+        };
+    }
+
+}));
 
 defineMIME('text/x-properties', 'properties');
 defineMIME('text/x-ini', 'properties');

@@ -28,9 +28,11 @@ defineMode('smarty', function(config, parserConf) {
 
     // Smarty 3 allows { and } surrounded by whitespace to NOT slip into Smarty mode
     function doesNotCount(stream, pos) {
-        if (pos == null) pos = stream.pos;
-        return version === 3 && leftDelimiter == '{' &&
-            (pos == stream.string.length || /\s/.test(stream.string.charAt(pos)));
+        if (pos === null) {
+            pos = stream.pos;
+        }
+        return version === 3 && leftDelimiter === '{' &&
+            (pos === stream.string.length || /\s/.test(stream.string.charAt(pos)));
     }
 
     function tokenTop(stream, state) {
@@ -39,9 +41,11 @@ defineMode('smarty', function(config, parserConf) {
         for (let scan = stream.pos; ;) {
             nextMatch = str.indexOf(leftDelimiter, scan);
             scan = nextMatch + leftDelimiter.length;
-            if (nextMatch == -1 || !doesNotCount(stream, nextMatch + leftDelimiter.length)) break;
+            if (nextMatch === -1 || !doesNotCount(stream, nextMatch + leftDelimiter.length)) {
+                break;
+            }
         }
-        if (nextMatch == stream.pos) {
+        if (nextMatch === stream.pos) {
             stream.match(leftDelimiter);
             if (stream.eat('*')) {
                 return chain(stream, state, tokenBlock('comment', '*' + rightDelimiter));
@@ -53,9 +57,13 @@ defineMode('smarty', function(config, parserConf) {
             }
         }
 
-        if (nextMatch > -1) stream.string = str.slice(0, nextMatch);
+        if (nextMatch > -1) {
+            stream.string = str.slice(0, nextMatch);
+        }
         const token = baseMode.token(stream, state.base);
-        if (nextMatch > -1) stream.string = str;
+        if (nextMatch > -1) {
+            stream.string = str;
+        }
         return token;
     }
 
@@ -79,12 +87,12 @@ defineMode('smarty', function(config, parserConf) {
         }
 
         const ch = stream.next();
-        if (ch == '$') {
+        if (ch === '$') {
             stream.eatWhile(regs.validIdentifier);
             return cont('variable-2', 'variable');
-        } else if (ch == '|') {
+        } else if (ch === '|') {
             return cont('operator', 'pipe');
-        } else if (ch == '.') {
+        } else if (ch === '.') {
             return cont('operator', 'property');
         } else if (regs.stringChar.test(ch)) {
             state.tokenize = tokenAttribute(ch);
@@ -92,31 +100,31 @@ defineMode('smarty', function(config, parserConf) {
         } else if (regs.operatorChars.test(ch)) {
             stream.eatWhile(regs.operatorChars);
             return cont('operator', 'operator');
-        } else if (ch == '[' || ch == ']') {
+        } else if (ch === '[' || ch === ']') {
             return cont('bracket', 'bracket');
-        } else if (ch == '(' || ch == ')') {
+        } else if (ch === '(' || ch === ')') {
             return cont('bracket', 'operator');
         } else if (/\d/.test(ch)) {
             stream.eatWhile(/\d/);
             return cont('number', 'number');
         } else {
 
-            if (state.last == 'variable') {
-                if (ch == '@') {
+            if (state.last === 'variable') {
+                if (ch === '@') {
                     stream.eatWhile(regs.validIdentifier);
                     return cont('property', 'property');
-                } else if (ch == '|') {
+                } else if (ch === '|') {
                     stream.eatWhile(regs.validIdentifier);
                     return cont('qualifier', 'modifier');
                 }
-            } else if (state.last == 'pipe') {
+            } else if (state.last === 'pipe') {
                 stream.eatWhile(regs.validIdentifier);
                 return cont('qualifier', 'modifier');
-            } else if (state.last == 'whitespace') {
+            } else if (state.last === 'whitespace') {
                 stream.eatWhile(regs.validIdentifier);
                 return cont('attribute', 'modifier');
             }
-            if (state.last == 'property') {
+            if (state.last === 'property') {
                 stream.eatWhile(regs.validIdentifier);
                 return cont('property', null);
             } else if (/\s/.test(ch)) {
@@ -125,7 +133,7 @@ defineMode('smarty', function(config, parserConf) {
             }
 
             let str = '';
-            if (ch != '/') {
+            if (ch !== '/') {
                 str += ch;
             }
             let c = null;
@@ -133,7 +141,7 @@ defineMode('smarty', function(config, parserConf) {
                 str += c;
             }
             for (let i = 0, j = keyFunctions.length; i < j; i++) {
-                if (keyFunctions[i] == str) {
+                if (keyFunctions[i] === str) {
                     return cont('keyword', 'keyword');
                 }
             }
@@ -150,7 +158,7 @@ defineMode('smarty', function(config, parserConf) {
             let currChar = null;
             while (!stream.eol()) {
                 currChar = stream.peek();
-                if (stream.next() == quote && prevChar !== '\\') {
+                if (stream.next() === quote && prevChar !== '\\') {
                     state.tokenize = tokenSmarty;
                     break;
                 }
@@ -174,7 +182,7 @@ defineMode('smarty', function(config, parserConf) {
     }
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 base: startState(baseMode),
                 tokenize: tokenTop,
@@ -182,7 +190,7 @@ defineMode('smarty', function(config, parserConf) {
                 depth: 0
             };
         },
-        copyState: function(state) {
+        copyState: (state) => {
             return {
                 base: copyState(baseMode, state.base),
                 tokenize: state.tokenize,
@@ -190,20 +198,22 @@ defineMode('smarty', function(config, parserConf) {
                 depth: state.depth
             };
         },
-        innerMode: function(state) {
-            if (state.tokenize == tokenTop)
+        innerMode: (state) => {
+            if (state.tokenize === tokenTop) {
                 return {mode: baseMode, state: state.base};
+            }
         },
-        token: function(stream, state) {
+        token: (stream, state) => {
             const style = state.tokenize(stream, state);
             state.last = last;
             return style;
         },
         indent: function(state, text) {
-            if (state.tokenize == tokenTop && baseMode.indent)
+            if (state.tokenize === tokenTop && baseMode.indent) {
                 return baseMode.indent(state.base, text);
-            else
+            } else {
                 return Pass;
+            }
         },
         blockCommentStart: leftDelimiter + '*',
         blockCommentEnd: '*' + rightDelimiter

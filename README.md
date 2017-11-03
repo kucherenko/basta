@@ -2,7 +2,7 @@
 [![npm](https://img.shields.io/npm/v/basta.svg?style=flat-square)](https://www.npmjs.com/package/basta)
 [![npm](https://img.shields.io/npm/l/basta.svg?style=flat-square)](https://www.npmjs.com/package/basta)
 
-Duplication detection tool, support different type of programming languages like javascript, jsx, typescript, html, java, c, swift, php, go, python and [other 150 languages...](docs/FORMATS.md)
+Duplication detection tool (copy-paste detector) for programming languages, support different type of programming languages like javascript, jsx, typescript, html, java, c, swift, php, go, python and [other 150 languages...](docs/FORMATS.md)
 
 
 ## Installation
@@ -60,7 +60,7 @@ If file `.basta.json` located in the root of project, values from the file will 
 
 ## TODO
 
-Basta tool is continuously improve, all plans are [here](TODO.md). Please feel free to add new feature requests.
+Basta tool is continuously improved, all plans are [here](TODO.md). Please feel free to add new feature requests.
 
 ## License
 

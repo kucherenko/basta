@@ -17,11 +17,12 @@
  - ~~file for execute as cli~~
  - Documentation 
 
-##Version: **2.x**
+##Version: **Next**
  - setup separate threshold for different formats
  - tree structure duplication detection
  - image duplication detection
  - gitignore support
+ - CI integration tutorial
  - Integration with IDE
     - atom
     - vscode
@@ -31,6 +32,6 @@
 - move reporters to separate packages
 - optimize algorithm 
 
-##Improvements && bugs:
+##Improvements & bugs:
   - ~~Improve JSX tokenizer~~
   - ~~Fix depended formats~~

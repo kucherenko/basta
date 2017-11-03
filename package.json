@@ -1,7 +1,7 @@
 {
   "name": "basta",
-  "version": "1.0.2",
-  "description": "Basta is clone detection tool (copy/paste detector), support 100+ programming languages. Developed by Andrey Kucherenko.",
+  "version": "1.0.3",
+  "description": "Basta is clone detection tool (copy/paste detector), support 100+ programming languages. Developed by Andrey Kucherenko.\n Example use: basta -t 10 /path/to/code",
   "main": "lib/index.js",
   "bin": {
     "basta": "./bin/basta"

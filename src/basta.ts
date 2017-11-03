@@ -2,7 +2,7 @@ import "colors";
 import {IOptions} from "./options.interface";
 import {lstatSync, readFileSync} from "fs";
 import {findModeByFileName, FormatMetadata, modesInfo} from "./formats/meta";
-import {detect} from "./detect";
+import {detect} from "./";
 import {getClonesStorage, getMapsStorage, getStatisticStorage} from "./storage/";
 import {IClones} from "./storage/clones.interface";
 import {IStatistic} from "./storage/statistic.interface";

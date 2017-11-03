@@ -9,7 +9,6 @@ Duplication detection tool, support different type of programming languages like
 
 ```
 npm install -g basta
-
 ```
 or 
 

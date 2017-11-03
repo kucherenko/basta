@@ -1,6 +1,6 @@
-#Navigation Map for Basta Copy/Paste Detection Tool
+# Navigation Map for Basta Copy/Paste Detection Tool
 
-##Version: **1.x**
+## Version: **1.x**
  - ~~Export basta API~~
  - ~~Tokens reducers~~
  - ~~Config file processing~~
@@ -17,7 +17,7 @@
  - ~~file for execute as cli~~
  - Documentation 
 
-##Version: **Next**
+## Version: **Next**
  - setup separate threshold for different formats
  - tree structure duplication detection
  - image duplication detection
@@ -32,6 +32,6 @@
 - move reporters to separate packages
 - optimize algorithm 
 
-##Improvements & bugs:
+## Improvements & bugs:
   - ~~Improve JSX tokenizer~~
   - ~~Fix depended formats~~

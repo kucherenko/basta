@@ -8,6 +8,7 @@ export interface IOptions {
     exclude?: string[];
     reporter?: string[];
     blame?: boolean;
+    silent?: boolean;
     debug?: boolean;
     list?: boolean;
     dontSkipComments?: boolean;

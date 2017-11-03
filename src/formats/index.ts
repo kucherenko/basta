@@ -161,7 +161,7 @@ export function getMode(options, spec) {
         return getMode(options, 'text/plain');
     }
 
-    const modeObj = mfactory(options, spec);
+    let modeObj = mfactory(options, spec);
 
     if (modeExtensions.hasOwnProperty(spec.name)) {
         const exts = modeExtensions[spec.name];
@@ -179,28 +179,8 @@ export function getMode(options, spec) {
     if (spec.helperType) {
         modeObj.helperType = spec.helperType;
     }
-    if (spec.modeProps) for (const prop in spec.modeProps) {
-        {
-            {
-                {
-                    {
-                        {
-                            {
-                                {
-                                    {
-                                        {
-                                            {
-        modeObj[prop] = spec.modeProps[prop];
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    if (spec.modeProps) {
+        modeObj = {...modeObj as any, ...spec.modeProps};
     }
 
     return modeObj;
@@ -274,6 +254,8 @@ StringStream.prototype = {
     next: function () {
         if (this.pos < this.string.length) {
             return this.string.charAt(this.pos++);
+        } else {
+            return null;
         }
     },
     eat: function (match) {

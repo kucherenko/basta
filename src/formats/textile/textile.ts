@@ -198,29 +198,12 @@ function activeStyles(state, ...args) {
 }
 
 function blankLine(state) {
-    const spanningLayout = state.spanningLayout, type = state.layoutType;
+    const spanningLayout = state.spanningLayout;
+    const type = state.layoutType;
 
-    for (const key in state) if (state.hasOwnProperty(key)) {
-        {
-            {
-                {
-                    {
-                        {
-                            {
-                                {
-                                    {
-                                        {
-                                            {
-        delete state[key];
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    for (const key in state) {
+        if (state.hasOwnProperty(key)) {
+            delete state[key];
         }
     }
 
@@ -262,7 +245,7 @@ const REs = {
         pad: /(?:\(+|\)+){1,2}/,
         css: /\{[^\}]+\}/
     },
-    createRe: function(name) {
+    createRe: name => {
         switch (name) {
             case 'drawTable':
                 return REs.makeRe('^', REs.single.drawTable, '$');
@@ -297,7 +280,7 @@ const REs = {
                 return REs.makeRe('^', REs.single[name]);
         }
     },
-    makeRe: function(...args) {
+    makeRe: (...args) => {
         let pattern = '';
         for (let i = 0; i < args.length; ++i) {
             const arg = args[i];
@@ -305,7 +288,7 @@ const REs = {
         }
         return new RegExp(pattern);
     },
-    choiceRe: function(...args) {
+    choiceRe: (...args) => {
         const parts = [args[0]];
         for (let i = 1; i < args.length; ++i) {
             parts[i * 2 - 1] = '|';
@@ -323,7 +306,7 @@ function RE(name) {
 }
 
 const Modes = {
-    newLayout: function(stream, state) {
+    newLayout: (stream, state) => {
         if (stream.match(RE('typeLayout'), false)) {
             state.spanningLayout = false;
             return (state.mode = Modes.blockType)(stream, state);
@@ -345,8 +328,9 @@ const Modes = {
         return (state.mode = (newMode || Modes.text))(stream, state);
     },
 
-    blockType: function(stream, state) {
-        let match, type;
+    blockType: (stream, state) => {
+        let match;
+        let type;
         state.layoutType = null;
 
         if (match = stream.match(RE('type'))) {
@@ -357,7 +341,7 @@ const Modes = {
 
         if (match = type.match(RE('header'))) {
             state.layoutType = 'header';
-            state.header = parseInt(match[0][1]);
+            state.header = parseInt(match[0][1], 10);
         } else if (type.match(RE('bq'))) {
             state.layoutType = 'quote';
         } else if (type.match(RE('bc'))) {
@@ -378,7 +362,7 @@ const Modes = {
         return tokenStyles(state);
     },
 
-    text: function(stream, state) {
+    text: (stream, state) => {
         if (stream.match(RE('text'))) {
             return tokenStyles(state);
         }
@@ -390,7 +374,7 @@ const Modes = {
         return handlePhraseModifier(stream, state, ch);
     },
 
-    attributes: function(stream, state) {
+    attributes: (stream, state) => {
         state.mode = Modes.layoutLength;
 
         if (stream.match(RE('attributes'))) {
@@ -400,7 +384,7 @@ const Modes = {
         }
     },
 
-    layoutLength: function(stream, state) {
+    layoutLength: (stream, state) => {
         if (stream.eat('.') && stream.eat('.')) {
             state.spanningLayout = true;
         }
@@ -409,7 +393,7 @@ const Modes = {
         return tokenStyles(state);
     },
 
-    list: function(stream, state) {
+    list: (stream, state) => {
         const match = stream.match(RE('list'));
         state.listDepth = match[0].length;
         const listMod = (state.listDepth - 1) % 3;
@@ -425,7 +409,7 @@ const Modes = {
         return tokenStyles(state);
     },
 
-    link: function(stream, state) {
+    link: (stream, state) => {
         state.mode = Modes.text;
         if (stream.match(RE('link'))) {
             stream.match(/\S+/);
@@ -434,12 +418,12 @@ const Modes = {
         return tokenStyles(state);
     },
 
-    linkDefinition: function(stream, state) {
+    linkDefinition: (stream, state) => {
         stream.skipToEnd();
         return tokenStylesWith(state, TOKEN_STYLES.linkDefinition);
     },
 
-    definitionList: function(stream, state) {
+    definitionList: (stream, state) => {
         stream.match(RE('definitionList'));
 
         state.layoutType = 'definitionList';
@@ -453,17 +437,17 @@ const Modes = {
         return tokenStyles(state);
     },
 
-    html: function(stream, state) {
+    html: (stream, state) => {
         stream.skipToEnd();
         return tokenStylesWith(state, TOKEN_STYLES.html);
     },
 
-    table: function(stream, state) {
+    table: (stream, state) => {
         state.layoutType = 'table';
         return (state.mode = Modes.tableCell)(stream, state);
     },
 
-    tableCell: function(stream, state) {
+    tableCell: (stream, state) => {
         if (stream.match(RE('tableHeading'))) {
             state.tableHeading = true;
         } else {
@@ -474,7 +458,7 @@ const Modes = {
         return tokenStyles(state);
     },
 
-    tableCellAttributes: function(stream, state) {
+    tableCellAttributes: (stream, state) => {
         state.mode = Modes.tableText;
 
         if (stream.match(RE('tableCellAttributes'))) {
@@ -484,7 +468,7 @@ const Modes = {
         }
     },
 
-    tableText: function(stream, state) {
+    tableText: (stream, state) => {
         if (stream.match(RE('tableText'))) {
             return tokenStyles(state);
         }
@@ -497,19 +481,17 @@ const Modes = {
     }
 };
 
-defineMode('textile', function() {
-    return {
-        startState: () => {
-            return {mode: Modes.newLayout};
-        },
-        token: (stream, state) => {
-            if (stream.sol()) {
-                startNewLine(stream, state);
-            }
-            return state.mode(stream, state);
-        },
-        blankLine: blankLine
-    };
-});
+defineMode('textile', () => ({
+    startState: () => {
+        return {mode: Modes.newLayout};
+    },
+    token: (stream, state) => {
+        if (stream.sol()) {
+            startNewLine(stream, state);
+        }
+        return state.mode(stream, state);
+    },
+    blankLine: blankLine
+}));
 
 defineMIME('text/x-textile', 'textile');

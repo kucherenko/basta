@@ -15,6 +15,8 @@ function prepareOptions(cli: Command): IOptions {
     argsConfig = {
         minLines: cli['min-lines'],
         debug: cli['debug'],
+        silent: cli['silent'],
+        blame: cli['blame'],
         output: cli['output'],
         list: cli['list'],
         threshold: cli['threshold'],
@@ -58,6 +60,8 @@ function prepareOptions(cli: Command): IOptions {
             reporter: ['html', 'console'],
             exclude: [],
             debug: false,
+            silent: false,
+            blame: false,
             dontSkipComments: false
         },
         ...storedConfig,
@@ -77,6 +81,7 @@ cli.option('-e, --exclude [string]', 'glob pattern for files what should be excl
 cli.option('-r, --reporter [string]', 'reporter to use (Default is console)');
 cli.option('-o, --output [string]', 'reporter to use (Default is ./report/)');
 cli.option('-b, --blame', 'blame authors of duplications (get information about authors from git)');
+cli.option('-s, --silent', 'Do not write detection progress and result to a console');
 cli.option('-d, --debug', 'show debug information(options list and selected files)');
 cli.option('--list', 'show list of all supported formats');
 cli.option('--dontSkipComments', `don't skip comments`);

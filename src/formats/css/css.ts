@@ -1,28 +1,29 @@
 import {defineMIME, defineMode, resolveMode} from '../index';
 
-defineMode('css', function(config, parserConfig) {
+defineMode('css', (config, parserConfig) => {
     const inline = parserConfig.inline;
     if (!parserConfig.propertyKeywords) {
         parserConfig = resolveMode('text/css');
     }
 
-    const indentUnit = config.indentUnit,
-        tokenHooks = parserConfig.tokenHooks,
-        documentTypes = parserConfig.documentTypes || {},
-        mediaTypes = parserConfig.mediaTypes || {},
-        mediaFeatures = parserConfig.mediaFeatures || {},
-        mediaValueKeywords = parserConfig.mediaValueKeywords || {},
-        propertyKeywords = parserConfig.propertyKeywords || {},
-        nonStandardPropertyKeywords = parserConfig.nonStandardPropertyKeywords || {},
-        fontProperties = parserConfig.fontProperties || {},
-        counterDescriptors = parserConfig.counterDescriptors || {},
-        colorKeywords = parserConfig.colorKeywords || {},
-        valueKeywords = parserConfig.valueKeywords || {},
-        allowNested = parserConfig.allowNested,
-        lineComment = parserConfig.lineComment,
-        supportsAtComponent = parserConfig.supportsAtComponent === true;
+    const indentUnit = config.indentUnit;
+    const tokenHooks = parserConfig.tokenHooks;
+    const documentTypes = parserConfig.documentTypes || {};
+    const mediaTypes = parserConfig.mediaTypes || {};
+    const mediaFeatures = parserConfig.mediaFeatures || {};
+    const mediaValueKeywords = parserConfig.mediaValueKeywords || {};
+    const propertyKeywords = parserConfig.propertyKeywords || {};
+    const nonStandardPropertyKeywords = parserConfig.nonStandardPropertyKeywords || {};
+    const fontProperties = parserConfig.fontProperties || {};
+    const counterDescriptors = parserConfig.counterDescriptors || {};
+    const colorKeywords = parserConfig.colorKeywords || {};
+    const valueKeywords = parserConfig.valueKeywords || {};
+    const allowNested = parserConfig.allowNested;
+    const lineComment = parserConfig.lineComment;
+    const supportsAtComponent = parserConfig.supportsAtComponent === true;
 
-    let type, override;
+    let type;
+    let override;
 
     function ret(style, tp) {
         type = tp;
@@ -90,8 +91,9 @@ defineMode('css', function(config, parserConfig) {
     }
 
     function tokenString(quote) {
-        return function(stream, state) {
-            let escaped = false, ch;
+        return (stream, state) => {
+            let escaped = false;
+            let ch;
             while ((ch = stream.next()) !== null) {
                 if (ch === quote && !escaped) {
                     if (quote === ')') {
@@ -110,11 +112,7 @@ defineMode('css', function(config, parserConfig) {
 
     function tokenParenthesized(stream, state) {
         stream.next(); // Must be '('
-        if (!stream.match(/\s*[\"\')]/, false)) {
-            state.tokenize = tokenString(')');
-        } else {
-            state.tokenize = null;
-        }
+        state.tokenize = !stream.match(/\s*[\"\')]/, false) ? tokenString(')') : null;
         return ret(null, '(');
     }
 
@@ -164,7 +162,7 @@ defineMode('css', function(config, parserConfig) {
 
     const states: any = {};
 
-    states.top = function(type, stream, state) {
+    states.top = (type, stream, state) => {
         if (type === '{') {
             return pushContext(state, stream, 'block');
         } else if (type === '}' && state.context.prev) {
@@ -198,7 +196,7 @@ defineMode('css', function(config, parserConfig) {
         return state.context.type;
     };
 
-    states.block = function(type, stream, state) {
+    states.block = (type, stream, state) => {
         if (type === 'word') {
             const word = stream.current().toLowerCase();
             if (propertyKeywords.hasOwnProperty(word)) {
@@ -224,14 +222,14 @@ defineMode('css', function(config, parserConfig) {
         }
     };
 
-    states.maybeprop = function(type, stream, state) {
+    states.maybeprop = (type, stream, state) => {
         if (type === ':') {
             return pushContext(state, stream, 'prop');
         }
         return pass(type, stream, state);
     };
 
-    states.prop = function(type, stream, state) {
+    states.prop = (type, stream, state) => {
         if (type === ';') {
             return popContext(state);
         }
@@ -255,7 +253,7 @@ defineMode('css', function(config, parserConfig) {
         return 'prop';
     };
 
-    states.propBlock = function(type, _stream, state) {
+    states.propBlock = (type, _stream, state) => {
         if (type === '}') {
             return popContext(state);
         }
@@ -266,7 +264,7 @@ defineMode('css', function(config, parserConfig) {
         return state.context.type;
     };
 
-    states.parens = function(type, stream, state) {
+    states.parens = (type, stream, state) => {
         if (type === '{' || type === '}') {
             return popAndPass(type, stream, state);
         }
@@ -285,7 +283,7 @@ defineMode('css', function(config, parserConfig) {
         return 'parens';
     };
 
-    states.pseudo = function(type, stream, state) {
+    states.pseudo = (type, stream, state) => {
         if (type === 'meta') {
             return 'pseudo';
         }
@@ -297,7 +295,7 @@ defineMode('css', function(config, parserConfig) {
         return pass(type, stream, state);
     };
 
-    states.documentTypes = function(type, stream, state) {
+    states.documentTypes = (type, stream, state) => {
         if (type === 'word' && documentTypes.hasOwnProperty(stream.current())) {
             override = 'tag';
             return state.context.type;
@@ -306,7 +304,7 @@ defineMode('css', function(config, parserConfig) {
         }
     };
 
-    states.atBlock = function(type, stream, state) {
+    states.atBlock = (type, stream, state) => {
         if (type === '(') {
             return pushContext(state, stream, 'atBlock_parens');
         }
@@ -346,7 +344,7 @@ defineMode('css', function(config, parserConfig) {
         return state.context.type;
     };
 
-    states.atComponentBlock = function(type, stream, state) {
+    states.atComponentBlock = (type, stream, state) => {
         if (type === '}') {
             return popAndPass(type, stream, state);
         }
@@ -359,7 +357,7 @@ defineMode('css', function(config, parserConfig) {
         return state.context.type;
     };
 
-    states.atBlock_parens = function(type, stream, state) {
+    states.atBlock_parens = (type, stream, state) => {
         if (type === ')') {
             return popContext(state);
         }
@@ -369,7 +367,7 @@ defineMode('css', function(config, parserConfig) {
         return states.atBlock(type, stream, state);
     };
 
-    states.restricted_atBlock_before = function(type, stream, state) {
+    states.restricted_atBlock_before = (type, stream, state) => {
         if (type === '{') {
             return pushContext(state, stream, 'restricted_atBlock');
         }
@@ -380,24 +378,24 @@ defineMode('css', function(config, parserConfig) {
         return pass(type, stream, state);
     };
 
-    states.restricted_atBlock = function(type, stream, state) {
+    states.restricted_atBlock = (type, stream, state) => {
         if (type === '}') {
             state.stateArg = null;
             return popContext(state);
         }
         if (type === 'word') {
-            if ((state.stateArg === '@font-face' && !fontProperties.hasOwnProperty(stream.current().toLowerCase())) ||
-                (state.stateArg === '@counter-style' && !counterDescriptors.hasOwnProperty(stream.current().toLowerCase()))) {
-                override = 'error';
-            } else {
-                override = 'property';
-            }
+
+            override = (
+                (state.stateArg === '@font-face' && !fontProperties.hasOwnProperty(stream.current().toLowerCase())) ||
+                (state.stateArg === '@counter-style' && !counterDescriptors.hasOwnProperty(stream.current().toLowerCase()))
+            ) ? 'error' : 'property';
+
             return 'maybeprop';
         }
         return 'restricted_atBlock';
     };
 
-    states.keyframes = function(type, stream, state) {
+    states.keyframes = (type, stream, state) => {
         if (type === 'word') {
             override = 'variable';
             return 'keyframes';
@@ -408,7 +406,7 @@ defineMode('css', function(config, parserConfig) {
         return pass(type, stream, state);
     };
 
-    states.at = function(type, stream, state) {
+    states.at = (type, stream, state) => {
         if (type === ';') {
             return popContext(state);
         }
@@ -423,7 +421,7 @@ defineMode('css', function(config, parserConfig) {
         return 'at';
     };
 
-    states.interpolation = function(type, stream, state) {
+    states.interpolation = (type, stream, state) => {
         if (type === '}') {
             return popContext(state);
         }
@@ -439,14 +437,12 @@ defineMode('css', function(config, parserConfig) {
     };
 
     return {
-        startState: function(base) {
-            return {
-                tokenize: null,
-                state: inline ? 'block' : 'top',
-                stateArg: null,
-                context: new Context(inline ? 'block' : 'top', base || 0, null)
-            };
-        },
+        startState: base => ({
+            tokenize: null,
+            state: inline ? 'block' : 'top',
+            stateArg: null,
+            context: new Context(inline ? 'block' : 'top', base || 0, null)
+        }),
 
         token: (stream, state) => {
             if (!state.tokenize && stream.eatSpace()) {
@@ -463,7 +459,8 @@ defineMode('css', function(config, parserConfig) {
         },
 
         indent: (state, textAfter) => {
-            let cx = state.context, ch = textAfter && textAfter.charAt(0);
+            let cx = state.context;
+            const ch = textAfter && textAfter.charAt(0);
             let indent = cx.indent;
             if (cx.type === 'prop' && (ch === '}' || ch === ')')) {
                 cx = cx.prev;
@@ -493,22 +490,22 @@ defineMode('css', function(config, parserConfig) {
 
 function keySet(array) {
     const keys = {};
-    for (let i = 0; i < array.length; ++i) {
-        keys[array[i].toLowerCase()] = true;
-    }
+    array.forEach(value => keys[value.toLowerCase()] = true);
     return keys;
 }
 
-const documentTypes_ = [
+const documentTypesTmp = [
     'domain', 'regexp', 'url', 'url-prefix'
-], documentTypes = keySet(documentTypes_);
+];
+const documentTypes = keySet(documentTypesTmp);
 
-const mediaTypes_ = [
+const mediaTypesTmp = [
     'all', 'aural', 'braille', 'handheld', 'print', 'projection', 'screen',
     'tty', 'tv', 'embossed'
-], mediaTypes = keySet(mediaTypes_);
+];
+const mediaTypes = keySet(mediaTypesTmp);
 
-const mediaFeatures_ = [
+const mediaFeaturesTmp = [
     'width', 'min-width', 'max-width', 'height', 'min-height', 'max-height',
     'device-width', 'min-device-width', 'max-device-width', 'device-height',
     'min-device-height', 'max-device-height', 'aspect-ratio',
@@ -519,14 +516,16 @@ const mediaFeatures_ = [
     'min-resolution', 'max-resolution', 'scan', 'grid', 'orientation',
     'device-pixel-ratio', 'min-device-pixel-ratio', 'max-device-pixel-ratio',
     'pointer', 'any-pointer', 'hover', 'any-hover'
-], mediaFeatures = keySet(mediaFeatures_);
+];
+const mediaFeatures = keySet(mediaFeaturesTmp);
 
-const mediaValueKeywords_ = [
+const mediaValueKeywordsTmp = [
     'landscape', 'portrait', 'none', 'coarse', 'fine', 'on-demand', 'hover',
     'interlace', 'progressive'
-], mediaValueKeywords = keySet(mediaValueKeywords_);
+];
+const mediaValueKeywords = keySet(mediaValueKeywordsTmp);
 
-const propertyKeywords_ = [
+const propertyKeywordsTmp = [
     'align-content', 'align-items', 'align-self', 'alignment-adjust',
     'alignment-baseline', 'anchor-point', 'animation', 'animation-delay',
     'animation-direction', 'animation-duration', 'animation-fill-mode',
@@ -616,27 +615,31 @@ const propertyKeywords_ = [
     'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'text-rendering',
     'baseline-shift', 'dominant-baseline', 'glyph-orientation-horizontal',
     'glyph-orientation-vertical', 'text-anchor', 'writing-mode'
-], propertyKeywords = keySet(propertyKeywords_);
+];
+const propertyKeywords = keySet(propertyKeywordsTmp);
 
-const nonStandardPropertyKeywords_ = [
+const nonStandardPropertyKeywordsTmp = [
     'scrollbar-arrow-color', 'scrollbar-base-color', 'scrollbar-dark-shadow-color',
     'scrollbar-face-color', 'scrollbar-highlight-color', 'scrollbar-shadow-color',
     'scrollbar-3d-light-color', 'scrollbar-track-color', 'shape-inside',
     'searchfield-cancel-button', 'searchfield-decoration', 'searchfield-results-button',
     'searchfield-results-decoration', 'zoom'
-], nonStandardPropertyKeywords = keySet(nonStandardPropertyKeywords_);
+];
+const nonStandardPropertyKeywords = keySet(nonStandardPropertyKeywordsTmp);
 
-const fontProperties_ = [
+const fontPropertiesTmp = [
     'font-family', 'src', 'unicode-range', 'font-variant', 'font-feature-settings',
     'font-stretch', 'font-weight', 'font-style'
-], fontProperties = keySet(fontProperties_);
+];
+const fontProperties = keySet(fontPropertiesTmp);
 
-const counterDescriptors_ = [
+const counterDescriptorsTmp = [
     'additive-symbols', 'fallback', 'negative', 'pad', 'prefix', 'range',
     'speak-as', 'suffix', 'symbols', 'system'
-], counterDescriptors = keySet(counterDescriptors_);
+];
+const counterDescriptors = keySet(counterDescriptorsTmp);
 
-const colorKeywords_ = [
+const colorKeywordsTmp = [
     'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige',
     'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown',
     'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue',
@@ -663,9 +666,10 @@ const colorKeywords_ = [
     'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan',
     'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white',
     'whitesmoke', 'yellow', 'yellowgreen'
-], colorKeywords = keySet(colorKeywords_);
+];
+const colorKeywords = keySet(colorKeywordsTmp);
 
-const valueKeywords_ = [
+const valueKeywordsTmp = [
     'above', 'absolute', 'activeborder', 'additive', 'activecaption', 'afar',
     'after-white-space', 'ahead', 'alias', 'all', 'all-scroll', 'alphabetic', 'alternate',
     'always', 'amharic', 'amharic-abegede', 'antialiased', 'appworkspace',
@@ -760,22 +764,19 @@ const valueKeywords_ = [
     'visibleStroke', 'visual', 'w-resize', 'wait', 'wave', 'wider',
     'window', 'windowframe', 'windowtext', 'words', 'wrap', 'wrap-reverse', 'x-large', 'x-small', 'xor',
     'xx-large', 'xx-small'
-], valueKeywords = keySet(valueKeywords_);
-
-// @TODO registerHelper
-// let allWords = documentTypes_.concat(mediaTypes_).concat(mediaFeatures_).concat(mediaValueKeywords_)
-//     .concat(propertyKeywords_).concat(nonStandardPropertyKeywords_).concat(colorKeywords_)
-//     .concat(valueKeywords_);
-// registerHelper("hintWords", "css", allWords);
+];
+const valueKeywords = keySet(valueKeywordsTmp);
 
 function tokenCComment(stream, state) {
-    let maybeEnd = false, ch;
-    while ((ch = stream.next()) !== null) {
+    let maybeEnd = false;
+    let ch = stream.next();
+    while (ch) {
         if (maybeEnd && ch === '/') {
             state.tokenize = null;
             break;
         }
         maybeEnd = (ch === '*');
+        ch = stream.next();
     }
     return ['comment', 'comment'];
 }
@@ -792,7 +793,7 @@ defineMIME('text/css', {
     colorKeywords: colorKeywords,
     valueKeywords: valueKeywords,
     tokenHooks: {
-        '/': function(stream, state) {
+        '/': (stream, state) => {
             if (!stream.eat('*')) {
                 return false;
             }
@@ -815,7 +816,7 @@ defineMIME('text/x-scss', {
     allowNested: true,
     lineComment: '//',
     tokenHooks: {
-        '/': function(stream, state) {
+        '/': (stream, state) => {
             if (stream.eat('/')) {
                 stream.skipToEnd();
                 return ['comment', 'comment'];
@@ -826,20 +827,20 @@ defineMIME('text/x-scss', {
                 return ['operator', 'operator'];
             }
         },
-        ':': function(stream) {
+        ':': stream => {
             if (stream.match(/\s*\{/, false)) {
                 return [null, null];
             }
             return false;
         },
-        '$': function(stream) {
+        '$': stream => {
             stream.match(/^[\w-]+/);
             if (stream.match(/^\s*:/, false)) {
                 return ['variable-2', 'variable-definition'];
             }
             return ['variable-2', 'variable'];
         },
-        '#': function(stream) {
+        '#': stream => {
             if (!stream.eat('{')) {
                 return false;
             }
@@ -862,7 +863,7 @@ defineMIME('text/x-less', {
     allowNested: true,
     lineComment: '//',
     tokenHooks: {
-        '/': function(stream, state) {
+        '/': (stream, state) => {
             if (stream.eat('/')) {
                 stream.skipToEnd();
                 return ['comment', 'comment'];
@@ -873,7 +874,7 @@ defineMIME('text/x-less', {
                 return ['operator', 'operator'];
             }
         },
-        '@': function(stream) {
+        '@': stream => {
             if (stream.eat('{')) {
                 return [null, 'interpolation'];
             }
@@ -886,9 +887,7 @@ defineMIME('text/x-less', {
             }
             return ['variable-2', 'variable'];
         },
-        '&': function() {
-            return ['atom', 'atom'];
-        }
+        '&': () => ['atom', 'atom']
     },
     name: 'css',
     helperType: 'less'
@@ -906,7 +905,7 @@ defineMIME('text/x-gss', {
     valueKeywords: valueKeywords,
     supportsAtComponent: true,
     tokenHooks: {
-        '/': function(stream, state) {
+        '/': (stream, state) => {
             if (!stream.eat('*')) {
                 return false;
             }

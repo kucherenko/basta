@@ -1,4 +1,4 @@
-import {defineMIME} from '../index';
+import {defineMode, defineMIME} from '../index';
 
 const TOKEN_STYLES = {
     addition: 'positive',
@@ -282,10 +282,7 @@ const REs = {
     },
     makeRe: (...args) => {
         let pattern = '';
-        for (let i = 0; i < args.length; ++i) {
-            const arg = args[i];
-            pattern += (typeof arg === 'string') ? arg : arg.source;
-        }
+        args.forEach(arg => pattern += (typeof arg === 'string') ? arg : arg.source);
         return new RegExp(pattern);
     },
     choiceRe: (...args) => {

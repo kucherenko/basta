@@ -9,7 +9,6 @@ Duplication detection tool (copy-paste detector) for programming languages, supp
 
 ```
 npm install -g basta
-
 ```
 or 
 

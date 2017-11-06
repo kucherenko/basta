@@ -3,3 +3,6 @@ node_modules/
 lib/
 *.log
 report/
+.DS_Store
+src/.DS_Store
+src/formats/.DS_Store

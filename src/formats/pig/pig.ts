@@ -1,10 +1,10 @@
 import {defineMIME, defineMode} from '../index';
 
-defineMode('pig', function(_config, parserConfig) {
-    const keywords = parserConfig.keywords,
-        builtins = parserConfig.builtins,
-        types = parserConfig.types,
-        multiLineStrings = parserConfig.multiLineStrings;
+defineMode('pig', (_config, parserConfig) => {
+    const keywords = parserConfig.keywords;
+    const builtins = parserConfig.builtins;
+    const types = parserConfig.types;
+    const multiLineStrings = parserConfig.multiLineStrings;
 
     const isOperatorChar = /[*+\-%<>=&?:\/!|]/;
 
@@ -27,8 +27,10 @@ defineMode('pig', function(_config, parserConfig) {
     }
 
     function tokenString(quote) {
-        return function(stream, state) {
-            let escaped = false, next, end = false;
+        return (stream, state) => {
+            let escaped = false;
+            let next;
+            let end = false;
             while ((next = stream.next()) !== null) {
                 if (next === quote && !escaped) {
                     end = true;
@@ -116,7 +118,8 @@ defineMode('pig', function(_config, parserConfig) {
 });
 
 function keywords(str) {
-    const obj = {}, words = str.split(' ');
+    const obj = {};
+    const words = str.split(' ');
     for (let i = 0; i < words.length; ++i) {
         obj[words[i]] = true;
     }

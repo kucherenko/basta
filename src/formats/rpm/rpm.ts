@@ -1,12 +1,12 @@
 import {defineMIME, defineMode} from '../index';
 
-defineMode('rpm-changes', function() {
+defineMode('rpm-changes', () => {
     const headerSeperator = /^-+$/;
     const headerLine = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)  ?\d{1,2} \d{2}:\d{2}(:\d{2})? [A-Z]{3,4} \d{4} - /;
     const simpleEmail = /^[\w+.-]+@[\w.-]+/;
 
     return {
-        token: function(stream) {
+        token: stream => {
             if (stream.sol()) {
                 if (stream.match(headerSeperator)) {
                     return 'tag';
@@ -28,7 +28,7 @@ defineMIME('text/x-rpm-changes', 'rpm-changes');
 
 // Quick and dirty spec file highlighting
 
-defineMode('rpm-spec', function() {
+defineMode('rpm-spec', () => {
     const arch = /^(i386|i586|i686|x86_64|ppc64le|ppc64|ppc|ia64|s390x|s390|sparc64|sparcv9|sparc|noarch|alphaev6|alpha|hppa|mipsel)/;
 
     const preamble = /^[a-zA-Z0-9()]+:/;

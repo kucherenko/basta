@@ -1,17 +1,17 @@
 import {defineMIME, defineMode} from '../index';
 
-defineMode('asn.1', function(config, parserConfig) {
-    const indentUnit = config.indentUnit,
-        keywords = parserConfig.keywords || {},
-        cmipVerbs = parserConfig.cmipVerbs || {},
-        compareTypes = parserConfig.compareTypes || {},
-        status = parserConfig.status || {},
-        tags = parserConfig.tags || {},
-        storage = parserConfig.storage || {},
-        modifier = parserConfig.modifier || {},
-        accessTypes = parserConfig.accessTypes || {},
-        multiLineStrings = parserConfig.multiLineStrings,
-        indentStatements = parserConfig.indentStatements !== false;
+defineMode('asn.1', (config, parserConfig) => {
+    const indentUnit = config.indentUnit;
+    const keywords = parserConfig.keywords || {};
+    const cmipVerbs = parserConfig.cmipVerbs || {};
+    const compareTypes = parserConfig.compareTypes || {};
+    const status = parserConfig.status || {};
+    const tags = parserConfig.tags || {};
+    const storage = parserConfig.storage || {};
+    const modifier = parserConfig.modifier || {};
+    const accessTypes = parserConfig.accessTypes || {};
+    const multiLineStrings = parserConfig.multiLineStrings;
+    const indentStatements = parserConfig.indentStatements !== false;
     const isOperatorChar = /[\|\^]/;
     let curPunc;
 
@@ -71,8 +71,10 @@ defineMode('asn.1', function(config, parserConfig) {
     }
 
     function tokenString(quote) {
-        return function(stream, state) {
-            let escaped = false, next, end = false;
+        return (stream, state) => {
+            let escaped = false;
+            let next;
+            let end = false;
             while ((next = stream.next()) !== null) {
                 if (next === quote && !escaped) {
                     let afterNext = stream.peek();
@@ -121,14 +123,12 @@ defineMode('asn.1', function(config, parserConfig) {
 
     //Interface
     return {
-        startState: function(basecolumn) {
-            return {
-                tokenize: null,
-                context: new Context((basecolumn || 0) - indentUnit, 0, 'top', false, undefined),
-                indented: 0,
-                startOfLine: true
-            };
-        },
+        startState: basecolumn => ({
+            tokenize: null,
+            context: new Context((basecolumn || 0) - indentUnit, 0, 'top', false, undefined),
+            indented: 0,
+            startOfLine: true
+        }),
 
         token: (stream, state) => {
             let ctx = state.context;
@@ -189,7 +189,8 @@ defineMode('asn.1', function(config, parserConfig) {
 });
 
 function words(str) {
-    const obj = {}, words = str.split(' ');
+    const obj = {};
+    const words = str.split(' ');
     for (let i = 0; i < words.length; ++i) {
         obj[words[i]] = true;
     }

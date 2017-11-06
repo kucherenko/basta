@@ -1,17 +1,17 @@
 import {defineMIME, defineMode} from '../index';
 import {Pass} from '../misc';
 
-defineMode('sql', function(config, parserConfig) {
+defineMode('sql', (config, parserConfig) => {
     'use strict';
 
-    const client = parserConfig.client || {},
-        atoms = parserConfig.atoms || {'false': true, 'true': true, 'null': true},
-        builtin = parserConfig.builtin || {},
-        keywords = parserConfig.keywords || {},
-        operatorChars = parserConfig.operatorChars || /^[*+\-%<>!=&|~^]/,
-        support = parserConfig.support || {},
-        hooks = parserConfig.hooks || {},
-        dateSQL = parserConfig.dateSQL || {'date': true, 'time': true, 'timestamp': true};
+    const client = parserConfig.client || {};
+    const atoms = parserConfig.atoms || {'false': true, 'true': true, 'null': true};
+    const builtin = parserConfig.builtin || {};
+    const keywords = parserConfig.keywords || {};
+    const operatorChars = parserConfig.operatorChars || /^[*+\-%<>!=&|~^]/;
+    const support = parserConfig.support || {};
+    const hooks = parserConfig.hooks || {};
+    const dateSQL = parserConfig.dateSQL || {'date': true, 'time': true, 'timestamp': true};
 
     function tokenBase(stream, state) {
         const ch = stream.next();
@@ -119,8 +119,9 @@ defineMode('sql', function(config, parserConfig) {
 
     // 'string', with char specified in quote escaped by '\'
     function tokenLiteral(quote) {
-        return function(stream, state) {
-            let escaped = false, ch;
+        return (stream, state) => {
+            let escaped = false;
+            let ch;
             while ((ch = stream.next()) !== null) {
                 if (ch === quote && !escaped) {
                     state.tokenize = tokenBase;
@@ -133,7 +134,7 @@ defineMode('sql', function(config, parserConfig) {
     }
 
     function tokenComment(depth) {
-        return function(stream, state) {
+        return (stream, state) => {
             const m = stream.match(/^.*?(\/\*|\*\/)/);
             if (!m) {
                 stream.skipToEnd();
@@ -216,7 +217,7 @@ defineMode('sql', function(config, parserConfig) {
     };
 });
 
-(function() {
+((() => {
     'use strict';
 
     // `identifier`
@@ -292,7 +293,8 @@ defineMode('sql', function(config, parserConfig) {
 
     // turn a space-separated list into an array
     function set(str) {
-        const obj = {}, words = str.split(' ');
+        const obj = {};
+        const words = str.split(' ');
         for (let i = 0; i < words.length; ++i) {
             obj[words[i]] = true;
         }
@@ -442,5 +444,5 @@ defineMode('sql', function(config, parserConfig) {
         builtin: set('blob datetime first key __key__ string integer double boolean null'),
         operatorChars: /^[*+\-%<>!=]/
     });
-}());
+})());
 

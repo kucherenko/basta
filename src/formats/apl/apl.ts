@@ -1,7 +1,7 @@
 import {defineMIME, defineMode} from '../index';
 
 
-defineMode('apl', function() {
+defineMode('apl', () => {
     const builtInOps = {
         '.': 'innerProduct',
         '\\': 'scan',
@@ -70,10 +70,10 @@ defineMode('apl', function() {
     const isArrow = /←/;
     const isComment = /[⍝#].*$/;
 
-    const stringEater = function(type) {
+    const stringEater = type => {
         let prev;
         prev = false;
-        return function(c) {
+        return c => {
             prev = c;
             if (c === type) {
                 return prev === '\\';

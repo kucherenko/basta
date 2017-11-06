@@ -7,7 +7,7 @@
     "max-classes-per-file": false,
     "max-line-length": [
       true,
-      210
+      300
     ],
     "quotemark": false,
     "no-unused-expression": false,

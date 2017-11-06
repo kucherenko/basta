@@ -50,7 +50,7 @@ defineMode('asciiarmor', () => ({
             return errorIfNotEmpty(stream);
         }
     },
-    blankLine: function (state) {
+    blankLine: state => {
         if (state.state === 'headers') {
             state.state = 'body';
         }

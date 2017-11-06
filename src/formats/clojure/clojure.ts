@@ -1,13 +1,21 @@
 import {defineMIME, defineMode} from '../index';
 
-defineMode('clojure', function(options) {
-    const BUILTIN = 'builtin', COMMENT = 'comment', STRING = 'string', CHARACTER = 'string-2',
-        ATOM = 'atom', NUMBER = 'number', BRACKET = 'bracket', KEYWORD = 'keyword', VAR = 'variable';
+defineMode('clojure', (options) => {
+    const BUILTIN = 'builtin';
+    const COMMENT = 'comment';
+    const STRING = 'string';
+    const CHARACTER = 'string-2';
+    const ATOM = 'atom';
+    const NUMBER = 'number';
+    const BRACKET = 'bracket';
+    const KEYWORD = 'keyword';
+    const VAR = 'variable';
     const INDENT_WORD_SKIP = options.indentUnit || 2;
     const NORMAL_INDENT_UNIT = options.indentUnit || 2;
 
     function makeKeywords(str) {
-        const obj = {}, words = str.split(' ');
+        const obj = {};
+        const words = str.split(' ');
         for (let i = 0; i < words.length; ++i) {
             obj[words[i]] = true;
         }
@@ -192,7 +200,8 @@ defineMode('clojure', function(options) {
 
             switch (state.mode) {
                 case 'string': // multi-line string parsing mode
-                    let next, escaped = false;
+                    let next;
+                    let escaped = false;
                     while ((next = stream.next()) !== null) {
                         if (next === '"' && !escaped) {
 
@@ -220,36 +229,13 @@ defineMode('clojure', function(options) {
                     } else if (isNumber(ch, stream)) {
                         returnType = NUMBER;
                     } else if (ch === '(' || ch === '[' || ch === '{') {
-                        let keyWord = '', indentTemp = stream.column(), letter;
-                        /**
-                         Either
-                         (indent-word ..
-                         (non-indent-word ..
-                         (;something else, bracket, etc.
-                         */
+                        let keyWord = '';
+                        const indentTemp = stream.column();
+                        let letter;
 
                         if (ch === '(') while ((letter = stream.eat(tests.keyword_char)) !== null) {
-                            {
-                                {
-                                    {
-                                        {
-                                            {
-                                                {
-                                                    {
-                                                        {
-                                                            {
-                                                                {
+
                             keyWord += letter;
-                        }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
                         }
 
                         if (keyWord.length > 0 && (indentKeys.propertyIsEnumerable(keyWord) ||

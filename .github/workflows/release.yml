@@ -329,6 +329,69 @@ jobs:
           )
           echo "package_dir=${package_dir}" >> "$GITHUB_OUTPUT"
 
+      # A downloadable, signed archive beside the npm package — for
+      # `cargo binstall basta`, air-gapped installs, and anyone who wants
+      # the binary without either registry. Binary and LICENSE at the
+      # archive root, matching the layout cargo-binstall expects.
+      - name: Archive binary for release assets
+        if: steps.platform-package.outputs.published != 'true'
+        working-directory: jscpd/rust
+        run: |
+          mkdir -p target/release-assets
+          binary_name="basta"
+          if [ "${{ matrix.target.os }}" = "win32" ]; then
+            binary_name="basta.exe"
+          fi
+          stage="target/release-assets/stage-${{ matrix.target.key }}"
+          rm -rf "$stage" && mkdir -p "$stage"
+          cp "target/${{ matrix.target.rustTarget }}/release/$binary_name" "$stage/"
+          cp ../../LICENSE "$stage/LICENSE"
+          tar -czf "target/release-assets/basta-${{ matrix.target.key }}.tar.gz" \
+            -C "$stage" "$binary_name" LICENSE
+
+      - name: Upload binary artifact
+        if: steps.platform-package.outputs.published != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: basta-binary-${{ matrix.target.key }}
+          path: jscpd/rust/target/release-assets/basta-${{ matrix.target.key }}.tar.gz
+          retention-days: 1
+
+      # On a resumed release (platform package already on npm from an earlier
+      # run), the build above is skipped — but the release job attaches
+      # assets from THIS run's artifacts only. Repack the published npm
+      # binary as the release-asset tarball so a resumed release still gets
+      # every asset.
+      - name: Repack published binary for release assets
+        if: steps.platform-package.outputs.published == 'true'
+        working-directory: jscpd/rust
+        run: |
+          version="${{ needs.version.outputs.version }}"
+          package_name="basta-${{ matrix.target.key }}"
+          mkdir -p target/release-assets repack
+          npm pack "${package_name}@${version}" --pack-destination repack >/dev/null
+          tar -xzf repack/*.tgz -C repack
+          binary_name="basta"
+          if [ "${{ matrix.target.os }}" = "win32" ]; then
+            binary_name="basta.exe"
+          fi
+          bin_path=$(find repack/package -name "$binary_name" -type f | head -1)
+          [ -n "$bin_path" ] || { echo "::error::${binary_name} not found in ${package_name}@${version}"; exit 1; }
+          mkdir -p repack/stage
+          cp "$bin_path" repack/stage/
+          cp ../../LICENSE repack/stage/LICENSE
+          chmod +x "repack/stage/$binary_name"
+          tar -czf "target/release-assets/basta-${{ matrix.target.key }}.tar.gz" \
+            -C repack/stage "$binary_name" LICENSE
+
+      - name: Upload binary artifact (from published package)
+        if: steps.platform-package.outputs.published == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: basta-binary-${{ matrix.target.key }}
+          path: jscpd/rust/target/release-assets/basta-${{ matrix.target.key }}.tar.gz
+          retention-days: 1
+
       - name: Publish platform package
         if: steps.platform-package.outputs.published != 'true'
         env:
@@ -431,3 +494,144 @@ jobs:
             sleep 15
           done
           echo "basta latest -> ${version}"
+
+  # ─── GitHub release ────────────────────────────────────────────────
+  # The registries (crates.io, npm) are where `cargo install`/`npm install`
+  # look, but a GitHub release is where a person looks for "what changed"
+  # and a signed binary to download directly — neither registry gives them
+  # that. This is the one place in the pipeline that writes to this repo.
+  release:
+    name: create basta github release
+    needs: [version, crates, build, publish]
+    if: always() && !cancelled() &&
+      needs.crates.result != 'failure' &&
+      needs.build.result != 'failure' &&
+      needs.publish.result != 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write # keyless signing for build provenance
+      attestations: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download binary artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: basta-binary-*
+          path: release-assets
+          merge-multiple: true
+        continue-on-error: true
+
+      # Idempotent like every other job here: a re-run (workflow_dispatch, or
+      # a retry after an earlier step failed) must not try to recreate a
+      # release that already exists — that fails with "Release.tag_name
+      # already exists" instead of quietly doing nothing, which is what
+      # tripped up kucherenko/jscpd's own release pipeline on 2026-09-18.
+      - name: Check whether this release already exists
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="v${{ needs.version.outputs.version }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "${tag} already exists; skipping release creation"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release notes
+        if: steps.existing.outputs.exists != 'true'
+        id: notes
+        run: |
+          notes="Dead code detection for JavaScript, TypeScript, Vue, Svelte, Astro and Python — unused files, exports, module-private declarations and imports, each finding with a confidence score.
+
+          The engine lives in [kucherenko/jscpd](https://github.com/kucherenko/jscpd), where it also ships as \`jscpd --dead-code\`; see [the jscpd changelog](https://github.com/kucherenko/jscpd/blob/master/rust/CHANGELOG.md) for what changed under the hood this release.
+
+          Install: \`npm i -g basta\`, \`cargo install basta\`, or \`cargo binstall basta\`. Without installing: \`npx basta src\`."
+          {
+            echo "notes<<EOF"
+            echo "$notes"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        if: steps.existing.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NOTES: ${{ steps.notes.outputs.notes }}
+        run: |
+          version="${{ needs.version.outputs.version }}"
+          tag="v${version}"
+
+          assets=""
+          if [ -d release-assets ] && ls release-assets/*.tar.gz >/dev/null 2>&1; then
+            for f in release-assets/*.tar.gz; do
+              assets="$assets $f"
+            done
+          fi
+
+          if [ -n "$assets" ]; then
+            gh release create "${tag}" \
+              --title "basta v${version}" \
+              --notes "$RELEASE_NOTES" \
+              --latest \
+              $assets
+          else
+            gh release create "${tag}" \
+              --title "basta v${version}" \
+              --notes "$RELEASE_NOTES" \
+              --latest
+          fi
+
+      - name: Generate checksums
+        if: steps.existing.outputs.exists != 'true'
+        id: checksums
+        run: |
+          if [ -d release-assets ] && ls release-assets/*.tar.gz >/dev/null 2>&1; then
+            (cd release-assets && sha256sum *.tar.gz > checksums.txt)
+            echo "have=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "have=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Signed SLSA provenance for the release binaries, verifiable with
+      # `gh attestation verify <asset> --repo kucherenko/basta`. The bundle is
+      # also uploaded as a release asset (multiple.intoto.jsonl) so provenance
+      # travels with the artifacts.
+      - name: Attest build provenance
+        if: steps.existing.outputs.exists != 'true' && steps.checksums.outputs.have == 'true'
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: release-assets/*.tar.gz
+
+      # Sigstore keyless signatures (in addition to the SLSA attestation) so
+      # assets can be verified with plain `cosign verify-blob` and no GitHub
+      # CLI. One `<asset>.sigstore.json` bundle per archive plus checksums.txt.
+      - name: Install cosign
+        if: steps.existing.outputs.exists != 'true' && steps.checksums.outputs.have == 'true'
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: Sign release assets (sigstore keyless)
+        if: steps.existing.outputs.exists != 'true' && steps.checksums.outputs.have == 'true'
+        working-directory: release-assets
+        run: |
+          for asset in *.tar.gz checksums.txt; do
+            cosign sign-blob --yes --bundle "${asset}.sigstore.json" "$asset"
+          done
+          ls -1 ./*.sigstore.json
+
+      - name: Upload checksums, provenance and signatures to release
+        if: steps.existing.outputs.exists != 'true' && steps.checksums.outputs.have == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="v${{ needs.version.outputs.version }}"
+          cp "${{ steps.attest.outputs.bundle-path }}" release-assets/multiple.intoto.jsonl
+          gh release upload "${tag}" \
+            release-assets/checksums.txt \
+            release-assets/multiple.intoto.jsonl \
+            release-assets/*.sigstore.json

@@ -404,6 +404,11 @@ jobs:
             echo "${package_name}@${version} is already published; skipping"
             exit 0
           fi
+          # npm checks the provenance attestation against the manifest: the
+          # build runs in this repository, so `repository.url` has to name it.
+          # The manifest is generated from jscpd's, which names jscpd, and the
+          # registry answers a mismatch with 422.
+          (cd "${{ steps.package.outputs.package_dir }}" && npm pkg delete repository.directory && npm pkg set repository.type=git "repository.url=git+https://github.com/${{ github.repository }}.git")
           npm publish "${{ steps.package.outputs.package_dir }}" --access public --provenance
 
   publish:
@@ -467,6 +472,10 @@ jobs:
             echo "basta@${version} is already published; skipping"
             exit 0
           fi
+          # The same provenance check as the platform packages: the manifest
+          # must name the repository the build ran in.
+          npm pkg delete repository.directory
+          npm pkg set repository.type=git "repository.url=git+https://github.com/${{ github.repository }}.git"
           npm publish --access public --provenance
 
       # `npm publish` tags what it publishes as `latest`, but the package

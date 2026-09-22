@@ -4,7 +4,8 @@
 [![license](https://img.shields.io/npm/l/basta.svg)](https://github.com/kucherenko/basta/blob/master/LICENSE)
 
 Finds code nothing runs: unused files, exports, module-private declarations
-and imports across **JavaScript, TypeScript, JSX, TSX and Python**.
+and imports across **JavaScript, TypeScript, JSX, TSX and Python**, and Rust
+through the compiler's own diagnostics.
 
 A self-contained Rust binary. No runtime dependencies, no install scripts,
 nothing to configure before the first run.
@@ -48,7 +49,7 @@ reference-counting linter misses.
 cannot be certain, so every finding carries a score from 0 to 100 and the
 reasons it is not higher: a file that calls `eval` or `getattr`, an
 unrecognised decorator, a wildcard re-export, a name that shows up in a string
-literal. `--min-confidence` sets the floor; the default is 60.
+literal, a file whose path is written out in one. `--min-confidence` sets the floor; the default is 60.
 
 **It knows the conventions.** A package's `__init__.py` re-exports are its
 API, not unused imports. `from __future__ import annotations` is a directive.

@@ -555,7 +555,7 @@ jobs:
         if: steps.existing.outputs.exists != 'true'
         id: notes
         run: |
-          notes="Dead code detection for JavaScript, TypeScript, Vue, Svelte, Astro and Python — unused files, exports, module-private declarations and imports, each finding with a confidence score.
+          notes="Dead code detection for JavaScript, TypeScript, Vue, Svelte, Astro and Python — unused files, exports, module-private declarations and imports, each finding with a confidence score — and for Rust, read from the compiler's own diagnostics (\`cargo check --message-format=json | basta . --rust-diagnostics -\`).
 
           The engine lives in [kucherenko/jscpd](https://github.com/kucherenko/jscpd), where it also ships as \`jscpd --dead-code\`; see [the jscpd changelog](https://github.com/kucherenko/jscpd/blob/master/rust/CHANGELOG.md) for what changed under the hood this release.
 

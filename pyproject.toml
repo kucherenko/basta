@@ -1,0 +1,18 @@
+# Repository-root Python project. It is not published: it exists so that
+# pre-commit (language: python, see .pre-commit-hooks.yaml) can `pip install`
+# this repository and get the `basta` binary from the PyPI wheel of the same
+# version. The release workflow fails when `version` or the exact `basta-cli`
+# pin disagree with the release, so bump both with the submodule.
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "basta-repo"
+version = "0.3.1"
+description = "basta repository root: installs the basta binary for pre-commit hooks"
+requires-python = ">=3.8"
+dependencies = ["basta-cli==0.3.1"]
+
+[tool.setuptools]
+packages = []

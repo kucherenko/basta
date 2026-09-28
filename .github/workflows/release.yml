@@ -87,6 +87,19 @@ jobs:
           echo "version=${manifest}" >> "$GITHUB_OUTPUT"
           echo "Releasing basta ${manifest}"
 
+      # The pre-commit hook installs the basta-cli wheel pinned in
+      # pyproject.toml. A tag whose pin names another version would hand
+      # every hook user that other release.
+      - name: Check the pre-commit pin names this version
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          pypi_version=$(python3 scripts/build-pypi-wheels.py --pep440 "$version")
+          grep -qx "version = \"${pypi_version}\"" pyproject.toml &&
+            grep -q "\"basta-cli==${pypi_version}\"" pyproject.toml || {
+            echo "::error::pyproject.toml must say version = \"${pypi_version}\" and pin basta-cli==${pypi_version}"
+            exit 1
+          }
+
   crates:
     name: publish crates.io
     needs: version
@@ -504,6 +517,69 @@ jobs:
           done
           echo "basta latest -> ${version}"
 
+  # ─── PyPI ───────────────────────────────────────────────────────────
+  # `basta` on PyPI is an unrelated astronomy package, so the wheels go out
+  # as `basta-cli`; the command they install is `basta`. They are repacked
+  # from this run's release tarballs, with nothing to compile
+  # (scripts/build-pypi-wheels.py). The upload uses trusted publishing: the
+  # `basta-cli` project on PyPI trusts this workflow through the `pypi`
+  # environment, so no token is stored. Before the first release, add it on
+  # PyPI as a pending publisher (owner kucherenko, repository basta, workflow
+  # release.yml, environment pypi).
+  pypi:
+    name: publish pypi wheels
+    needs: [version, build]
+    if: always() && !cancelled() &&
+      needs.version.result == 'success' &&
+      needs.build.result != 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: pypi
+      url: https://pypi.org/project/basta-cli/
+    permissions:
+      contents: read
+      id-token: write # PyPI trusted publishing + PEP 740 attestations
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Every build job uploads its tarball, whether it built the binary or
+      # repacked it from npm on a resumed release, so all eight are here.
+      - name: Download binary artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: basta-binary-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Build wheels
+        run: |
+          python3 scripts/build-pypi-wheels.py \
+            --version "${{ needs.version.outputs.version }}" \
+            --assets-dir release-assets \
+            --out-dir dist
+          ls -la dist
+
+      # Install the wheel for this runner from the local directory only, and
+      # make sure the packaged binary is the release being shipped.
+      - name: Smoke test
+        run: |
+          version="${{ needs.version.outputs.version }}"
+          pypi_version=$(python3 scripts/build-pypi-wheels.py --pep440 "$version")
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet --no-index --find-links dist "basta-cli==${pypi_version}"
+          installed=$(.venv/bin/basta --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "NOT_FOUND")
+          echo "basta: ${installed}, expected ${version}"
+          [ "$installed" = "$version" ] || { echo "::error::basta from the wheel reports ${installed}"; exit 1; }
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: dist
+          # A resumed release may have uploaded some wheels already.
+          skip-existing: true
+
   # ─── GitHub release ────────────────────────────────────────────────
   # The registries (crates.io, npm) are where `cargo install`/`npm install`
   # look, but a GitHub release is where a person looks for "what changed"
@@ -511,11 +587,12 @@ jobs:
   # that. This is the one place in the pipeline that writes to this repo.
   release:
     name: create basta github release
-    needs: [version, crates, build, publish]
+    needs: [version, crates, build, publish, pypi]
     if: always() && !cancelled() &&
       needs.crates.result != 'failure' &&
       needs.build.result != 'failure' &&
-      needs.publish.result != 'failure'
+      needs.publish.result != 'failure' &&
+      needs.pypi.result != 'failure'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -559,7 +636,7 @@ jobs:
 
           The engine lives in [kucherenko/jscpd](https://github.com/kucherenko/jscpd), where it also ships as \`jscpd --dead-code\`; see [the jscpd changelog](https://github.com/kucherenko/jscpd/blob/master/rust/CHANGELOG.md) for what changed under the hood this release.
 
-          Install: \`npm i -g basta\`, \`cargo install basta\`, or \`cargo binstall basta\`. Without installing: \`npx basta src\`."
+          Install: \`npm i -g basta\`, \`pip install basta-cli\`, \`cargo install basta\`, or \`cargo binstall basta\`. Without installing: \`npx basta .\` or \`uvx --from basta-cli basta .\`. As a pre-commit hook: \`repo: https://github.com/kucherenko/basta\` with \`rev: v${{ needs.version.outputs.version }}\` and \`id: basta\`."
           {
             echo "notes<<EOF"
             echo "$notes"

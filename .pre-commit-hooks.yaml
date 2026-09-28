@@ -1,0 +1,15 @@
+- id: basta
+  name: Find dead code
+  description: Unused files, exports, declarations and imports, found by walking the whole project from its entry points
+  entry: basta
+  # Fail the commit when anything is found. Pass your own args to change it,
+  # for example --min-confidence 90, or --threshold 5 to allow some dead code.
+  args: ["--exit-code", "1"]
+  # Installs the basta-cli wheel from PyPI (pyproject.toml pins this rev's
+  # version), so the hook needs no Node.js.
+  language: python
+  # basta reads the whole project, not the staged files: deleting a function
+  # in one file can leave its only helper dead in another. A run takes
+  # milliseconds, so it runs on every commit.
+  pass_filenames: false
+  always_run: true

@@ -182,22 +182,42 @@ jobs:
           echo "Publish order:"
           echo "$order"
 
+          # Whether the sparse index, the one cargo itself reads, lists this
+          # exact version. In the v0.3.1 run the crates.io API check let
+          # cpd-core 0.1.21 through although crates.io had it, and `cargo
+          # publish` failed on it. `cargo info` matches any version.
+          on_index() {
+            local name path
+            name=$(printf '%s' "$1" | tr 'A-Z' 'a-z')
+            case ${#name} in
+              1) path="1/$name" ;;
+              2) path="2/$name" ;;
+              3) path="3/${name:0:1}/$name" ;;
+              *) path="${name:0:2}/${name:2:2}/$name" ;;
+            esac
+            curl -sf "https://index.crates.io/$path" | grep -qF "\"vers\":\"$2\""
+          }
+
           for entry in $order; do
             crate="${entry%%:*}"
             crate_version="${entry##*:}"
-            max_ver=$(curl -sfH "Accept: application/json" -H "User-Agent: jscpd-ci (github.com/kucherenko/jscpd)" \
-              "https://crates.io/api/v1/crates/${crate}" 2>/dev/null | jq -r '.crate.max_version // empty' || echo "")
-            if [ "$max_ver" = "$crate_version" ]; then
+            if on_index "$crate" "$crate_version"; then
               echo "${crate}@${crate_version} already on crates.io; skipping"
               continue
             fi
             echo "--- publishing ${crate}@${crate_version} ---"
-            cargo publish --locked -p "${crate}" --allow-dirty
+            if ! cargo publish --locked -p "${crate}" --allow-dirty 2>&1 | tee "$RUNNER_TEMP/publish.log"; then
+              if grep -q "already exists on crates.io index" "$RUNNER_TEMP/publish.log"; then
+                echo "${crate}@${crate_version} is on crates.io after all; skipping"
+                continue
+              fi
+              exit 1
+            fi
 
             # The index has to carry the new version before the next crate
             # can build against it.
             for i in $(seq 1 30); do
-              cargo info "${crate}@${crate_version}" >/dev/null 2>&1 && break
+              on_index "$crate" "$crate_version" && break
               echo "waiting for the index to show ${crate}@${crate_version} ($i/30)"
               sleep 10
             done
